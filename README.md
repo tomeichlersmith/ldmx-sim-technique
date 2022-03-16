@@ -12,3 +12,6 @@ Samples generated on `sim-technique` branch of ldmx-sw. This branch had three ne
 1. Allowing the simulation to run without any hit collections being produced.
 2. Auto generation of GDML corresponding to big hunk of a single material.
 3. Addition of new dark brem model using NA64's DMG4
+
+- ana : analysis scripts
+- sim : config scripts for simulations with ldmx-sw
