@@ -22,3 +22,15 @@ The necessary dark brem event libraries from MadGraph were generated with versio
 - ana : analysis scripts
 - sim : config scripts for simulations with ldmx-sw
 
+## Development
+Due to DMG4's requirement of GSL, we need to use v2.0 of the ldmx/dev container.
+```
+ldmx use dev v2.0
+```
+We can install DMG4 to `${LDMX_BASE}/dmg4/install` so that CMake can find it and
+then we need to symlink its libraries to the ldmx-sw install location so that
+they can be found by the linker at runtime.
+```
+cd ldmx-sw/install
+ln -s ${LDMX_BASE}/dmg4/install/lib/* .
+```
