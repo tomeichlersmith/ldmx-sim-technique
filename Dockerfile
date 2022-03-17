@@ -1,0 +1,30 @@
+###############################################################################
+# This dockerfile is meant to build the production image of ldmx-sw
+#   for the development image, look at the LDMX-Software/docker repo
+###############################################################################
+
+ARG DEV_TAG=v2.0
+FROM ldmx/dev:${DEV_TAG}
+
+# need DMG4 installed
+RUN mkdir src &&\
+    wget -q -O -  http://mkirsano.web.cern.ch/mkirsano/DMG4.tar.gz |\
+      tar -xz --strip-components=1 --directory src &&\
+    ./home/ldmx.sh . cmake \
+      -DCMAKE_INSTALL_PREFIX=/usr/local \
+      -B /src/build \
+      -S /src &&\
+    ./home/ldmx.sh /src/build make install &&\
+    rm -r /src
+
+# install ldmx-sw into the container at /usr/local
+COPY . /code
+RUN mkdir /code/build &&\
+    ./home/ldmx.sh /code/build cmake -DCMAKE_INSTALL_PREFIX=/usr/local .. &&\
+    ./home/ldmx.sh /code/build make install &&\
+    rm -rf code &&\
+    ldconfig /usr/local/lib
+
+COPY ./scripts/docker_entrypoint.sh /home/docker_entrypoint.sh
+RUN chmod 755 /home/docker_entrypoint.sh
+ENTRYPOINT ["/home/docker_entrypoint.sh"]

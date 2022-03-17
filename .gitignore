@@ -1,0 +1,6 @@
+# local dark brem libraries for testing
+dblib
+# local generated gdml for testing
+.write_detector.gdml
+# data files
+**.root
