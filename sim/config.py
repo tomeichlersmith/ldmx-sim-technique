@@ -69,6 +69,8 @@ if not os.path.isdir(arg.out_dir) :
 p.outputFiles = [
         f'{arg.out_dir}/{arg.material}_mAMeV_{int(ap_mass)}_events_{p.maxEvents}_run_{run_num}.root'
         ]
+
+p.histogramFile = f'{arg.out_dir}/ntuple_{arg.material}_mAMeV_{int(ap_mass)}_events_{p.maxEvents}_run_{run_num}.root'
 p.run = run_num
 
 from LDMX.SimCore import simulator
@@ -116,7 +118,10 @@ from LDMX.Biasing import filters
 from LDMX.Biasing import util
 sim.actions = [ util.PartialEnergySorter(min_e), filters.EcalDarkBremFilter(min_e) ]
 
-p.sequence = [sim]
+p.sequence = [
+    sim,
+    ldmxcfg.Analyzer('dbint','dqm::NtuplizeDarkBremInteraction','DQM')
+    ]
 
 if arg.pause :
     p.pause()
