@@ -1,7 +1,7 @@
 # Sim Technique Paper Notes
 
 ## Start-Up
-Production container built ~7 months ago, pulling down to UMN for testing.
+Production container built from ldmx-sw branch, pulling down to UMN for testing and batch production.
 ```
 cd ${LDMX_BASE}
 singularity build ldmx_local_sim-technique.sif docker://tomeichlersmith/ldmx-sw:sim-technique
@@ -17,7 +17,8 @@ This branch had four necessary developments for the studies related to this pape
 4. Simple Ntuplizer of particle kinematics involved in dark brem interaction
 
 The necessary dark brem event libraries from MadGraph were generated with version 4.0 of 
-[dark-brem-lib-gen](https://github.com/tomeichlersmith/dark-brem-lib-gen).
+[dark-brem-lib-gen](https://github.com/tomeichlersmith/dark-brem-lib-gen) and are stored at UMN
+`/hdfs/cms/user/eichl008/ldmx/dark-brem-event-libraries`.
 
 ### Table of Contents
 - ana : analysis scripts
