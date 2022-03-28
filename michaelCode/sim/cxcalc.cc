@@ -12,6 +12,7 @@
 #include <dirent.h>
 #include <map>
 
+//Scans over a directory full of lhe madgraph output files and snags their cross sections from the header. Then uses DarkPhotons to calculate the Weiszacker-Williams approximation at each point, creating TGraphs of each as well as a ratio.
 std::pair<double, double> lheparse(std::string madfname)
 {
    madfname = "/hdfs/cms/user/revering/madgraph/text/AN_doc/map0p1_el_pb/" + madfname; 

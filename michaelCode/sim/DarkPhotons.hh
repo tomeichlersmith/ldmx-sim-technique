@@ -50,6 +50,7 @@ class DarkPhotons
     void SetSigmaNorm(double SigmaNormIn);
     void ParseLHE(std::string fname);
     void ParseROOT(std::string fname);
+    void MakePlaceholders();
     double TotalCrossSectionCalc(double E0, bool KFactor=false);
     double TotalMuCrossSectionCalc(double E0);
     double MaxCrossSectionCalc(double E0);

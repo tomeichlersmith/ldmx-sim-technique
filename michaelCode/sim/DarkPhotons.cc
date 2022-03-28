@@ -236,6 +236,7 @@ void DarkPhotons::ParseLHE(std::string fname)
    }
    printf("Number of events: %i.\n", n);
    ifile.close();
+   MakePlaceholders();
 }
 
 void DarkPhotons::ParseROOT(std::string fname)
@@ -264,6 +265,20 @@ void DarkPhotons::ParseROOT(std::string fname)
       mgdata[evnt.E].push_back(evnt);
    }
    f->Close();
+   MakePlaceholders();
+}
+
+void DarkPhotons::MakePlaceholders()
+{
+   for ( const auto &iter : mgdata )
+   {                                                
+      energies.push_back(std::make_pair(iter.first,iter.second.size()));
+   } 
+
+   for(uint64_t i=0;i<energies.size();i++)
+   {  
+      energies[i].second=int(drand48()*mgdata[energies[i].first].size());
+   }
 }
 
 double chi (double t, void * pp) 
@@ -566,18 +581,18 @@ TLorentzVector* DarkPhotons::SimulateEmission(double E0, std::string type)
    TLorentzVector* fel;
    if(type == "forward_only")
    {
-      EAcc = (data.fEl->E()-Mmu)/(data.E-Mmu-MA)*(E0-Mmu-MA);
+      EAcc = (data.fEl->E()-Mel)/(data.E-Mel-MA)*(E0-Mel-MA);
       Pt = data.fEl->Pt();
-      P = sqrt(EAcc*EAcc-Mmu*Mmu);
+      P = sqrt(EAcc*EAcc-Mel*Mel);
       PhiAcc = data.fEl->Phi();
       int i = 0;
-      while(Pt*Pt+Mmu*Mmu>EAcc*EAcc) //Skip events until the Pt is less than the energy.
+      while(Pt*Pt+Mel*Mel>EAcc*EAcc) //Skip events until the Pt is less than the energy.
       {
          i++;
          data = GetMadgraphData(E0);
-         EAcc = (data.fEl->E()-Mmu)/(data.E-Mmu-MA)*(E0-Mmu-MA);
+         EAcc = (data.fEl->E()-Mel)/(data.E-Mel-MA)*(E0-Mel-MA);
          Pt = data.fEl->Pt();
-         P = sqrt(EAcc*EAcc-Mmu*Mmu);
+         P = sqrt(EAcc*EAcc-Mel*Mel);
          PhiAcc = data.fEl->Phi();
          if(i>10000)
          {
@@ -592,7 +607,7 @@ TLorentzVector* DarkPhotons::SimulateEmission(double E0, std::string type)
       TLorentzVector* newcm = new TLorentzVector(data.cm->X(),data.cm->Y(),data.cm->Z()-ediff,data.cm->E()-ediff);
       el->Boost(-1.*data.cm->BoostVector());
       el->Boost(newcm->BoostVector());
-      double newE = (data.fEl->E()-Mmu)/(data.E-Mmu-MA)*(E0-Mmu-MA);
+      double newE = (data.fEl->E()-Mel)/(data.E-Mel-MA)*(E0-Mel-MA);
       el->SetE(newE);
       fel = el;
       EAcc = el->E();
@@ -618,17 +633,16 @@ frame DarkPhotons::GetMadgraphData(double E0)
 {
    double samplingE = energies[0].first;
    frame cmdata;
-   int i=0;
+   int i=-1;
    bool pass = false;
    while(!pass)
    {
-      i = i+1;
+      i++;
       samplingE = energies[i].first;
-      if(E0<=samplingE) {pass=true;}
-      if(i>=energies.size()) {pass=true;}
+      if(E0<=samplingE||i>=energies.size()){pass=true;}
    }
    if(i==energies.size()) {i=i-1;}
-   if(energies[i].second>=mgdata[energies[i].first].size()) {energies[i].second = 0;}
+   if(energies[i].second>=double(mgdata[energies[i].first].size())) {energies[i].second = 0;}
    cmdata = mgdata[energies[i].first].at(energies[i].second);
    energies[i].second=energies[i].second+1;
 

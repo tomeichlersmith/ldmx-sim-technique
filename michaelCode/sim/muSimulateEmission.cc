@@ -1,4 +1,4 @@
-//To compile : g++ simulateEmission.cc -o simulateDbrem `root-config --cflags --glibs` DarkPhotons.cc -lgsl -lgslcblas -lm
+//To compile : g++ muSimulateEmission.cc -o simulateMuDbrem `root-config --cflags --glibs` DarkPhotons.cc -lgsl -lgslcblas -lm
 
 #include "DarkPhotons.hh"
 //#include "combsim.hh"
@@ -8,7 +8,7 @@
 #include <iostream>
 #include <string>
 
-//./whatever A'mass ebeam randomSeed 
+//  Usage: ./simulateMuDBrem A'mass ebeam randomSeed ScaleFile OutputFilename
 int main(int argc, char* argv[])
 {
    srand48(std::atof(argv[3]));
@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
    std::string ename = argv[2];
    std::string jnum = argv[3];
    std::string ofname = argv[5];
-   double e_m = 0.1056;
+   double muonMass = 0.1056;
    std::string fname = ofname + ".root";
    TFile *f = new TFile(fname.c_str(),"recreate");
    
@@ -42,11 +42,11 @@ int main(int argc, char* argv[])
       printf("Cross section at %d Gev is %e\n", i, dphoton->TotalCrossSectionCalc(i));
    }
 */
-   for(int i=0;i<1000000;i++)
+   for(int i=0;i<40000;i++)
    {
-      TLorentzVector* pchange = dphoton->SimulateEmission(ebeam, "forward_only");
+      TLorentzVector* pchange = dphoton->MuSimulateEmission(ebeam, "forward_only");
       evec->SetPxPyPzE(pchange->X(),pchange->Y(),pchange->Z(),pchange->E());
-      a_z = sqrt(ebeam*ebeam - e_m*e_m) - evec->Z();
+      a_z = sqrt(ebeam*ebeam - muonMass*muonMass) - evec->Z();
       a_x = evec->X();
       a_y = evec->Y();
       a_E = sqrt(a_x*a_x+a_y*a_y+a_z*a_z+map*map);
@@ -68,11 +68,11 @@ int main(int argc, char* argv[])
       printf("Cross section at %d Gev is %e\n", i, dphoton->TotalCrossSectionCalc(i));
    }
 */
-   for(int i=0;i<10000;i++)
+   for(int i=0;i<40000;i++)
    {
-      TLorentzVector* cmpchange = dphoton->SimulateEmission(ebeam, "cm_scaling");
+      TLorentzVector* cmpchange = dphoton->MuSimulateEmission(ebeam, "cm_scaling");
       cmevec->SetPxPyPzE(cmpchange->X(),cmpchange->Y(),cmpchange->Z(),cmpchange->E());
-      a_z = sqrt(ebeam*ebeam - e_m*e_m) - cmevec->Z();
+      a_z = sqrt(ebeam*ebeam - muonMass*muonMass) - cmevec->Z();
       a_x = cmevec->X();
       a_y = cmevec->Y();
       a_E = sqrt(a_x*a_x+a_y*a_y+a_z*a_z+map*map);
