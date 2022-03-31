@@ -19,5 +19,5 @@ ldmx-submit-jobs \
   -i dark-brem-event-libraries/<collection> \
   --no_recursive \
   --production \
-  --config_args '-d <depth> -m <material> --particle <particle>'
+  --files_per_job 1
 ```

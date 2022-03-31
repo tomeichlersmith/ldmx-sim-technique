@@ -63,7 +63,7 @@ if not os.path.isdir(arg.out_dir) :
     os.makedirs(arg.out_dir)
 
 p.outputFiles = [
-        f'{arg.out_dir}/{particle}_{material}_mAMeV_{int(ap_mass)}_events_{p.maxEvents}_run_{run_num}.root'
+        f'{arg.out_dir}/{particle}_{material}_depthmm_{arg.depth}_mAMeV_{int(ap_mass)}_events_{p.maxEvents}_run_{run_num}.root'
         ]
 
 p.histogramFile = f'{arg.out_dir}/ntuple_{os.path.basename(p.outputFiles[0])}'

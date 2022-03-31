@@ -14,9 +14,8 @@ parser.add_argument("-v","--verbose",dest="verbose",default=False,action='store_
 parser.add_argument('-d','--depth',default=100.,type=float,
         help='Depth of material hunk [mm] to simulate inside of.')
 parser.add_argument('-m','--material',default='tungsten',
-        choices=['tungsten'],
+        choices=['tungsten','silicon'],
         help='Material to use as target in simulation.')
-
 parser.add_argument('--particle',default='e-',
         help='Particle to be the primary in the simulation.')
 parser.add_argument('--primary_energy',default=4.,type=float,
@@ -43,18 +42,20 @@ if not os.path.isdir(arg.out_dir) :
     os.makedirs(arg.out_dir)
 
 p.outputFiles = [
-        f'{arg.out_dir}/{arg.material}_mAMeV_{int(ap_mass)}_events_{p.maxEvents}_run_{run_num}.root'
+        f'{arg.out_dir}/{arg.particle}_{arg.material}_depthmm_{arg.depth}_mAMeV_{int(ap_mass)}_events_{p.maxEvents}_run_{run_num}.root'
         ]
+
+p.histogramFile = f'{arg.out_dir}/ntuple_{os.path.basename(p.outputFiles[0])}'
 p.run = run_num
 
 from LDMX.SimCore import simulator
 sim = simulator.simulator( "dark_brem_%sMeV" % str(ap_mass) )
 sim.description = "Dark Brem Process Testing and Validation"
 
-sim.preInitCommands = ['/run/verbose 2']
 if arg.verbose :
     sim.validate_detector = True
     sim.verbosity = 2
+    sim.preInitCommands = ['/run/verbose 2']
     p.termLogLevel = 0
     p.logFrequency = 1
 
