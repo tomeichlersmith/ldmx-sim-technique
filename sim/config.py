@@ -16,12 +16,6 @@ parser.add_argument("-v","--verbose",dest="verbose",default=False,action='store_
 
 parser.add_argument('-d','--depth',default=100.,type=float,
         help='Depth of material hunk [mm] to simulate inside of.')
-parser.add_argument('-m','--material',default='tungsten',
-        choices=['tungsten'],
-        help='Material to use as target in simulation.')
-
-parser.add_argument('--particle',default='e-',choices=['e-'],
-        help='Particle to be the primary in the simulation.')
 
 parser.add_argument('--out_dir',default=os.getcwd(),
         help='Directory to output event file.')
@@ -58,6 +52,8 @@ if db_event_lib_path.endswith('/') :
 
 # Get A' mass and run number from the dark brem library name
 lib_parameters = os.path.basename(db_event_lib_path).split('_')
+particle = lib_parameters[0]
+material = lib_parameters[1]
 ap_mass = float(lib_parameters[lib_parameters.index('mA')+1])*1000. # MeV for A' mass
 run_num = int(lib_parameters[lib_parameters.index('run')+1]) # run number
 max_e = float(lib_parameters[lib_parameters.index('MaxE')+1]) # GeV for ParticleGun
@@ -67,10 +63,10 @@ if not os.path.isdir(arg.out_dir) :
     os.makedirs(arg.out_dir)
 
 p.outputFiles = [
-        f'{arg.out_dir}/{arg.material}_mAMeV_{int(ap_mass)}_events_{p.maxEvents}_run_{run_num}.root'
+        f'{arg.out_dir}/{particle}_{material}_mAMeV_{int(ap_mass)}_events_{p.maxEvents}_run_{run_num}.root'
         ]
 
-p.histogramFile = f'{arg.out_dir}/ntuple_{arg.material}_mAMeV_{int(ap_mass)}_events_{p.maxEvents}_run_{run_num}.root'
+p.histogramFile = f'{arg.out_dir}/ntuple_{os.path.basename(p.outputFiles[0])}'
 p.run = run_num
 
 from LDMX.SimCore import simulator
@@ -85,8 +81,8 @@ if arg.verbose :
     p.logFrequency = 100
 
 from LDMX.SimCore import generators
-primary = generators.gun(f'primary_{arg.particle}')
-primary.particle = arg.particle
+primary = generators.gun(f'primary_{particle}')
+primary.particle = particle
 primary.energy = max_e
 primary.direction = [ 0., 0., 1. ] #unitless
 primary.position = [ 0., 0., -1. ] #mm
@@ -95,7 +91,7 @@ sim.time_shift_primaries = False
 
 # use detector.gdml file in current directory
 from LDMX.Detectors.write import write
-sim.detector = write('.write_detector.gdml',arg.material,hunk_transverse,arg.depth)
+sim.detector = write('.write_detector.gdml',material,hunk_transverse,arg.depth)
 
 #Activiate dark bremming with a certain A' mass and LHE library
 from LDMX.SimCore import dark_brem
