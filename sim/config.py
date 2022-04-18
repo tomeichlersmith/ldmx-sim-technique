@@ -27,7 +27,7 @@ hunk_transverse = 500 #mm
 from LDMX.Framework import ldmxcfg
 
 p = ldmxcfg.Process('db')
-p.maxEvents = 10 #000
+p.maxEvents = 10000
 p.maxTriesPerEvent = 1000
 
 # Dark Brem Vertex Library
@@ -85,7 +85,7 @@ primary = generators.gun(f'primary_{particle}')
 if particle == 'electron' :
   primary.particle = 'e-'
 else :
-  primary.particle = 'muon'
+  primary.particle = 'mu-'
 
 primary.energy = max_e
 primary.direction = [ 0., 0., 1. ] #unitless
