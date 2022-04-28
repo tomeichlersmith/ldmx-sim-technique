@@ -59,6 +59,10 @@ run_num = int(lib_parameters[lib_parameters.index('run')+1]) # run number
 max_e = float(lib_parameters[lib_parameters.index('MaxE')+1]) # GeV for ParticleGun
 min_e = float(lib_parameters[lib_parameters.index('MinE')+1])*1000. # MeV for user actions
 
+# using copper as library for brass
+if material == 'copper' :
+    material = 'brass'
+
 if not os.path.isdir(arg.out_dir) :
     os.makedirs(arg.out_dir)
 
