@@ -27,7 +27,7 @@ hunk_transverse = 500 #mm
 from LDMX.Framework import ldmxcfg
 
 p = ldmxcfg.Process('db')
-p.maxEvents = 10000
+p.maxEvents = 10 #000
 p.maxTriesPerEvent = 1000
 
 # Dark Brem Vertex Library
@@ -99,7 +99,7 @@ sim.time_shift_primaries = False
 
 # use detector.gdml file in current directory
 from LDMX.Detectors.write import write
-sim.detector = write('.write_detector.gdml',material,hunk_transverse,arg.depth)
+sim.detector = write('.write_detector.gdml',material,arg.depth,hunk_transverse)
 
 #Activiate dark bremming with a certain A' mass and LHE library
 from LDMX.SimCore import dark_brem
@@ -115,7 +115,9 @@ mass_power = max(log10(sim.dark_brem.ap_mass),2.)
 
 from LDMX.SimCore import bias_operators
 sim.biasing_operators = [ 
-        bias_operators.DarkBrem('hunk',True,sim.dark_brem.ap_mass**mass_power / db_model.epsilon**2)
+        bias_operators.DarkBrem('hunk',True,
+          sim.dark_brem.ap_mass**mass_power / db_model.epsilon**2,
+          particle = primary.particle)
         ]
 
 from LDMX.Biasing import filters
