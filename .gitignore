@@ -4,3 +4,5 @@ dblib
 .write_detector.gdml
 # data files
 **.root
+# sim log files
+*.log
