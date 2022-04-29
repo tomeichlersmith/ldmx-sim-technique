@@ -27,7 +27,7 @@ hunk_transverse = 500 #mm
 from LDMX.Framework import ldmxcfg
 
 p = ldmxcfg.Process('db')
-p.maxEvents = 10 #000
+p.maxEvents = 20000
 p.maxTriesPerEvent = 1000
 
 # Dark Brem Vertex Library

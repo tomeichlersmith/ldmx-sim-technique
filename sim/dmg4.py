@@ -36,8 +36,8 @@ hunk_transverse = 500 #mm
 from LDMX.Framework import ldmxcfg
 
 p = ldmxcfg.Process('db')
-p.maxEvents = 1#0
-p.maxTriesPerEvent = 10 #00
+p.maxEvents = 20000
+p.maxTriesPerEvent = 1000
 
 if not os.path.isdir(arg.out_dir) :
     os.makedirs(arg.out_dir)
