@@ -82,6 +82,7 @@ from LDMX.SimCore import dark_brem
 db_model = dark_brem.DMG4Model()
 db_model.threshold = 2. #GeV - minimum energy electron needs to have to dark brem
 sim.dark_brem.activate( arg.ap_mass , db_model , muons = (primary.particle == 'mu-'))
+sim.dark_brem.only_one_per_event = True
 
 #Biasing dark brem up inside of the ecal volumes
 from math import log10
