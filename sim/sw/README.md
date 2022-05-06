@@ -6,12 +6,20 @@ Derivate of ldmx-sw so source that environment script.
 ```
 source /full/path/to/ldmx-sw/scripts/ldmx-env.sh
 ```
-Requires v2.0 of dev container and a specific base
+Requires v2.0 of dev container and a specific base, so
+I have written a simple env file to source.
 ```
 cd ldmx-sim-technique
-ldmx clean env
-ldmx base .
-ldmx use dev v2.0
+ldmx source sim/sw/ldmx-env
+```
+
+## Building
+After Setup is done, we can build it similar to how ldmx-sw is built.
+```
+cd sim/sw/
+ldmx cmake -B build -S .
+cd build
+ldmx make install
 ```
 
 ## Reference

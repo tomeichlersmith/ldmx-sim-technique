@@ -22,5 +22,8 @@ Since the differences between DMG4 and MG-Sampling can be observed with relative
 (~10k minimum), I am going to avoid batch submission and simply generate the samples locally 
 in sequence so that I have more control over them.
 
+## Simulation Software
+The [sw](sw) directory contains a lightened version of ldmx-sw with the branch of SimCore necessary to run a DMG4 model simulation.
+
 ## Documentation
 We used DMG4 v1.2 released on March 18, 2022 and downloaded from [Mikhail Kirsanov's website](http://mkirsano.web.cern.ch/mkirsano/DMG4.tar.gz).
