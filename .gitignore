@@ -9,6 +9,8 @@ dblib
 # jupyter notebook
 .ipynb_checkpoints
 __pycache__
-
+# generated directories
 build
 ldmx-sw/install
+# container images
+**.sif
