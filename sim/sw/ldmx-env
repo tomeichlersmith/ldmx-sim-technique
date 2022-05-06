@@ -1,0 +1,5 @@
+clean env
+# back out of this directory to ldmx-sim-technique root
+base ../../
+# need GSL from dev v2.0
+use dev v2.0
