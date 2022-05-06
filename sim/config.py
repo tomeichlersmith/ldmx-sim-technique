@@ -135,7 +135,7 @@ sim.actions = [
 
 p.sequence = [
     sim,
-    ldmxcfg.Analyzer('dbint','dqm::NtuplizeDarkBremInteraction','DQM')
+    ldmxcfg.Analyzer('dbint','dqm::NtuplizeDarkBremInteraction','Biasing')
     ]
 
 if arg.pause :
