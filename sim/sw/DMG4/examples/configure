@@ -1,0 +1,116 @@
+#!/bin/sh
+#
+# Configuration script, to be run before compilation
+#
+export PREFIX=.
+export COMPMODE=Release
+
+# check arguments
+for arg in $* ; do
+  if [ "x$arg" = "x--help" ] ; then
+    echo "Usage: ./configure [options] , where options are:"
+    echo "--help               : prints this help"
+    echo "--prefix=path        : path to install, default is ."
+    echo "--enable-debug       : turns on build type Debug (debug flags, optimization off)"
+    echo "--buildtype=value    : possible types: None, Release, Debug, MinSizeRel, RelWithDebInfo, D=Release, see CMakeLists.txt"
+    echo "--with-geant4=path   : path to the installed Geant4, with directory /bin/geant4.sh, /include etc."
+    echo "--with-dmg4=path     : path to the DMG4 package"
+    echo "--with-gsl=path      : path to the GSL package"
+    echo "--with-mmkutils=path : path to the MMKUTILS package"
+    echo "--with-hepmc=path    : path to the HepMC package"
+    echo "--with-root          : use ROOT as pointed by the ROOTSYS variable"
+    echo
+    echo "to see the actual compilation commands add argument VERBOSE=1 to make"
+    echo
+    exit
+  elif [ "x$arg" = "x--enable-debug" ] ; then
+    COMPMODE=Debug
+  elif [ "x$arg" = "x--with-root" ] ; then
+    ROOTLOCATION=${ROOTSYS}
+  elif [ x`echo x${arg} | grep "="` != x ] ; then
+    option=`echo ${arg} | awk -F = '{print $1}'`
+    value=`echo ${arg} | awk -F = '{print $2}'`
+    if [ "x${option}" = "x--prefix" ] ; then
+      PREFIX=${value}
+    elif [ "x${option}" = "x--with-geant4" ] ; then
+      GEANT4LOCATION=${value}
+   elif [ "x${option}" = "x--with-dmg4" ] ; then
+      DMG4LOCATION=${value}
+    elif [ "x${option}" = "x--with-gsl" ] ; then
+      GSLLOCATION=${value}
+    elif [ "x${option}" = "x--with-mmkutils" ] ; then
+      MMKUTILSLOCATION=${value}
+    elif [ "x${option}" = "x--with-hepmc" ] ; then
+      HEPMCLOCATION=${value}
+    elif [ "x${option}" = "x--buildtype" ] ; then
+      if [ "${value}" = "None" ] ; then
+        COMPMODE=${value}
+      elif [ "${value}" = "Release" ] ; then
+        COMPMODE=${value}
+      elif [ "${value}" = "Debug" ] ; then
+        COMPMODE=${value}
+      elif [ "${value}" = "MinSizeRel" ] ; then
+        COMPMODE=${value}
+      elif [ "${value}" = "RelWithDebInfo" ] ; then
+        COMPMODE=${value}
+      else
+        echo "${value}: wrong value for buildtype. Ignored." >&2
+        echo
+      fi
+    else
+      echo "${arg}: wrong option. Ignored." >&2
+      echo
+    fi
+  fi
+done
+
+MYCMAKE=`which  cmake`
+if [ "x$MYCMAKE" = "x" ] ; then
+  echo
+  echo "Error: cmake is not defined. Please define cmake"
+  echo
+  exit
+fi
+
+echo The package will be installed in PREFIX = $PREFIX
+echo "The compilation mode (see CMakeLists.txt for definitions) is:" ${COMPMODE}
+echo
+
+rm -f ./CMakeCache.txt
+
+cd $GEANT4LOCATION/bin
+source ./geant4.sh
+cd -
+
+rm -f config.sh
+echo "#!/bin/sh" > config.sh
+echo "cd $GEANT4LOCATION/bin" >> config.sh
+echo "source geant4.sh" >> config.sh
+echo "cd -" >> config.sh
+echo "export G4ORDPARAMTABLE=`pwd`/../../DATA/ordTable_FTFP_BERT.txt" >> config.sh
+
+rm -f config.csh
+echo "#!/bin/csh" > config.csh
+echo "cd $GEANT4LOCATION/bin" >> config.csh
+echo "source geant4.csh" >> config.csh
+echo "cd -" >> config.csh
+echo "setenv G4ORDPARAMTABLE `pwd`/../../DATA/ordTable_FTFP_BERT.txt" >> config.csh
+
+ARGLIST="-DCMAKE_INSTALL_PREFIX=${PREFIX}"
+if [ "x${MMKUTILSLOCATION}" != "x" ] ; then
+  ARGLIST="${ARGLIST} -DMMKUTILS=${MMKUTILSLOCATION}"
+fi
+if [ "x${DMG4LOCATION}" != "x" ] ; then
+  ARGLIST="${ARGLIST} -DDMG4_ROOT_DIR=${DMG4LOCATION}"
+fi
+if [ "x${GSLLOCATION}" != "x" ] ; then
+  ARGLIST="${ARGLIST} -DGSL_ROOT_DIR=${GSLLOCATION}"
+fi
+if [ "x${HEPMCLOCATION}" != "x" ] ; then
+  ARGLIST="${ARGLIST} -DHEPMC_ROOT_DIR=${HEPMCLOCATION}"
+fi
+if [ "x${ROOTLOCATION}" != "x" ] ; then
+  ARGLIST="${ARGLIST} -DROOTSYS=${ROOTLOCATION}"
+fi
+
+cmake ${ARGLIST} ../.

@@ -27,7 +27,7 @@ hunk_transverse = 500 #mm
 from LDMX.Framework import ldmxcfg
 
 p = ldmxcfg.Process('db')
-p.maxEvents = 20000
+p.maxEvents = 50000
 p.maxTriesPerEvent = 1000
 
 # Dark Brem Vertex Library
@@ -77,8 +77,9 @@ from LDMX.SimCore import simulator
 sim = simulator.simulator( "dark_brem_%sMeV" % str(ap_mass) )
 sim.description = "Dark Brem Process Testing and Validation"
 
+p.termLogLevel = 1
 if arg.verbose :
-    sim.validate_detector = True
+    #sim.validate_detector = True
     sim.verbosity = 2
     sim.preInitCommands = ['/run/verbose 2']
     p.termLogLevel = 0
@@ -104,7 +105,7 @@ sim.detector = write('.write_detector.gdml',material,arg.depth,hunk_transverse)
 #Activiate dark bremming with a certain A' mass and LHE library
 from LDMX.SimCore import dark_brem
 db_model = dark_brem.VertexLibraryModel(db_event_lib_path)
-db_model.threshold = 2. #GeV - minimum energy electron needs to have to dark brem
+db_model.threshold = min_e/1000. #GeV - minimum energy electron needs to have to dark brem
 db_model.epsilon   = 0.01 #decrease epsilon from one to help with Geant4 biasing calculations
 sim.dark_brem.activate( ap_mass , db_model , muons = (primary.particle == 'mu-'))
 if primary.particle == 'mu-' :
@@ -126,7 +127,11 @@ sim.biasing_operators = [
 
 from LDMX.Biasing import filters
 from LDMX.Biasing import util
-sim.actions = [ util.PartialEnergySorter(min_e), filters.EcalDarkBremFilter(min_e) ]
+sim.actions = [ 
+    util.PartialEnergySorter(min_e), 
+    filters.EcalDarkBremFilter(0.), 
+    #util.StepPrinter(1) 
+    ]
 
 p.sequence = [
     sim,

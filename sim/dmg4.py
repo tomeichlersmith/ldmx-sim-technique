@@ -36,7 +36,7 @@ hunk_transverse = 500 #mm
 from LDMX.Framework import ldmxcfg
 
 p = ldmxcfg.Process('db')
-p.maxEvents = 20000
+p.maxEvents = 50000
 p.maxTriesPerEvent = 1000
 
 if not os.path.isdir(arg.out_dir) :
@@ -92,7 +92,7 @@ mass_power = max(log10(sim.dark_brem.ap_mass),2.)
 from LDMX.SimCore import bias_operators
 sim.biasing_operators = [ 
         bias_operators.DarkBrem('hunk',True,
-          sim.dark_brem.ap_mass**mass_power / 0.01**2,
+          0.01**2, #sim.dark_brem.ap_mass**mass_power / 0.01**2,
           particle = primary.particle)
         ]
 
@@ -102,7 +102,7 @@ sim.actions = [
         #Make sure all particles above 2GeV are processed first
         util.PartialEnergySorter(2000.),
         #Only keep events when a dark brem happens in the Ecal (the hunk in this case)
-        filters.EcalDarkBremFilter(2000.)
+        filters.EcalDarkBremFilter(0.)
 ]
 
 p.sequence = [

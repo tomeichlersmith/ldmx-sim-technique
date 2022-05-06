@@ -6,3 +6,9 @@ dblib
 **.root
 # sim log files
 *.log
+# jupyter notebook
+.ipynb_checkpoints
+__pycache__
+
+build
+ldmx-sw/install

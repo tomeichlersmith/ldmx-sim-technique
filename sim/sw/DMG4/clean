@@ -1,0 +1,7 @@
+rm -f CMakeCache.txt
+rm -rf CMakeFiles
+rm -f cmake_install.cmake
+rm -f Makefile
+rm -f install_manifest.txt
+rm -f src/*.so
+rm -rf lib
