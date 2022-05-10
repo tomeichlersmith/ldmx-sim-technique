@@ -1,0 +1,12 @@
+#!/bin/bash
+#source /cvmfs/sft.cern.ch/lcg/views/setupViews.csh LCG_96b x86_64-centos7-gcc62-opt
+#GEANT4LOCATION=$(dirname `readlink -f $(which geant4-config)`)/..
+GEANT4LOCATION=`geant4-config --prefix`
+GSLLOCATION=`gsl-config --prefix`
+echo "GEANT4LOCATION=${GEANT4LOCATION}"
+echo "GSLLOCATION=${GSLLOCATION}"
+#
+echo "GEANT4LOCATION=${GEANT4LOCATION}" > config.txt
+echo "GSLLOCATION=${GSLLOCATION}" >> config.txt
+#
+./configure --with-geant4=${GEANT4LOCATION} --with-gsl=${GSLLOCATION}

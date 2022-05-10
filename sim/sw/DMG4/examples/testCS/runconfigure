@@ -1,0 +1,8 @@
+source ../../config.txt
+echo
+echo configuring with the following package locations taken from ../../config.txt :
+echo
+echo ${GEANT4LOCATION}
+echo ${GSLLOCATION}
+echo
+../configure --with-geant4=${GEANT4LOCATION} --with-gsl=${GSLLOCATION}

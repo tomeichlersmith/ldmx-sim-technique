@@ -4,3 +4,13 @@ dblib
 .write_detector.gdml
 # data files
 **.root
+# sim log files
+*.log
+# jupyter notebook
+.ipynb_checkpoints
+__pycache__
+# generated directories
+build
+ldmx-sw/install
+# container images
+**.sif

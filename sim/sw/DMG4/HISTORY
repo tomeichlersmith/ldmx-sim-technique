@@ -1,0 +1,14 @@
+18.03.2022   Version 1.2      Analytical expression for ds/dx in WW approximation is implemented for DarkZ (muon beam). Other improvements in DarkZ.
+                              Small bugs fixed in K-factor tables. K-factors tables below 1 Mev extended for other DM types. This is the last version
+                              before the major reorganization of the code.
+
+06.09.2021   Version 1.1      Moved to using the analytical formula for the "flux" in the electron beams. Cross section drops because of this, it was
+                              overestimated in the previous code because of a bug. Enable simulation of Dark Photons with the mass below 1 MeV.
+
+30.06.2021   Version 1.0      Move to WW formulas in Muon Brems. process (Z' emission)
+
+26.04.2021   Version Beta 3   All simulations are now made with correct Xmax. There is now maximal DM particle mass that can be simulated (1 GeV now)
+
+31.03.2021   Version Beta 2   Fixed incorrect Xmax in differential CS (remained only for scalars, pseudoscalars and axials with mass > 20 MeV if decay is on)
+
+22.02.2021   Version Beta 1   Initial version

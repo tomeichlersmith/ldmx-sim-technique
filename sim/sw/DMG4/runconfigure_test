@@ -1,0 +1,13 @@
+# For automatic testing by gitlab
+# Not for users
+#
+GEANT4VERSION=4.10.01.p01
+cd ../packages/geant4.10.01.p01.multithread.cvmfsdep/geant4_install
+GEANT4LOCATION=`pwd`
+cd -
+GSLLOCATION=/cvmfs/sft.cern.ch/lcg/external/GSL/1.10/x86_64-slc6-gcc48-opt
+#
+echo "GEANT4LOCATION=${GEANT4LOCATION}" > config.txt
+echo "GSLLOCATION=${GSLLOCATION}" >> config.txt
+#
+./configure --with-geant4=${GEANT4LOCATION} --with-gsl=${GSLLOCATION}

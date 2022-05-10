@@ -16,12 +16,6 @@ parser.add_argument("-v","--verbose",dest="verbose",default=False,action='store_
 
 parser.add_argument('-d','--depth',default=100.,type=float,
         help='Depth of material hunk [mm] to simulate inside of.')
-parser.add_argument('-m','--material',default='tungsten',
-        choices=['tungsten'],
-        help='Material to use as target in simulation.')
-
-parser.add_argument('--particle',default='e-',choices=['e-'],
-        help='Particle to be the primary in the simulation.')
 
 parser.add_argument('--out_dir',default=os.getcwd(),
         help='Directory to output event file.')
@@ -33,7 +27,7 @@ hunk_transverse = 500 #mm
 from LDMX.Framework import ldmxcfg
 
 p = ldmxcfg.Process('db')
-p.maxEvents = 10000
+p.maxEvents = 50000
 p.maxTriesPerEvent = 1000
 
 # Dark Brem Vertex Library
@@ -58,35 +52,46 @@ if db_event_lib_path.endswith('/') :
 
 # Get A' mass and run number from the dark brem library name
 lib_parameters = os.path.basename(db_event_lib_path).split('_')
+particle = lib_parameters[0]
+material = lib_parameters[1]
 ap_mass = float(lib_parameters[lib_parameters.index('mA')+1])*1000. # MeV for A' mass
 run_num = int(lib_parameters[lib_parameters.index('run')+1]) # run number
 max_e = float(lib_parameters[lib_parameters.index('MaxE')+1]) # GeV for ParticleGun
 min_e = float(lib_parameters[lib_parameters.index('MinE')+1])*1000. # MeV for user actions
 
+# using copper as library for brass
+if material == 'copper' :
+    material = 'brass'
+
 if not os.path.isdir(arg.out_dir) :
     os.makedirs(arg.out_dir)
 
 p.outputFiles = [
-        f'{arg.out_dir}/{arg.material}_mAMeV_{int(ap_mass)}_events_{p.maxEvents}_run_{run_num}.root'
+        f'{arg.out_dir}/{particle}_{material}_depthmm_{arg.depth}_mAMeV_{int(ap_mass)}_events_{p.maxEvents}_run_{run_num}.root'
         ]
 
-p.histogramFile = f'{arg.out_dir}/ntuple_{arg.material}_mAMeV_{int(ap_mass)}_events_{p.maxEvents}_run_{run_num}.root'
+p.histogramFile = f'{arg.out_dir}/ntuple_{os.path.basename(p.outputFiles[0])}'
 p.run = run_num
 
 from LDMX.SimCore import simulator
 sim = simulator.simulator( "dark_brem_%sMeV" % str(ap_mass) )
 sim.description = "Dark Brem Process Testing and Validation"
 
+p.termLogLevel = 1
 if arg.verbose :
-    sim.validate_detector = True
+    #sim.validate_detector = True
     sim.verbosity = 2
     sim.preInitCommands = ['/run/verbose 2']
     p.termLogLevel = 0
     p.logFrequency = 100
 
 from LDMX.SimCore import generators
-primary = generators.gun(f'primary_{arg.particle}')
-primary.particle = arg.particle
+primary = generators.gun(f'primary_{particle}')
+if particle == 'electron' :
+  primary.particle = 'e-'
+else :
+  primary.particle = 'mu-'
+
 primary.energy = max_e
 primary.direction = [ 0., 0., 1. ] #unitless
 primary.position = [ 0., 0., -1. ] #mm
@@ -95,14 +100,18 @@ sim.time_shift_primaries = False
 
 # use detector.gdml file in current directory
 from LDMX.Detectors.write import write
-sim.detector = write('.write_detector.gdml',arg.material,hunk_transverse,arg.depth)
+sim.detector = write('.write_detector.gdml',material,arg.depth,hunk_transverse)
 
 #Activiate dark bremming with a certain A' mass and LHE library
 from LDMX.SimCore import dark_brem
 db_model = dark_brem.VertexLibraryModel(db_event_lib_path)
-db_model.threshold = 2. #GeV - minimum energy electron needs to have to dark brem
+db_model.threshold = min_e/1000. #GeV - minimum energy electron needs to have to dark brem
 db_model.epsilon   = 0.01 #decrease epsilon from one to help with Geant4 biasing calculations
-sim.dark_brem.activate( ap_mass , db_model )
+sim.dark_brem.activate( ap_mass , db_model , muons = (primary.particle == 'mu-'))
+if primary.particle == 'mu-' :
+    sim.dark_brem.global_bias = 1e12
+
+sim.dark_brem.only_one_per_event = True
 
 #Biasing dark brem up inside of the ecal volumes
 from math import log10
@@ -111,12 +120,18 @@ mass_power = max(log10(sim.dark_brem.ap_mass),2.)
 
 from LDMX.SimCore import bias_operators
 sim.biasing_operators = [ 
-        bias_operators.DarkBrem('hunk',True,sim.dark_brem.ap_mass**mass_power / db_model.epsilon**2)
+        bias_operators.DarkBrem('hunk',True,
+          sim.dark_brem.ap_mass**mass_power / db_model.epsilon**2,
+          particle = primary.particle)
         ]
 
 from LDMX.Biasing import filters
 from LDMX.Biasing import util
-sim.actions = [ util.PartialEnergySorter(min_e), filters.EcalDarkBremFilter(min_e) ]
+sim.actions = [ 
+    util.PartialEnergySorter(min_e), 
+    filters.EcalDarkBremFilter(0.), 
+    #util.StepPrinter(1) 
+    ]
 
 p.sequence = [
     sim,
