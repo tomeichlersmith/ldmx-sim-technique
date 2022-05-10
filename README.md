@@ -1,15 +1,7 @@
 # Sim Technique Paper Notes
 
-## Start-Up
-Production container built from ldmx-sw branch, pulling down to UMN for testing and batch production.
-```
-cd ${LDMX_BASE}
-singularity build ldmx_local_sim-technique.sif docker://tomeichlersmith/ldmx-sw:sim-technique
-ldmx use local sim-technique
-```
-
 ## Documentation
-Samples generated on [sim-technique branch of ldmx-sw](https://github.com/LDMX-Software/ldmx-sw/tree/sim-technique).
+Samples generated with [sim/sw](sim/sw).
 This branch had four necessary developments for the studies related to this paper.
 1. Allowing the simulation to run without any hit collections being produced.
 2. Auto generation of GDML corresponding to big hunk of a single material.
