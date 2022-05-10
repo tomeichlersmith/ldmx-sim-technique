@@ -37,15 +37,17 @@ def energy_comp_multi(rescaledFiles,madgraphFile):
    hists = []
    ebeam=-1
    mass=-1
+   mu=False
    for name in names:
      rfile = ROOT.TFile(name,"READ")
      tree = rfile.Get("ForwardEvents")
      evec = ROOT.TLorentzVector()
      avec = ROOT.TLorentzVector()
-     histname = name.split("/")[-1].split(".")[-2]+" scaling"
-     if(histname.split("_")[0]=="mu"):
-        histname=histname.split("_")[-1]
+     scalepoint = name.split("/")[-1].split(".")[-2]
+     if(scalepoint.split("_")[0]=="mu"):
+        scalepoint=scalepoint.split("_")[-1]
         mu=True
+     histname = "Scale to " +scalepoint
      x = ROOT.TH1F(histname,histname,50,0,1)
      tree.SetBranchAddress("IncidentParticle",evec)
      tree.SetBranchAddress("APrime",avec)
@@ -75,9 +77,9 @@ def energy_comp_multi(rescaledFiles,madgraphFile):
    imghist = mghist.Clone("h3")
    plotter.integrate_hist(mghist,imghist)
    if not mu: 
-      d = plotter.plot(hists,imghist, xtitle="Outgoing e- Energy Fraction", ytitle="Event Fraction Below X Value",imageTitle="scaleDistanceKEFractions",log=False,APMassTag=str(mass)+" GeV",y_min=0.01,y_max=1.1,lab_x0=0.58,lab_y0=0.6)
+      d = plotter.plot(hists,imghist, xtitle="Outgoing e- Energy Fraction", ytitle="Event Fraction Below Outgoing Energy",imageTitle="scaleDistanceKEFractions",log=False,APMassTag=str(mass)+" GeV",y_min=0.01,y_max=1.1,lab_x0=0.58,lab_y0=0.6, ebeam=str(ebeam))
    else:
-      d = plotter.plot(hists,imghist, xtitle="Outgoing #mu- Energy Fraction", ytitle="Event Fraction Below X Value",imageTitle="scaleDistanceKEFractionsMu",log=False,APMassTag=str(mass)+" GeV",y_min=0.01,y_max=1.1,lab_x0=0.58,lab_y0=0.6,ratMin=0.96,ratMax=1.139)
+      d = plotter.plot(hists,imghist, xtitle="Outgoing #mu- Energy Fraction", ytitle="Event Fraction Below Outgoing Energy",imageTitle="scaleDistanceKEFractionsMu",log=False,APMassTag=str(mass)+" GeV",y_min=0.01,y_max=1.1,lab_x0=0.58,lab_y0=0.6,ratMin=0.96,ratMax=1.139,ebeam=str(ebeam))
 
    rfile.Close()
 

@@ -10,7 +10,7 @@ def integrate_hist(histin,histout):
    return 
 
 #When ratio is enabled "mainHist" is used as the common divisor.
-def plot(hists, mainHist, ytitle="Set me", y_max=-1,y_min=-1,imageTitle="image",ratio=True, xtitle="Set me",leg_x0=0.55,leg_y0=0.25, log=True, normalize=False,ratMin=0.81,ratMax=1.09,ratioTitle="Method/Madgraph",APMassTag="SET ME",lab_x0=0.725,lab_y0=0.8,x_max=1.):
+def plot(hists, mainHist, ytitle="Set me", y_max=-1,y_min=-1,imageTitle="image",ratio=True, xtitle="Set me",leg_x0=0.55,leg_y0=0.25, log=True, normalize=False,ratMin=0.81,ratMax=1.09,ratioTitle="Rescaled/Madgraph",APMassTag="SET ME",lab_x0=0.725,lab_y0=0.8,x_max=1.,ebeam=100, rebin=-1):
    plot = ROOT.TCanvas(imageTitle+"_canvas","Plot comparison",2) 
    div_line = 0.35
    ROOT.gStyle.SetPadTickY(1)
@@ -26,18 +26,21 @@ def plot(hists, mainHist, ytitle="Set me", y_max=-1,y_min=-1,imageTitle="image",
      
    pad1.Draw()
    pad1.cd()
-   i=1
+   i=0
    mainHist.SetTitle("")
-   mainHist.SetLineColor(3)
+   mainHist.SetLineColor(1)
    mainHist.SetLineWidth(3)
+   mainHist.SetLineStyle(7)
+   if(rebin>0):
+      mainHist.Rebin(rebin)
    if(normalize):
       mainHist.Scale(1/mainHist.GetEntries())
    mainHist.SetStats(0)
    mainHist.Draw("sameHist")
    mainHist.GetYaxis().SetTitle(ytitle)
-   mainHist.GetYaxis().SetTitleSize(20)
+   mainHist.GetYaxis().SetTitleSize(16)
    mainHist.GetYaxis().SetTitleFont(43)
-   mainHist.GetYaxis().SetTitleOffset(1.1)
+   mainHist.GetYaxis().SetTitleOffset(1.2)
    mainHist.GetYaxis().SetLabelFont(43)
    mainHist.GetYaxis().SetLabelSize(15)
    if(y_min>0):
@@ -46,13 +49,15 @@ def plot(hists, mainHist, ytitle="Set me", y_max=-1,y_min=-1,imageTitle="image",
       mainHist.SetMaximum(y_max)
    if(log):
       pad1.SetLogy()
-   leg = ROOT.TLegend(leg_x0,leg_y0,leg_x0+0.4,leg_y0+0.25)
+   leg = ROOT.TLegend(leg_x0,leg_y0,leg_x0+0.3,leg_y0+0.25)
    leg.SetBorderSize(0)
    leg.AddEntry(mainHist, "Madgraph","l")
-   goodColors = [0,1,2,4,6]
+   goodColors = [1,2,3,4,6]
    for hist in hists:
       hist.SetTitle("")
       hist.SetStats(0)
+      if(rebin>0):
+         hist.Rebin(rebin)
       #Use known-good colors, just increment from the last one once done
       if(i<len(goodColors)):
          hist.SetLineColor(goodColors[i])
@@ -73,17 +78,22 @@ def plot(hists, mainHist, ytitle="Set me", y_max=-1,y_min=-1,imageTitle="image",
 #   label.SetFillColor(0)
 #   label.SetBorderSize(0)
 #   label.Draw() 
-   tag1 = ROOT.TLatex(lab_x0,lab_y0,"LDMX")
-   tag1.SetNDC()
-   tag1.SetTextFont(62)
-   tag2 = ROOT.TLatex(lab_x0+0.1,lab_y0,"Internal")
+   #tag1 = ROOT.TLatex(lab_x0,lab_y0,"LDMX")
+   #tag1.SetNDC()
+   #tag1.SetTextFont(62)
+   #tag2 = ROOT.TLatex(lab_x0+0.1,lab_y0,"Internal")
+   #tag2.SetNDC()
+   #tag2.SetTextFont(52)
+   #tag1.SetTextSize(0.055)
+   #tag2.SetTextSize(0.045)
+   tag2 = ROOT.TLatex(lab_x0-0.08,lab_y0-0.42,"Madgraph sim at "+str(ebeam)+" GeV")
    tag2.SetNDC()
    tag2.SetTextFont(52)
-   tag1.SetTextSize(0.055)
-   tag2.SetTextSize(0.045)
-   tag1.Draw()
+   tag2.SetTextSize(0.05)
+  
+   #tag1.Draw()
    tag2.Draw()
-   tag3 = ROOT.TLatex(lab_x0,lab_y0-0.06,"m_{A'} = "+APMassTag)
+   tag3 = ROOT.TLatex(lab_x0-0.02,lab_y0-0.06,"m_{A'} = "+APMassTag)
    tag3.SetNDC()
    tag3.SetTextFont(52)
    tag3.SetTextSize(0.05)
@@ -108,7 +118,7 @@ def plot(hists, mainHist, ytitle="Set me", y_max=-1,y_min=-1,imageTitle="image",
          ratio.SetStats(0)
          ratio.Divide(mainHist)
          divs.append(ratio)
-      j=1
+      j=0
       for div in divs:
          if(j<len(goodColors)):
             div.SetLineColor(goodColors[j])

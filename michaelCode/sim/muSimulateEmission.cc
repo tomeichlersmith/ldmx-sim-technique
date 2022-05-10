@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
       printf("Cross section at %d Gev is %e\n", i, dphoton->TotalCrossSectionCalc(i));
    }
 */
-   for(int i=0;i<40000;i++)
+   for(int i=0;i<1000000;i++)
    {
       TLorentzVector* pchange = dphoton->MuSimulateEmission(ebeam, "forward_only");
       evec->SetPxPyPzE(pchange->X(),pchange->Y(),pchange->Z(),pchange->E());
@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
       printf("Cross section at %d Gev is %e\n", i, dphoton->TotalCrossSectionCalc(i));
    }
 */
-   for(int i=0;i<40000;i++)
+   for(int i=0;i<100000;i++)
    {
       TLorentzVector* cmpchange = dphoton->MuSimulateEmission(ebeam, "cm_scaling");
       cmevec->SetPxPyPzE(cmpchange->X(),cmpchange->Y(),cmpchange->Z(),cmpchange->E());
