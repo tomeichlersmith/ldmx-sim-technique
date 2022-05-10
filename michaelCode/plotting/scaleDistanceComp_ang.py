@@ -37,15 +37,17 @@ def angle_comp_multi(rescaledFiles,madgraphFile):
    hists = []
    ebeam=-1
    mass=-1
+   mu=False
    for name in names:
      rfile = ROOT.TFile(name,"READ")
      tree = rfile.Get("ForwardEvents")
      evec = ROOT.TLorentzVector()
      avec = ROOT.TLorentzVector()
-     histname = name.split("/")[-1].split(".")[-2]+" scaling"
-     if(histname.split("_")[0]=="mu"):
-        histname=histname.split("_")[-1]
+     scaleDistance = name.split("/")[-1].split(".")[-2]
+     if(scaleDistance.split("_")[0]=="mu"):
+        scaleDistance=scaleDistance.split("_")[-1]
         mu=True
+     histname = "Scale to "+scaleDistance
      x = ROOT.TH1F(histname,histname,50,0,3.14)
      tree.SetBranchAddress("IncidentParticle",evec)
      tree.SetBranchAddress("APrime",avec)
@@ -71,9 +73,9 @@ def angle_comp_multi(rescaledFiles,madgraphFile):
       mghist.Fill(mgevec.Theta())
    
    if not mu: 
-      d = plotter.plot(hists,mghist, xtitle="Outgoing e- Angle", ytitle="Event Fraction",imageTitle="scaleDistanceAngle",log=True,APMassTag=str(mass)+" GeV",y_min=0.00011,y_max=0.4,lab_x0=0.58,lab_y0=0.8,normalize=True,x_max=3.14,leg_y0=0.45,ratMax=1.24)
+      d = plotter.plot(hists,mghist, xtitle="Outgoing e- Angle", ytitle="Normalized Rate (1/#sigma d#sigma/d#theta)",imageTitle="scaleDistanceAngle",log=True,APMassTag=str(mass)+" GeV",y_min=0.00011,y_max=1.,lab_x0=0.68,lab_y0=0.88,normalize=True,x_max=3.14,leg_y0=0.53,leg_x0=0.65,ratMax=1.24,rebin=2)
    else:
-      d = plotter.plot(hists,mghist, xtitle="Outgoing #mu- Angle", ytitle="Event Fraction",imageTitle="scaleDistanceAngleMu",log=True,APMassTag=str(mass)+" GeV",y_min=0.000011,y_max=1.,lab_x0=0.58,lab_y0=0.8,normalize=True,x_max=3.14,leg_y0=0.45,ratMax=1.99, ratMin=0.51)
+      d = plotter.plot(hists,mghist, xtitle="Outgoing #mu- Angle", ytitle="Normalized Rate (1/#sigma d#sigma/d#theta)",imageTitle="scaleDistanceAngleMu",log=True,APMassTag=str(mass)+" GeV",y_min=0.000011,y_max=1.,lab_x0=0.58,lab_y0=0.8,normalize=True,x_max=3.14,leg_y0=0.45,ratMax=3.99, ratMin=0.51,rebin=2)
 
    rfile.Close()
 
