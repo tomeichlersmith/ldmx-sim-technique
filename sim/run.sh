@@ -40,36 +40,41 @@ __main__() {
         ;;
     esac
   done
-  set -ex
+  
   if ! mkdir -p ${_output_dir}; then
     echo "ERROR: Could not create output directory ${_output_dir}"
     return $?
   fi
-  local _log=${_output_dir}/fire.log
+  local _mgs_log=${_output_dir}/mgs_fire.log
+  local _dmg4_log=${_output_dir}/dmg4_fire.log
   
-  echo "MG-Scaling Muons" | tee ${_log}
+  echo "Muons $(date)"
+
   fire ${LDMX_BASE}/sim/config.py \
     ${LDMX_BASE}/dblib/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/ \
     --depth ${_muon_thickness} \
-    --out_dir ${_output_dir} | tee -a ${_log}
+    --out_dir ${_output_dir} &>> ${_mgs_log} &
   
-  echo "DMG4 Muons" | tee -a ${_log}
   fire ${LDMX_BASE}/sim/dmg4.py \
     -m brass --particle mu- --primary_energy 100. --ap_mass 1000 1 \
     --depth ${_muon_thickness} \
-    --out_dir ${_output_dir} | tee -a ${_log}
+    --out_dir ${_output_dir} &>> ${_dmg4_log} &
+
+  wait
+  echo "Electrons $(date)"
   
-  echo "MG-Scaling Electrons" | tee -a ${_log}
   fire ${LDMX_BASE}/sim/config.py \
     ${LDMX_BASE}/dblib/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/ \
     --depth ${_elec_thickness} \
-    --out_dir ${_output_dir} | tee -a ${_log}
+    --out_dir ${_output_dir} &>> ${_mgs_log} &
   
-  echo "DMG4 Electrons" | tee -a ${_log}
   fire ${LDMX_BASE}/sim/dmg4.py \
     -m tungsten --particle e- --primary_energy 4. --ap_mass 100 1 \
     --depth ${_elec_thickness} \
-    --out_dir ${_output_dir} | tee -a ${_log}
+    --out_dir ${_output_dir} &>> ${_dmg4_log} &
+
+  wait
+  echo "done $(date)"
 }
 
 __main__ $@
