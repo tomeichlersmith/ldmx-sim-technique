@@ -108,8 +108,6 @@ db_model = dark_brem.VertexLibraryModel(db_event_lib_path)
 db_model.threshold = min_e/1000. #GeV - minimum energy electron needs to have to dark brem
 db_model.epsilon   = 0.01 #decrease epsilon from one to help with Geant4 biasing calculations
 sim.dark_brem.activate( ap_mass , db_model , muons = (primary.particle == 'mu-'))
-if primary.particle == 'mu-' :
-    sim.dark_brem.global_bias = 1e12
 
 sim.dark_brem.only_one_per_event = True
 
