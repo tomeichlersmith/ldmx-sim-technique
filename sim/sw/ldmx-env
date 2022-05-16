@@ -1,5 +1,5 @@
 clean env
 # back out of this directory to ldmx-sim-technique root
 base ../../
-# need GSL from dev v2.0
-use dev v2.0
+# need GSL from dev v2.0 AND newer G4 version to bias muons
+use dev geant4.10.7
