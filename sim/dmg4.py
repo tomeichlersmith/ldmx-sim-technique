@@ -80,7 +80,6 @@ sim.detector = write('.write_detector.gdml',arg.material,arg.depth,hunk_transver
 #Activiate dark bremming with a certain A' mass and LHE library
 from LDMX.SimCore import dark_brem
 db_model = dark_brem.DMG4Model()
-db_model.threshold = 2. #GeV - minimum energy electron needs to have to dark brem
 sim.dark_brem.activate( arg.ap_mass , db_model , muons = (primary.particle == 'mu-'))
 sim.dark_brem.only_one_per_event = True
 
@@ -90,10 +89,12 @@ from math import log10
 mass_power = max(log10(sim.dark_brem.ap_mass),2.)
 
 from LDMX.SimCore import bias_operators
+bias = 0.01**2
+if primary.particle == 'mu-' :
+    bias = 0.01
+
 sim.biasing_operators = [ 
-        bias_operators.DarkBrem('hunk',True,
-          0.01**2, #sim.dark_brem.ap_mass**mass_power / 0.01**2,
-          particle = primary.particle)
+        bias_operators.DarkBrem('hunk',True,bias,particle = primary.particle)
         ]
 
 from LDMX.Biasing import filters
