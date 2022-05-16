@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -ex
+
 # run.sh run four simulations within container
 #   Usage: ldmx run.sh {output_dir}
 
