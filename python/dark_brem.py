@@ -61,7 +61,6 @@ class DMG4Model(DarkBremModel) :
 
     def __init__(self) :
         super().__init__('dmg4')
-        self.threshold    = 2.0 #GeV
         self.epsilon      = 0.01
 
 class DarkBrem:

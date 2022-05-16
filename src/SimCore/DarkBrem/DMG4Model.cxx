@@ -11,9 +11,8 @@ namespace darkbrem {
 DMG4Model::DMG4Model(framework::config::Parameters &params)
     : G4eDarkBremsstrahlungModel(params) {
   double apmass = G4APrime::APrime()->GetPDGMass()/CLHEP::GeV;
-  double threshold = std::max(params.getParameter<double>("threshold"), 2.*apmass);
   epsilon_ = params.getParameter<double>("epsilon");
-  dm_model_ = std::make_unique<DarkPhotons>(apmass,threshold);
+  dm_model_ = std::make_unique<DarkPhotons>(apmass,2.*apmass);
   dm_model_->PrepareTable();
 }
 
