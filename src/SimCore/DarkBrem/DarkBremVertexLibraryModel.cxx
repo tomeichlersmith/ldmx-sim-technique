@@ -158,7 +158,7 @@ void DarkBremVertexLibraryModel::GenerateChange(
   static const double MA = G4APrime::APrime()->GetPDGMass() / CLHEP::GeV;
 
   // mass of incident lepton (usually electrons, muons experimental)
-  const double Mel = track.GetDefinition()->GetPDGMass() / CLHEP::GeV;
+  double Mel = track.GetDefinition()->GetPDGMass() / CLHEP::GeV;
 
   // convert to energy units in LHE files [GeV]
   G4double incidentEnergy = step.GetPostStepPoint()->GetTotalEnergy()/CLHEP::GeV;
@@ -220,13 +220,13 @@ void DarkBremVertexLibraryModel::GenerateChange(
   //  - P and Pt for ThetaAcc
   //  - PhiAcc
   // Basically we need the 3-momentum of the recoil electron
-
-  EAcc = EAcc *
-         CLHEP::GeV;  // Change the energy back to MeV, the internal GEANT unit.
+  
+  // Change the energy back to MeV, the internal GEANT unit.
+  EAcc = EAcc * CLHEP::GeV;  
+  Mel  = Mel  * CLHEP::GeV;
 
   // outgoing lepton momentum
-  G4double recoilElectronMomentumMag =
-      sqrt(EAcc * EAcc - Mel*Mel*Mel*Mel);
+  G4double recoilElectronMomentumMag = sqrt(EAcc * EAcc - Mel*Mel);
   G4ThreeVector recoilElectronMomentum;
   double ThetaAcc = std::asin(Pt / P);
   recoilElectronMomentum.set(std::sin(ThetaAcc) * std::cos(PhiAcc),
@@ -243,15 +243,13 @@ void DarkBremVertexLibraryModel::GenerateChange(
   G4DynamicParticle *dphoton =
       new G4DynamicParticle(G4APrime::APrime(), darkPhotonMomentum);
   // energy of primary
-  G4double finalKE = EAcc - electron_mass_c2;
+  G4double finalKE = EAcc - Mel;
 
   // stop tracking and create new secondary instead of primary
   if (alwaysCreateNewElectron_) {
     // TODO copy over all other particle information from track I am killing
     G4DynamicParticle *el = new G4DynamicParticle(
-        track.GetDefinition(),  // should be all electrons right now, but leaves
-                                // positrons open
-        recoilElectronMomentum);
+        track.GetDefinition(), recoilElectronMomentum);
     particleChange.SetNumberOfSecondaries(2);
     particleChange.AddSecondary(dphoton);
     particleChange.AddSecondary(el);
