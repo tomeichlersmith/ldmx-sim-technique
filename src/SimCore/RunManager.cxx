@@ -31,6 +31,7 @@
 #include "G4ParallelWorldPhysics.hh"
 #include "G4ProcessTable.hh"
 #include "G4VModularPhysicsList.hh"
+#include "G4MuonMinus.hh"
 
 namespace simcore {
 
@@ -191,33 +192,23 @@ void RunManager::TerminateOneEvent() {
   // have geant4 do its own thing
   G4RunManager::TerminateOneEvent();
 
-  // reset dark brem process (if needed)
-  G4ProcessTable* ptable = G4ProcessTable::GetProcessTable();
-  G4int verbosity = ptable->GetVerboseLevel();
+  auto reactivate_dark_brem = [](G4ProcessManager* pman) {
+    for (std::size_t i_proc{0}; i_proc < pman->GetProcessList()->size(); i_proc++) {
+      G4VProcess* p{(*(pman->GetProcessList()))[i_proc]};
+      if (p->GetProcessName().contains(darkbrem::G4eDarkBremsstrahlung::PROCESS_NAME)) {
+        pman->SetProcessActivation(p, true);
+        break;
+      }
+    }
+  };
 
-  // Only one of these processes should be in the table
-  //  (i.e. either the Dark Brem is biased or its not)
-  // BUT we want to be able to cover both options without
-  // the user having to configure it, so we set both
-  // of these processes to active (by passing 'true')
-  // while the table is silenced. If the table isn't silenced,
-  // the process that isn't in the table will cause the table
-  // to throw a "not found" warning.
-  std::vector<G4String> dark_brem_processes = {
-      darkbrem::G4eDarkBremsstrahlung::PROCESS_NAME,
-      "biasWrapper(" + darkbrem::G4eDarkBremsstrahlung::PROCESS_NAME + ")"};
-  // silent ptable while searching for process that may/may not exist
-  ptable->SetVerboseLevel(0);
-  for (auto const& name : dark_brem_processes)
-    ptable->SetProcessActivation(name, true);
-  ptable->SetVerboseLevel(verbosity);
-
+  reactivate_dark_brem(G4MuonMinus::Definition()->GetProcessManager());
+  reactivate_dark_brem(G4Electron::Definition()->GetProcessManager());
   if (this->GetVerboseLevel() > 1) {
     std::cout << "[ RunManager ] : "
               << "Reset the dark brem process (if it was activated)."
               << std::endl;
   }
-  ptable->SetVerboseLevel(verbosity);
 }
 
 DetectorConstruction* RunManager::getDetectorConstruction() {

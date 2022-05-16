@@ -136,16 +136,21 @@ G4VParticleChange* G4eDarkBremsstrahlung::PostStepDoIt(const G4Track& track,
     //  so we turn off both while silencing the warnings from the process table.
     std::vector<G4String> db_process_name_options = {
         "biasWrapper(" + PROCESS_NAME + ")", PROCESS_NAME};
-    G4ProcessTable* ptable = G4ProcessTable::GetProcessTable();
-    G4int verbosity = ptable->GetVerboseLevel();
-    ptable->SetVerboseLevel(0);
-    for (auto const& name : db_process_name_options)
-      ptable->SetProcessActivation(name, false);
-    ptable->SetVerboseLevel(verbosity);
+    ldmx_log(debug) << "Deactivating dark brem process";
+    G4ProcessManager* pman = track.GetDefinition()->GetProcessManager();
+    for (std::size_t i_proc{0}; i_proc < pman->GetProcessList()->size(); i_proc++) {
+      G4VProcess* p{(*(pman->GetProcessList()))[i_proc]};
+      if (p->GetProcessName().contains(PROCESS_NAME)) {
+        pman->SetProcessActivation(p, false);
+        break;
+      }
+    }
   }
 
+  ldmx_log(debug) << "Initializing track";
   aParticleChange.Initialize(track);
 
+  ldmx_log(debug) << "Calling model's generate change";
   model_->GenerateChange(aParticleChange, track, step);
 
   /*
@@ -153,6 +158,7 @@ G4VParticleChange* G4eDarkBremsstrahlung::PostStepDoIt(const G4Track& track,
    * so we call it before returning. It will return our shared
    * protected member variable aParticleChange that we have been modifying
    */
+  ldmx_log(debug) << "Calling parent's poststepdoit";
   return G4VDiscreteProcess::PostStepDoIt(track, step);
 }
 
