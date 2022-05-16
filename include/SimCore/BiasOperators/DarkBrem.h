@@ -67,13 +67,13 @@ class DarkBrem : public XsecBiasingOperator {
 
   /**
    * DEBUG FUNCTION
-   */
   virtual G4VBiasingOperation* ProposeNonPhysicsBiasingOperation(
       const G4Track* track, 
       const G4BiasingProcessInterface* callingProcess) final override {
     std::cout << "NonPhysicsBiasing!!" << std::endl;
     return 0;
   }
+   */
 
  protected:
   /**
