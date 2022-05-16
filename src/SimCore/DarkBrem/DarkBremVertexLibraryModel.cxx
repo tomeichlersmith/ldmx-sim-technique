@@ -69,6 +69,8 @@ G4double DarkBremVertexLibraryModel::ComputeCrossSectionPerAtom(
     G4double electronKE, G4double A, G4double Z) {
   static const double MA =
       G4APrime::APrime()->GetPDGMass() / CLHEP::GeV;  // mass A' in GeV
+
+  // TODO switch depending on which is activated
   static const double Mel = G4Electron::Electron()->GetPDGMass() /
                             CLHEP::GeV;  // mass electron in GeV
 
@@ -222,9 +224,9 @@ void DarkBremVertexLibraryModel::GenerateChange(
   EAcc = EAcc *
          CLHEP::GeV;  // Change the energy back to MeV, the internal GEANT unit.
 
+  // outgoing lepton momentum
   G4double recoilElectronMomentumMag =
-      sqrt(EAcc * EAcc -
-           electron_mass_c2 * electron_mass_c2);  // Electron momentum in MeV.
+      sqrt(EAcc * EAcc - Mel*Mel*Mel*Mel);
   G4ThreeVector recoilElectronMomentum;
   double ThetaAcc = std::asin(Pt / P);
   recoilElectronMomentum.set(std::sin(ThetaAcc) * std::cos(PhiAcc),
