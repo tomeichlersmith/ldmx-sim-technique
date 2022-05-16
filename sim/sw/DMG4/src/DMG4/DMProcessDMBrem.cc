@@ -123,9 +123,11 @@ G4VParticleChange* DMProcessDMBrem::PostStepDoIt( const G4Track& aTrack,
   aParticleChange.ProposeEnergy( recoilE );
   aParticleChange.ProposeMomentumDirection( projDirection );
 
+  /*
   std::cout << "DM PDG ID = " << theDMParticlePtr->GetPDGEncoding() 
             << " emitted by " << aTrack.GetDefinition()->GetParticleName()
             << " with energy = " << incidentE/GeV << " DM kinetic energy = " << DMKinE/GeV << std::endl;
+            */
 
   return G4VDiscreteProcess::PostStepDoIt(aTrack, aStep);
 }
