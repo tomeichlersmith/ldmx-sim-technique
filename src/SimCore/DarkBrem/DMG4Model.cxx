@@ -31,7 +31,7 @@ G4double DMG4Model::ComputeCrossSectionPerAtom(
     G4double electronKE, G4double A, G4double Z) {
   electronKE /= GeV; //DMG4 uses GeV internally
   if (electronKE < dm_model_->GetEThresh()) return 0.;  // outside viable region for model
-  return epsilon_*epsilon_*dm_model_->GetSigmaTot(electronKE)/dm_model_->GetMeanFreePathFactor();
+  return dm_model_->GetSigmaTot(electronKE)/dm_model_->GetMeanFreePathFactor();
 }
 
 /**
