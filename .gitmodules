@@ -4,6 +4,3 @@
 [submodule "sim/sw/cmake"]
 	path = sim/sw/cmake
 	url = git@github.com:LDMX-Software/cmake.git
-[submodule "sim/sw/SimCore"]
-	path = sim/sw/SimCore
-	url = git@github.com:LDMX-Software/SimCore.git
