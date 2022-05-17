@@ -31,3 +31,6 @@ and then unpacked
 ```
 tar xzf DMG4.tar.gz
 ```
+Many of the other subdirectories in this software are taken from
+[ldmx-sw](https://github.com/LDMX-Software/ldmx-sw.git) and so (like DMG4)
+there are many components of them that are not used here.
