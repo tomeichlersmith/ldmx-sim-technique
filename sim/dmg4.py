@@ -89,12 +89,10 @@ from math import log10
 mass_power = max(log10(sim.dark_brem.ap_mass),2.)
 
 from LDMX.SimCore import bias_operators
-bias = 0.01**2
-if primary.particle == 'mu-' :
-    bias = 0.01
 
 sim.biasing_operators = [ 
-        bias_operators.DarkBrem('hunk',True,bias,particle = primary.particle)
+        bias_operators.DarkBrem('hunk',True,
+          sim.dark_brem.ap_mass**mass_power/(0.0001**2),particle = primary.particle)
         ]
 
 from LDMX.Biasing import filters
