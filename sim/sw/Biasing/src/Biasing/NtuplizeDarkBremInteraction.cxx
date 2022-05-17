@@ -16,6 +16,7 @@ void NtuplizeDarkBremInteraction::onProcessStart() {
   ntuple_.addVar<double>("dbint","x");
   ntuple_.addVar<double>("dbint","y");
   ntuple_.addVar<double>("dbint","z");
+  ntuple_.addVar<double>("dbint","weight");
   ntuple_.addVar<int>("dbint","incident_pdg");
   ntuple_.addVar<int>("dbint","incident_genstatus");
   ntuple_.addVar<double>("dbint","incident_mass");
@@ -66,6 +67,7 @@ void NtuplizeDarkBremInteraction::analyze(const framework::Event& e) {
   ntuple_.setVar<double>("x", aprime->getVertex().at(0));
   ntuple_.setVar<double>("y", aprime->getVertex().at(1));
   ntuple_.setVar<double>("z", aprime->getVertex().at(2));
+  ntuple_.setVar<double>("weight", e.getEventWeight());
   if (incident != nullptr) {
     ntuple_.setVar<int>("incident_pdg", incident->getPdgID());
     ntuple_.setVar<int>("incident_genstatus", incident->getGenStatus());
