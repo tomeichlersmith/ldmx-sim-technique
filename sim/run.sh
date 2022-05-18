@@ -50,28 +50,26 @@ __main__() {
   
   echo "Muons $(date)"
 
-  fire ${LDMX_BASE}/sim/config.py \
+  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thickness} \
+    mgs \
     ${LDMX_BASE}/dblib/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/ \
-    --depth ${_muon_thickness} \
-    --out_dir ${_output_dir} &>> ${_mgs_log} &
+    &>> ${_mgs_log} &
   
-  fire ${LDMX_BASE}/sim/dmg4.py \
-    -m brass --particle mu- --primary_energy 100. --ap_mass 1000 1 \
-    --depth ${_muon_thickness} \
-    --out_dir ${_output_dir} &>> ${_dmg4_log} &
+  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thickness} \
+    dmg4 -m brass --particle muon --primary_energy 100. --ap_mass 1000 1 \
+    &>> ${_dmg4_log} &
 
   wait
   echo "Electrons $(date)"
   
-  fire ${LDMX_BASE}/sim/config.py \
+  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thickness} \
+    mgs \
     ${LDMX_BASE}/dblib/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/ \
-    --depth ${_elec_thickness} \
-    --out_dir ${_output_dir} &>> ${_mgs_log} &
+    &>> ${_mgs_log} &
   
-  fire ${LDMX_BASE}/sim/dmg4.py \
-    -m tungsten --particle e- --primary_energy 4. --ap_mass 100 1 \
-    --depth ${_elec_thickness} \
-    --out_dir ${_output_dir} &>> ${_dmg4_log} &
+  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thickness} \
+    dmg4 -m tungsten --particle electron --primary_energy 4. --ap_mass 100 1 \
+    &>> ${_dmg4_log} &
 
   wait
   echo "done $(date)"
