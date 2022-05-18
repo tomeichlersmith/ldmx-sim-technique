@@ -88,7 +88,7 @@ from math import log10
 #need a higher power for the higher mass A'
 mass_power = max(log10(sim.dark_brem.ap_mass),2.)
 if primary.particle == 'mu-' :
-    mass_power = 2
+    mass_power = 1
 
 from LDMX.SimCore import bias_operators
 
