@@ -42,7 +42,7 @@ void NtuplizeDarkBremInteraction::onProcessStart() {
 
 void NtuplizeDarkBremInteraction::analyze(const framework::Event& e) {
   const auto& particle_map{e.getMap<int,ldmx::SimParticle>("SimParticles")};
-  const ldmx::SimParticle *incident{nullptr}, *recoil{nullptr}, *aprime{nullptr};
+  const ldmx::SimParticle *recoil{nullptr}, *aprime{nullptr};
   for (const auto& [track_id, particle] : particle_map) {
     if (particle.getProcessType() == ldmx::SimParticle::ProcessType::eDarkBrem) {
       if (particle.getPdgID() == 622) {
@@ -52,10 +52,6 @@ void NtuplizeDarkBremInteraction::analyze(const framework::Event& e) {
         aprime = &particle;
       } else {
         recoil = &particle;
-        auto parent_id = particle.getParents().at(0);
-        if (particle_map.find(parent_id) != particle_map.end()) {
-          incident = &(particle_map.at(parent_id));
-        }
       }
     }
   }
@@ -64,38 +60,35 @@ void NtuplizeDarkBremInteraction::analyze(const framework::Event& e) {
     EXCEPTION_RAISE("BadEvent","Unable to find both of the products of the dark brem.");
   }
 
+  static auto energy = [](const std::vector<double>& p, const double& m) {
+    return sqrt(p.at(0)*p.at(0)+ p.at(1)*p.at(1)+ p.at(2)*p.at(2)+ m*m);
+  };
+
+  std::vector<double> incident_p{recoil->getMomentum()};
+  for (std::size_t i{0}; i < 3; i++) incident_p[i] += aprime->getMomentum().at(i);
+
   ntuple_.setVar<double>("x", aprime->getVertex().at(0));
   ntuple_.setVar<double>("y", aprime->getVertex().at(1));
   ntuple_.setVar<double>("z", aprime->getVertex().at(2));
   ntuple_.setVar<double>("weight", e.getEventWeight());
-  if (incident != nullptr) {
-    ntuple_.setVar<int>("incident_pdg", incident->getPdgID());
-    ntuple_.setVar<int>("incident_genstatus", incident->getGenStatus());
-    ntuple_.setVar<double>("incident_mass", incident->getMass());
-    ntuple_.setVar<double>("incident_energy", incident->getEnergy());
-    ntuple_.setVar<double>("incident_px", incident->getMomentum().at(0));
-    ntuple_.setVar<double>("incident_py", incident->getMomentum().at(1));
-    ntuple_.setVar<double>("incident_pz", incident->getMomentum().at(2));
-  } else {
-    ntuple_.setVar<int>("incident_pdg", recoil->getPdgID());
-    ntuple_.setVar<int>("incident_genstatus", -1);
-    ntuple_.setVar<double>("incident_mass", recoil->getMass());
-    ntuple_.setVar<double>("incident_energy", recoil->getEnergy()+aprime->getEnergy());
-    ntuple_.setVar<double>("incident_px", recoil->getMomentum().at(0)+aprime->getMomentum().at(0));
-    ntuple_.setVar<double>("incident_py", recoil->getMomentum().at(1)+aprime->getMomentum().at(1));
-    ntuple_.setVar<double>("incident_pz", recoil->getMomentum().at(2)+aprime->getMomentum().at(2));
-  }
+  ntuple_.setVar<int>("incident_pdg", recoil->getPdgID());
+  ntuple_.setVar<int>("incident_genstatus", -1);
+  ntuple_.setVar<double>("incident_mass", recoil->getMass());
+  ntuple_.setVar<double>("incident_energy", energy(incident_p,recoil->getMass()));
+  ntuple_.setVar<double>("incident_px", incident_p.at(0));
+  ntuple_.setVar<double>("incident_py", incident_p.at(1));
+  ntuple_.setVar<double>("incident_pz", incident_p.at(2));
   ntuple_.setVar<int>("recoil_pdg", recoil->getPdgID());
   ntuple_.setVar<int>("recoil_genstatus", recoil->getGenStatus());
   ntuple_.setVar<double>("recoil_mass", recoil->getMass());
-  ntuple_.setVar<double>("recoil_energy", recoil->getEnergy());
+  ntuple_.setVar<double>("recoil_energy", energy(recoil->getMomentum(),recoil->getMass()));
   ntuple_.setVar<double>("recoil_px", recoil->getMomentum().at(0));
   ntuple_.setVar<double>("recoil_py", recoil->getMomentum().at(1));
   ntuple_.setVar<double>("recoil_pz", recoil->getMomentum().at(2));
   ntuple_.setVar<int>("aprime_pdg", aprime->getPdgID());
   ntuple_.setVar<int>("aprime_genstatus", aprime->getGenStatus());
   ntuple_.setVar<double>("aprime_mass", aprime->getMass());
-  ntuple_.setVar<double>("aprime_energy", aprime->getEnergy());
+  ntuple_.setVar<double>("aprime_energy", energy(aprime->getMomentum(),aprime->getMass()));
   ntuple_.setVar<double>("aprime_px", aprime->getMomentum().at(0));
   ntuple_.setVar<double>("aprime_py", aprime->getMomentum().at(1));
   ntuple_.setVar<double>("aprime_pz", aprime->getMomentum().at(2));
