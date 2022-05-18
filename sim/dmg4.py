@@ -100,8 +100,8 @@ sim.biasing_operators = [
 from LDMX.Biasing import filters
 from LDMX.Biasing import util
 sim.actions = [
-        #Make sure all particles above 2GeV are processed first
-        util.PartialEnergySorter(2000.),
+        #Make sure all particles above A' mass are processed first
+        util.PartialEnergySorter(sim.dark_brem.ap_mass),
         #Only keep events when a dark brem happens in the Ecal (the hunk in this case)
         filters.EcalDarkBremFilter(0.)
 ]

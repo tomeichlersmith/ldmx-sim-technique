@@ -105,7 +105,7 @@ sim.detector = write('.write_detector.gdml',material,arg.depth,hunk_transverse)
 #Activiate dark bremming with a certain A' mass and LHE library
 from LDMX.SimCore import dark_brem
 db_model = dark_brem.VertexLibraryModel(db_event_lib_path)
-db_model.threshold = min_e/1000. #GeV - minimum energy electron needs to have to dark brem
+db_model.threshold = 2*min_e/1000. #GeV - minimum energy electron needs to have to dark brem
 db_model.epsilon   = 0.01 #decrease epsilon from one to help with Geant4 biasing calculations
 sim.dark_brem.activate( ap_mass , db_model , muons = (primary.particle == 'mu-'))
 
