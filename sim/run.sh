@@ -5,30 +5,28 @@
 __usage__() {
   cat <<HELP
  USAGE:
-  ldmx run.sh [-m MUON_DEPTH] [-e ELEC_DEPTH] [-o OUT_DIR]
+  ldmx run.sh [-o OUT_DIR]
 
  OPTIONS:
-  -m    : Depth in mm to make brass target for muons (default: 2000)
-  -e    : Depth in mm to make tungsten target for electrons (default: 18)
   -o    : Base output directory for data files (default: 'data/<git describe --tags>')
+
+ We do two simulations at once (MGS and DMG4) and then we loop over the combinations
+ of thicknesses and incident particles.
+
 HELP
 }
 
 __main__() {
-  local _muon_thickness=2000
-  local _elec_thickness=18
   local _tag=$(git describe --tags)
-  local _output_dir=$(cd ${1:-data} && pwd -P)/${_tag}
+  local _output_dir=$(cd data && pwd -P)/${_tag}
   while [ $# -gt 0 ]; do
     case $1 in
-      -m|-t|-o)
+      -o)
         if [ -z $2 ]; then
           echo "ERROR: '$1' requires an argument."
           return 1
         fi
         case $1 in
-          -m) _muon_thickness=$2;;
-          -e) _elec_thickness=$2;;
           -o) _output_dir=$2;;
         esac
         shift
@@ -47,27 +45,56 @@ __main__() {
   fi
   local _mgs_log=${_output_dir}/mgs_fire.log
   local _dmg4_log=${_output_dir}/dmg4_fire.log
-  
-  echo "Muons $(date)"
 
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thickness} \
+  local _muon_thin=100
+  local _elec_thin=0.35
+  local _elec_thick=18
+  local _muon_thick=2000
+  
+  echo "Thick Muons $(date)"
+
+  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thick} \
     mgs \
     ${LDMX_BASE}/dblib/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/ \
     &>> ${_mgs_log} &
   
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thickness} \
+  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thick} \
     dmg4 -m brass --particle muon --primary_energy 100. --ap_mass 1000 1 \
     &>> ${_dmg4_log} &
 
   wait
-  echo "Electrons $(date)"
+  echo "Thick Electrons $(date)"
   
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thickness} \
+  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thick} \
     mgs \
     ${LDMX_BASE}/dblib/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/ \
     &>> ${_mgs_log} &
   
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thickness} \
+  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thick} \
+    dmg4 -m tungsten --particle electron --primary_energy 4. --ap_mass 100 1 \
+    &>> ${_dmg4_log} &
+
+  wait
+  echo "Thin Muons $(date)"
+
+  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thin} \
+    mgs \
+    ${LDMX_BASE}/dblib/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/ \
+    &>> ${_mgs_log} &
+  
+  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thin} \
+    dmg4 -m brass --particle muon --primary_energy 100. --ap_mass 1000 1 \
+    &>> ${_dmg4_log} &
+
+  wait
+  echo "Thin Electrons $(date)"
+  
+  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thin} \
+    mgs \
+    ${LDMX_BASE}/dblib/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/ \
+    &>> ${_mgs_log} &
+  
+  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thin} \
     dmg4 -m tungsten --particle electron --primary_energy 4. --ap_mass 100 1 \
     &>> ${_dmg4_log} &
 
