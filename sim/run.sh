@@ -16,6 +16,10 @@ __usage__() {
 HELP
 }
 
+__status__() {
+  printf "%5s %9s %s\n" "$1" "$2" "$(date)"
+}
+
 __main__() {
   local _tag=$(git describe --tags)
   local _output_dir=$(cd data && pwd -P)/${_tag}
@@ -51,7 +55,7 @@ __main__() {
   local _elec_thick=18
   local _muon_thick=2000
   
-  echo "Thick Muons $(date)"
+  __status__ thick muons
 
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thick} \
     mgs \
@@ -63,7 +67,7 @@ __main__() {
     &>> ${_dmg4_log} &
 
   wait
-  echo "Thick Electrons $(date)"
+  __status__ thick electrons
   
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thick} \
     mgs \
@@ -75,7 +79,7 @@ __main__() {
     &>> ${_dmg4_log} &
 
   wait
-  echo "Thin Muons $(date)"
+  __status__ thin muons
 
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thin} \
     mgs \
@@ -87,7 +91,7 @@ __main__() {
     &>> ${_dmg4_log} &
 
   wait
-  echo "Thin Electrons $(date)"
+  __status__ thin electrons
   
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thin} \
     mgs \
@@ -99,7 +103,8 @@ __main__() {
     &>> ${_dmg4_log} &
 
   wait
-  echo "done $(date)"
+
+  __status__ done
 }
 
 __main__ $@
