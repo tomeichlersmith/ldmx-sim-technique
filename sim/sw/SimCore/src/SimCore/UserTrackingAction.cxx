@@ -75,9 +75,12 @@ void UserTrackingAction::PostUserTrackingAction(const G4Track* track) {
    * is chosen to be put into the output particle map.
    * If its save flag is true **for any reason** at this
    * point, then it will be in the output map.
+   *
+   * SIM-TECH HACK : saving all particle tracks so that 
+   * we can do the skim at the analysis ntuplizer.
    */
   auto track_info{UserTrackInformation::get(track)};
-  if (track_info->getSaveFlag() and
+  if (true /*track_info->getSaveFlag()*/ and
       track->GetTrackStatus() == G4TrackStatus::fStopAndKill) {
     trackMap_.save(track);
   }

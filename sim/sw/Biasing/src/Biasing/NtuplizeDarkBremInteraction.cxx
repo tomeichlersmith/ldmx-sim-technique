@@ -44,7 +44,7 @@ void NtuplizeDarkBremInteraction::onProcessStart() {
 
 void NtuplizeDarkBremInteraction::analyze(const framework::Event& e) {
   const auto& particle_map{e.getMap<int,ldmx::SimParticle>("SimParticles")};
-  const ldmx::SimParticle *recoil{nullptr}, *aprime{nullptr}, *beam{nullptr};
+  const ldmx::SimParticle *recoil{nullptr}, *aprime{nullptr}, *beam{nullptr}, *incident{nullptr};
   for (const auto& [track_id, particle] : particle_map) {
     if (track_id == 1) beam = &particle;
     if (particle.getProcessType() == ldmx::SimParticle::ProcessType::eDarkBrem) {
@@ -55,22 +55,23 @@ void NtuplizeDarkBremInteraction::analyze(const framework::Event& e) {
         aprime = &particle;
       } else {
         recoil = &particle;
+        auto parent_id = particle.getParents().at(0);
+        if (particle_map.find(parent_id) != particle_map.end()) {
+          incident = &(particle_map.at(parent_id));
+        }
       }
     }
   }
 
-  if (recoil == nullptr or aprime == nullptr or beam == nullptr) {
-    EXCEPTION_RAISE("BadEvent","Unable to find both of the products of the dark brem.");
+  if (recoil == nullptr or aprime == nullptr or beam == nullptr or incident == nullptr) {
+    EXCEPTION_RAISE("BadEvent","Unable to find all necessary particles.");
   }
 
   static auto energy = [](const std::vector<double>& p, const double& m) {
     return sqrt(p.at(0)*p.at(0)+ p.at(1)*p.at(1)+ p.at(2)*p.at(2)+ m*m);
   };
 
-  std::vector<double> incident_p{recoil->getMomentum()};
-  for (std::size_t i{0}; i < 3; i++) incident_p[i] += aprime->getMomentum().at(i);
-
-  double incident_energy = energy(incident_p, recoil->getMass());
+  double incident_energy = incident->getEnergy();
   double recoil_energy = energy(recoil->getMomentum(), recoil->getMass());
   double visible_energy = (beam->getEnergy() - incident_energy) + recoil_energy;
 
@@ -82,9 +83,9 @@ void NtuplizeDarkBremInteraction::analyze(const framework::Event& e) {
   ntuple_.setVar<int>("incident_genstatus", -1);
   ntuple_.setVar<double>("incident_mass", recoil->getMass());
   ntuple_.setVar<double>("incident_energy", incident_energy);
-  ntuple_.setVar<double>("incident_px", incident_p.at(0));
-  ntuple_.setVar<double>("incident_py", incident_p.at(1));
-  ntuple_.setVar<double>("incident_pz", incident_p.at(2));
+  ntuple_.setVar<double>("incident_px", incident->getEndPointMomentum().at(0));
+  ntuple_.setVar<double>("incident_py", incident->getEndPointMomentum().at(1));
+  ntuple_.setVar<double>("incident_pz", incident->getEndPointMomentum().at(2));
   ntuple_.setVar<int>("recoil_pdg", recoil->getPdgID());
   ntuple_.setVar<int>("recoil_genstatus", recoil->getGenStatus());
   ntuple_.setVar<double>("recoil_mass", recoil->getMass());
