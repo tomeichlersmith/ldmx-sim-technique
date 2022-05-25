@@ -38,12 +38,15 @@ void NtuplizeDarkBremInteraction::onProcessStart() {
   ntuple_.addVar<double>("dbint","aprime_px");
   ntuple_.addVar<double>("dbint","aprime_py");
   ntuple_.addVar<double>("dbint","aprime_pz");
+  ntuple_.addVar<double>("dbint","visible_energy");
+  ntuple_.addVar<double>("dbint","beam_energy");
 }
 
 void NtuplizeDarkBremInteraction::analyze(const framework::Event& e) {
   const auto& particle_map{e.getMap<int,ldmx::SimParticle>("SimParticles")};
-  const ldmx::SimParticle *recoil{nullptr}, *aprime{nullptr};
+  const ldmx::SimParticle *recoil{nullptr}, *aprime{nullptr}, *beam{nullptr};
   for (const auto& [track_id, particle] : particle_map) {
+    if (track_id == 1) beam = &particle;
     if (particle.getProcessType() == ldmx::SimParticle::ProcessType::eDarkBrem) {
       if (particle.getPdgID() == 622) {
         if (aprime != nullptr) {
@@ -56,7 +59,7 @@ void NtuplizeDarkBremInteraction::analyze(const framework::Event& e) {
     }
   }
 
-  if (recoil == nullptr or aprime == nullptr) {
+  if (recoil == nullptr or aprime == nullptr or beam == nullptr) {
     EXCEPTION_RAISE("BadEvent","Unable to find both of the products of the dark brem.");
   }
 
@@ -67,6 +70,10 @@ void NtuplizeDarkBremInteraction::analyze(const framework::Event& e) {
   std::vector<double> incident_p{recoil->getMomentum()};
   for (std::size_t i{0}; i < 3; i++) incident_p[i] += aprime->getMomentum().at(i);
 
+  double incident_energy = energy(incident_p, recoil->getMass());
+  double recoil_energy = energy(recoil->getMomentum(), recoil->getMass());
+  double visible_energy = (beam->getEnergy() - incident_energy) + recoil_energy;
+
   ntuple_.setVar<double>("x", aprime->getVertex().at(0));
   ntuple_.setVar<double>("y", aprime->getVertex().at(1));
   ntuple_.setVar<double>("z", aprime->getVertex().at(2));
@@ -74,14 +81,14 @@ void NtuplizeDarkBremInteraction::analyze(const framework::Event& e) {
   ntuple_.setVar<int>("incident_pdg", recoil->getPdgID());
   ntuple_.setVar<int>("incident_genstatus", -1);
   ntuple_.setVar<double>("incident_mass", recoil->getMass());
-  ntuple_.setVar<double>("incident_energy", energy(incident_p,recoil->getMass()));
+  ntuple_.setVar<double>("incident_energy", incident_energy);
   ntuple_.setVar<double>("incident_px", incident_p.at(0));
   ntuple_.setVar<double>("incident_py", incident_p.at(1));
   ntuple_.setVar<double>("incident_pz", incident_p.at(2));
   ntuple_.setVar<int>("recoil_pdg", recoil->getPdgID());
   ntuple_.setVar<int>("recoil_genstatus", recoil->getGenStatus());
   ntuple_.setVar<double>("recoil_mass", recoil->getMass());
-  ntuple_.setVar<double>("recoil_energy", energy(recoil->getMomentum(),recoil->getMass()));
+  ntuple_.setVar<double>("recoil_energy", recoil_energy);
   ntuple_.setVar<double>("recoil_px", recoil->getMomentum().at(0));
   ntuple_.setVar<double>("recoil_py", recoil->getMomentum().at(1));
   ntuple_.setVar<double>("recoil_pz", recoil->getMomentum().at(2));
@@ -92,6 +99,8 @@ void NtuplizeDarkBremInteraction::analyze(const framework::Event& e) {
   ntuple_.setVar<double>("aprime_px", aprime->getMomentum().at(0));
   ntuple_.setVar<double>("aprime_py", aprime->getMomentum().at(1));
   ntuple_.setVar<double>("aprime_pz", aprime->getMomentum().at(2));
+  ntuple_.setVar<double>("beam_energy", beam->getEnergy());
+  ntuple_.setVar<double>("visible_energy", visible_energy);
 }
 
 }
