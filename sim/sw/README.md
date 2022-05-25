@@ -6,7 +6,7 @@ Derivate of ldmx-sw so source that environment script.
 ```
 source /full/path/to/ldmx-sw/scripts/ldmx-env.sh
 ```
-Requires v2.0 of dev container and a specific base, so
+Requires a specific version of dev container and a specific base, so
 I have written a simple env file to source.
 ```
 cd ldmx-sim-technique
