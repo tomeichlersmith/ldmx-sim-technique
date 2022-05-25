@@ -96,11 +96,9 @@ elif arg.method == 'dmg4' :
 if not os.path.isdir(arg.out_dir) :
     os.makedirs(arg.out_dir)
 
-p.outputFiles = [
-        f'{arg.out_dir}/{arg.method}_{particle}_{material}_depthmm_{arg.depth}_mAMeV_{int(ap_mass)}_events_{p.maxEvents}_run_{run_num}.root'
-        ]
+p.outputFiles = ['/dev/null']
 
-p.histogramFile = f'{arg.out_dir}/ntuple_{os.path.basename(p.outputFiles[0])}'
+p.histogramFile = f'{arg.out_dir}/ntuple_{arg.method}_{particle}_{material}_depthmm_{arg.depth}_mAMeV_{int(ap_mass)}_events_{p.maxEvents}_run_{run_num}.root'
 p.run = run_num
 
 from LDMX.SimCore import simulator
