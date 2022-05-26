@@ -71,7 +71,7 @@ void NtuplizeDarkBremInteraction::analyze(const framework::Event& e) {
     return sqrt(p.at(0)*p.at(0)+ p.at(1)*p.at(1)+ p.at(2)*p.at(2)+ m*m);
   };
 
-  double incident_energy = incident->getEnergy();
+  double incident_energy = energy(incident->getEndPointMomentum(), incident->getMass());
   double recoil_energy = energy(recoil->getMomentum(), recoil->getMass());
   double visible_energy = (beam->getEnergy() - incident_energy) + recoil_energy;
 
