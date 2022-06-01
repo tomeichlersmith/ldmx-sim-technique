@@ -47,63 +47,54 @@ __main__() {
     echo "ERROR: Could not create output directory ${_output_dir}"
     return $?
   fi
-  local _mgs_log=${_output_dir}/mgs_fire.log
-  local _dmg4_log=${_output_dir}/dmg4_fire.log
 
   local _muon_thin=100
   local _elec_thin=0.35
   local _elec_thick=18
   local _muon_thick=2000
   
-  __status__ thick muons
+  __status__ thick targets
 
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thick} \
     mgs \
     ${LDMX_BASE}/dblib/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/ \
-    &>> ${_mgs_log} &
+    &>> ${_output_dir}/mgs_muon_thick.log &
   
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thick} \
     dmg4 -m brass --particle muon --primary_energy 100. --ap_mass 1000 1 \
-    &>> ${_dmg4_log} &
+    &>> ${_output_dir}/dmg4_muon_thick.log &
 
-  wait
-  __status__ thick electrons
-  
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thick} \
     mgs \
     ${LDMX_BASE}/dblib/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/ \
-    &>> ${_mgs_log} &
+    &>> ${_output_dir}/mgs_electron_thick.log &
   
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thick} \
     dmg4 -m tungsten --particle electron --primary_energy 4. --ap_mass 100 1 \
-    &>> ${_dmg4_log} &
+    &>> ${_output_dir}/dmg4_electron_thick.log &
 
   wait
-  __status__ thin muons
+  __status__ thin targets
 
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thin} \
     mgs \
     ${LDMX_BASE}/dblib/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/ \
-    &>> ${_mgs_log} &
+    &>> ${_output_dir}/mgs_muon_thin.log &
   
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thin} \
     dmg4 -m brass --particle muon --primary_energy 100. --ap_mass 1000 1 \
-    &>> ${_dmg4_log} &
+    &>> ${_output_dir}/dmg4_muon_thin.log &
 
-  wait
-  __status__ thin electrons
-  
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thin} \
     mgs \
     ${LDMX_BASE}/dblib/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/ \
-    &>> ${_mgs_log} &
+    &>> ${_output_dir}/mgs_electron_thin.log &
   
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thin} \
     dmg4 -m tungsten --particle electron --primary_energy 4. --ap_mass 100 1 \
-    &>> ${_dmg4_log} &
+    &>> ${_output_dir}/dmg4_electron_thin.log &
 
   wait
-
   __status__ done
 }
 
