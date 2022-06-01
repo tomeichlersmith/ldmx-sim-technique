@@ -5,9 +5,6 @@
 //---< Geant4 >---//
 #include "G4GDMLParser.hh"
 
-//---< DetDescr >---//
-#include "DetDescr/DetectorHeader.h"
-
 //---< Framework >---//
 #include "Framework/Configure/Parameters.h"
 
@@ -52,21 +49,7 @@ class AuxInfoReader {
    */
   void assignAuxInfoToVolumes();
 
-  /**
-   * Get the detector header that was created from the userinfo block.
-   * @return The detector header.
-   */
-  ldmx::DetectorHeader *getDetectorHeader() { return detectorHeader_; }
-
  private:
-  /**
-   * Create a sensitive detector from GDML data.
-   * @param sdType The type of the sensitive detector.
-   * @param auxInfoList The aux info defining the sensitive detector.
-   */
-  void createSensitiveDetector(G4String sdType,
-                               const G4GDMLAuxListType *auxInfoList);
-
   /**
    * Create a magnetic field from GDML data.
    * @param name The name of the magnetic field.
@@ -88,14 +71,6 @@ class AuxInfoReader {
    */
   void createVisAttributes(G4String name, const G4GDMLAuxListType *auxInfoList);
 
-  /**
-   * Create the detector header from the global auxinfo.
-   * @param detectorVersion The aux value with the detector version.
-   * @param auxInfoList The aux info with the detector header information.
-   */
-  void createDetectorHeader(G4String detectorVersion,
-                            const G4GDMLAuxListType *auxInfoList);
-
  private:
   /**
    * The GDML parser.
@@ -106,11 +81,6 @@ class AuxInfoReader {
    * The GDML expression evaluator.
    */
   G4GDMLEvaluator *eval_;
-
-  /**
-   * Detector header with name and version.
-   */
-  ldmx::DetectorHeader *detectorHeader_{nullptr};
 
   /// Configuration parameters
   framework::config::Parameters parameters_;

@@ -16,9 +16,9 @@
 /*~~~~~~~~~~~~~*/
 /*   SimCore   */
 /*~~~~~~~~~~~~~*/
-#include "SimCore/EcalHitIO.h"
 #include "SimCore/G4CalorimeterHit.h"
 #include "SimCore/G4TrackerHit.h"
+#include "SimCore/ConditionsInterface.h"
 
 /*~~~~~~~~~~~~*/
 /*   Geant4   */
@@ -199,9 +199,6 @@ class RootPersistencyManager : public G4PersistencyManager {
 
   /// The event container used to manage the tree/branches/collections.
   framework::Event *event_{nullptr};
-
-  /// Handles ECal hit readout and IO.
-  EcalHitIO ecalHitIO_;
 };
 
 }  // namespace persist

@@ -55,7 +55,6 @@ add_subdirectory(SimCore ${CMAKE_BINARY_DIR}/SimCoreEvent)
 set(BUILD_EVENT_ONLY OFF CACHE BOOL "Build the SimCore library." FORCE)
 
 add_subdirectory(Framework)
-add_subdirectory(DetDescr)
 add_subdirectory(DMG4)
 # need to globally include DMG4 headers
 include_directories(DMG4/include/ DMG4/include/DMG4)

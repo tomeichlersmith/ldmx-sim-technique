@@ -49,7 +49,6 @@ setup_library(module SimCore
                            Framework::Configure
                            Framework::Framework
                            G4DarkBreM::G4DarkBreM
-                           DetDescr::DetDescr
                            Boost::log
                            "${registered_targets}"
               sources ${SRC_FILES})

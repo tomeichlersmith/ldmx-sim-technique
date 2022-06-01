@@ -18,14 +18,8 @@
 #include "Framework/Exception/Exception.h"
 
 //---< SimCore >---//
-#include "SimCore/CalorimeterSD.h"
-#include "SimCore/EcalSD.h"
-#include "SimCore/HcalSD.h"
 #include "SimCore/MagneticFieldMap3D.h"
 #include "SimCore/MagneticFieldStore.h"
-#include "SimCore/ScoringPlaneSD.h"
-#include "SimCore/TrackerSD.h"
-#include "SimCore/TrigScintSD.h"
 #include "SimCore/UserRegionInformation.h"
 #include "SimCore/VisAttributesStore.h"
 
@@ -41,7 +35,6 @@ AuxInfoReader::AuxInfoReader(G4GDMLParser* theParser,
 
 AuxInfoReader::~AuxInfoReader() {
   delete eval_;
-  delete detectorHeader_;
 }
 
 void AuxInfoReader::readGlobalAuxInfo() {
@@ -53,100 +46,15 @@ void AuxInfoReader::readGlobalAuxInfo() {
     G4String auxVal = iaux->value;
     G4String auxUnit = iaux->unit;
 
-    if (auxType == "SensDet") {
-      createSensitiveDetector(auxVal, iaux->auxList);
-    } else if (auxType == "MagneticField") {
+    if (auxType == "MagneticField") {
       createMagneticField(auxVal, iaux->auxList);
     } else if (auxType == "Region") {
       createRegion(auxVal, iaux->auxList);
     } else if (auxType == "VisAttributes") {
       createVisAttributes(auxVal, iaux->auxList);
-    } else if (auxType == "DetectorVersion") {
-      createDetectorHeader(auxVal, iaux->auxList);
-    }
+    } 
   }
   return;
-}
-
-void AuxInfoReader::createSensitiveDetector(
-    G4String theSensDetName, const G4GDMLAuxListType* auxInfoList) {
-  // G4cout << "Creating SensitiveDetector " << theSensDetName << G4endl;
-
-  G4String sdType("");
-  G4String hcName("");
-  G4String idName("");
-  int subdetID = -1;
-  int layerDepth = -1;
-  int verbose = 0;
-  for (std::vector<G4GDMLAuxStructType>::const_iterator iaux =
-           auxInfoList->begin();
-       iaux != auxInfoList->end(); iaux++) {
-    G4String auxType = iaux->type;
-    G4String auxVal = iaux->value;
-    G4String auxUnit = iaux->unit;
-
-    // G4cout << "auxType: " << auxType << ", auxVal: " << auxVal << ", auxUnit:
-    // " << auxUnit << G4endl;
-
-    if (auxType == "SensDetType") {
-      sdType = auxVal;
-    } else if (auxType == "HitsCollection") {
-      hcName = auxVal;
-    } else if (auxType == "Verbose") {
-      verbose = atoi(auxVal.c_str());
-    } else if (auxType == "SubdetID") {
-      subdetID = atoi(auxVal.c_str());
-    } else if (auxType == "DetectorID") {
-      idName = auxVal;
-    } else if (auxType == "LayerDepth") {
-      layerDepth = atoi(auxVal.c_str());
-    }
-  }
-
-  if (sdType == "") {
-    EXCEPTION_RAISE("MissingInfo", "The SensDet is missing the SensDetType.");
-  }
-
-  if (hcName == "") {
-    EXCEPTION_RAISE("MissingInfo",
-                    "The SensDet is missing the HitsCollection.");
-  }
-
-  if (subdetID <= 0) {
-    EXCEPTION_RAISE("BadID", "The SubdetID '" + std::to_string(subdetID) +
-                                 "' is missing or invalid.");
-  }
-
-  /*
-   * Build the Sensitive Detector, and re-assign the detID if applicable
-   */
-  G4VSensitiveDetector* sd = 0;
-
-  if (sdType == "TrackerSD") {
-    sd = new TrackerSD(theSensDetName, hcName, subdetID);
-  } else if (sdType == "EcalSD") {
-    sd = new EcalSD(theSensDetName, hcName, subdetID, conditionsIntf_);
-  } else if (sdType == "HcalSD") {
-    sd = new HcalSD(theSensDetName, hcName, subdetID);
-  } else if (sdType == "ScoringPlaneSD") {
-    sd = new ScoringPlaneSD(theSensDetName, hcName, subdetID);
-  } else if (sdType == "TrigScintSD") {
-    sd = new TrigScintSD(theSensDetName, hcName, subdetID);
-  } else {
-    EXCEPTION_RAISE("DetType", "Unknown SensitiveDetector type: " + sdType);
-  }
-
-  /*
-   * Fix  layer depth if the Sensitive Detector is not the Tracker
-   */
-  if (sdType != "TrackerSD" && layerDepth != -1) {
-    ((CalorimeterSD*)sd)->setLayerDepth(layerDepth);
-  }
-  sd->SetVerboseLevel(verbose);
-
-  // G4cout << "Created " << sdType << " " << theSensDetName << " with hits
-  // collection " << hcName << " and verbose level " << verbose << G4endl <<
-  // G4endl;
 }
 
 void AuxInfoReader::assignAuxInfoToVolumes() {
@@ -165,20 +73,7 @@ void AuxInfoReader::assignAuxInfoToVolumes() {
 
         G4LogicalVolume* lv = (*lvciter);
 
-        if (auxType == "SensDet") {
-          G4String sdName = auxVal;
-          G4VSensitiveDetector* sd =
-              G4SDManager::GetSDMpointer()->FindSensitiveDetector(sdName);
-          if (sd != NULL) {
-            lv->SetSensitiveDetector(sd);
-            // G4cout << "Assigned SD " << sd->GetName() << " to " <<
-            // lv->GetName() << G4endl;
-          } else {
-            EXCEPTION_RAISE("MissingInfo",
-                            "Unknown SensDet in volume's auxiliary info: " +
-                                std::string(sdName.data()));
-          }
-        } else if (auxType == "MagneticField") {
+        if (auxType == "MagneticField") {
           G4String magFieldName = auxVal;
           G4MagneticField* magField =
               MagneticFieldStore::getInstance()->getMagneticField(magFieldName);
@@ -423,42 +318,6 @@ void AuxInfoReader::createVisAttributes(G4String name,
 
   // G4cout << "Created VisAttributes " << name << G4endl << (*visAttributes) <<
   // G4endl << G4endl;
-}
-
-void AuxInfoReader::createDetectorHeader(G4String auxValue,
-                                         const G4GDMLAuxListType* auxInfoList) {
-  int detectorVersion = atoi(auxValue.c_str());
-
-  std::string detectorName("");
-  std::string author("");
-  std::string description("");
-
-  for (std::vector<G4GDMLAuxStructType>::const_iterator iaux =
-           auxInfoList->begin();
-       iaux != auxInfoList->end(); iaux++) {
-    G4String auxType = iaux->type;
-    G4String auxVal = iaux->value;
-    G4String auxUnit = iaux->unit;
-
-    if (auxType == "DetectorName") {
-      detectorName = auxVal;
-    } else if (auxType == "Author") {
-      author = auxVal;
-    } else if (auxType == "Description") {
-      description = auxVal;
-    }
-  }
-
-  detectorHeader_ = new ldmx::DetectorHeader(detectorName, detectorVersion,
-                                             description, author);
-
-  /*G4cout << G4endl;
-  G4cout << "Read detector header from userinfo: " << G4endl;
-  G4cout << "  DetectorName: " << detectorHeader_->getName() << G4endl;
-  G4cout << "  DetectorVersion: " << detectorHeader_->getVersion() << G4endl;
-  G4cout << "  Author: " << detectorHeader_->getAuthor() << G4endl;
-  G4cout << "  Description: " << detectorHeader_->getDescription() << G4endl;
-  G4cout << G4endl;*/
 }
 
 }  // namespace simcore::geo

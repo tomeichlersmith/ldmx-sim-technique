@@ -38,8 +38,7 @@ RootPersistencyManager::RootPersistencyManager(
     const int &runNumber, ConditionsInterface &ci)
     : G4PersistencyManager(G4PersistencyCenter::GetPersistencyCenter(),
                            "RootPersistencyManager"),
-      file_(file),
-      ecalHitIO_(ci) {
+      file_(file) {
   // Let Geant4 know what to use this persistency manager
   G4PersistencyCenter::GetPersistencyCenter()->RegisterPersistencyManager(this);
   G4PersistencyCenter::GetPersistencyCenter()->SetPersistencyManager(
@@ -47,8 +46,6 @@ RootPersistencyManager::RootPersistencyManager(
 
   // Set the parameters, used laster when printing run header
   parameters_ = parameters;
-
-  ecalHitIO_.configure(parameters_);
 
   run_ = runNumber;
 }
@@ -149,15 +146,7 @@ void RootPersistencyManager::writeHitsCollections(
       G4CalorimeterHitsCollection *calHitsColl =
           dynamic_cast<G4CalorimeterHitsCollection *>(hc);
       std::vector<ldmx::SimCalorimeterHit> outputColl;
-      if (collName == "EcalSimHits") {
-        // Write ECal G4CalorimeterHit collection to output SimCalorimeterHit
-        // collection using helper class.
-        ecalHitIO_.writeHitsCollection(calHitsColl, outputColl);
-      } else {
-        // Write generic G4CalorimeterHit collection to output SimCalorimeterHit
-        // collection.
-        writeCalorimeterHitsCollection(calHitsColl, outputColl);
-      }
+      writeCalorimeterHitsCollection(calHitsColl, outputColl);
 
       // Add hits collection to output event.
       outputEvent->add(collName, outputColl);
