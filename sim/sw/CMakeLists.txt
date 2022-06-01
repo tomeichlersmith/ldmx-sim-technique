@@ -61,5 +61,4 @@ include_directories(DMG4/include/ DMG4/include/DMG4)
 add_subdirectory(G4DarkBreM)
 add_subdirectory(SimCore)
 add_subdirectory(Biasing)
-add_subdirectory(Detectors)
 
