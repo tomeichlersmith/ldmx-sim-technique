@@ -13,7 +13,6 @@
 #include "G4DarkBreM/G4eDarkBremsstrahlung.h"  //for process name
 #include "SimCore/DetectorConstruction.h"
 #include "SimCore/GammaPhysics.h"
-#include "SimCore/ParallelWorld.h"
 #include "SimCore/PluginFactory.h"
 #include "SimCore/PrimaryGeneratorAction.h"
 #include "SimCore/USteppingAction.h"
@@ -28,7 +27,6 @@
 #include "FTFP_BERT.hh"
 #include "G4GDMLParser.hh"
 #include "G4GenericBiasingPhysics.hh"
-#include "G4ParallelWorldPhysics.hh"
 #include "G4ProcessTable.hh"
 #include "G4VModularPhysicsList.hh"
 #include "G4MuonMinus.hh"
@@ -52,16 +50,6 @@ RunManager::~RunManager() {}
 
 void RunManager::setupPhysics() {
   auto pList{physicsListFactory_.GetReferencePhysList("FTFP_BERT")};
-
-  parallelWorldPath_ = parameters_.getParameter<std::string>("scoringPlanes");
-  isPWEnabled_ = !parallelWorldPath_.empty();
-  if (isPWEnabled_) {
-    std::cout
-        << "[ RunManager ]: Parallel worlds physics list has been registered."
-        << std::endl;
-    pList->RegisterPhysics(new G4ParallelWorldPhysics("ldmxParallelWorld"));
-  }
-
   pList->RegisterPhysics(new GammaPhysics);
   pList->RegisterPhysics(new darkbrem::APrimePhysics(
       parameters_.getParameter<framework::config::Parameters>("dark_brem")));
@@ -102,19 +90,6 @@ void RunManager::setupPhysics() {
 
 void RunManager::Initialize() {
   setupPhysics();
-
-  // The parallel world needs to be registered before the mass world is
-  // constructed i.e. before G4RunManager::Initialize() is called.
-  if (isPWEnabled_) {
-    std::cout << "[ RunManager ]: Parallel worlds have been enabled."
-              << std::endl;
-
-    auto validateGeometry_{parameters_.getParameter<bool>("validate_detector")};
-    G4GDMLParser* pwParser = new G4GDMLParser();
-    pwParser->Read(parallelWorldPath_, validateGeometry_);
-    this->getDetectorConstruction()->RegisterParallelWorld(
-        new ParallelWorld(pwParser, "ldmxParallelWorld", conditionsIntf_));
-  }
 
   // This is where the physics lists are told to construct their particles and
   // their processes

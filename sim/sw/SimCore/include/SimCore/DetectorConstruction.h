@@ -9,14 +9,6 @@
 //---< Framework >---//
 #include "Framework/Configure/Parameters.h"
 
-//---< SimCore >---//
-#include "SimCore/Geo/Parser.h"
-
-// Forward declaration
-namespace simcore::geo {
-class Parser;
-}
-
 namespace simcore {
 
 /**
@@ -39,9 +31,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction {
    * @param parameters The parameters used to configure this class.
    * @param ci The conditions needed to build the detector.
    */
-  DetectorConstruction(simcore::geo::Parser *parser,
-                       framework::config::Parameters &parameters,
-                       ConditionsInterface &ci);
+  DetectorConstruction(framework::config::Parameters &parameters);
 
   /**
    * Class destructor.
@@ -58,18 +48,9 @@ class DetectorConstruction : public G4VUserDetectorConstruction {
    */
   void ConstructSDandField();
 
-  /**
-   * @return The name of this detector. This is extracted from the
-   *	description file used to build this detector.
-   */
-  std::string getDetectorName() { return parser_->getDetectorName(); }
-
  private:
-  /// The parser used to load the detector into memory.
-  simcore::geo::Parser *parser_;
-
-  /// The set of parameters used to configure this class
-  framework::config::Parameters parameters_;
+  std::string gdml_file_;
+  bool validate_;
 };  // DetectorConstruction
 }  // namespace simcore
 

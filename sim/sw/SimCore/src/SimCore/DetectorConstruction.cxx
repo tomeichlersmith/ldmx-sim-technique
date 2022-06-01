@@ -4,6 +4,8 @@
 #include "SimCore/PluginFactory.h"
 #include "SimCore/XsecBiasingOperator.h"
 
+#include "G4GDMLParser.hh"
+
 namespace simcore {
 
 namespace logical_volume_tests {
@@ -114,15 +116,15 @@ typedef bool (*Test)(G4LogicalVolume*, const std::string&);
 
 }  // namespace logical_volume_tests
 
-DetectorConstruction::DetectorConstruction(
-    simcore::geo::Parser* parser, framework::config::Parameters& parameters,
-    ConditionsInterface& ci)
-    : parser_(parser) {
-  parameters_ = parameters;
+DetectorConstruction::DetectorConstruction(framework::config::Parameters& parameters) {
+  gdml_file_ = parameters.getParameter<std::string>("detector");
+  validate_ = parameters.getParameter<bool>("validate_detector");
 }
 
 G4VPhysicalVolume* DetectorConstruction::Construct() {
-  return parser_->GetWorldVolume();
+  G4GDMLParser p;
+  p.Read(gdml_file_, validate_);
+  return p.GetWorldVolume();
 }
 
 void DetectorConstruction::ConstructSDandField() {

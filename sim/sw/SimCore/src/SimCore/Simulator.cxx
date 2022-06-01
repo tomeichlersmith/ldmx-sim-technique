@@ -13,7 +13,6 @@
 #include "G4DarkBreM/G4eDarkBremsstrahlung.h"
 #include "SimCore/DetectorConstruction.h"
 #include "SimCore/G4Session.h"
-#include "SimCore/Geo/ParserFactory.h"
 #include "SimCore/Persist/RootPersistencyManager.h"
 #include "SimCore/PluginFactory.h"
 #include "SimCore/RunManager.h"
@@ -77,21 +76,13 @@ void Simulator::configure(framework::config::Parameters& parameters) {
   // Instantiate the run manager.
   runManager_ = std::make_unique<RunManager>(parameters, conditionsIntf_);
 
-  // Instantiate the GDML parser
-  auto parser{simcore::geo::ParserFactory::getInstance().createParser(
-      "gdml", parameters, conditionsIntf_)};
-
   // Instantiate the class so cascade parameters can be set.
   G4CascadeParameters::Instance();
 
   // Set the DetectorConstruction instance used to build the detector
   // from the GDML description.
   runManager_->SetUserInitialization(
-      new DetectorConstruction(parser, parameters, conditionsIntf_));
-
-  G4GeometryManager::GetInstance()->OpenGeometry();
-  parser->read();
-  runManager_->DefineWorldVolume(parser->GetWorldVolume());
+      new DetectorConstruction(parameters));
 
   auto preInitCommands =
       parameters_.getParameter<std::vector<std::string>>("preInitCommands", {});
@@ -122,28 +113,6 @@ void Simulator::onFileOpen(framework::EventFile& file) {
 }
 
 void Simulator::beforeNewRun(ldmx::RunHeader& header) {
-  // Get the detector header from the user detector construction
-  DetectorConstruction* detector =
-      static_cast<RunManager*>(RunManager::GetRunManager())
-          ->getDetectorConstruction();
-
-  if (!detector)
-    EXCEPTION_RAISE("SimSetup", "Detector not constructed before run start.");
-
-  header.setDetectorName(detector->getDetectorName());
-  header.setDescription(parameters_.getParameter<std::string>("description"));
-
-  header.setIntParameter("Save ECal Hit Contribs",
-                         parameters_.getParameter<bool>("enableHitContribs"));
-  header.setIntParameter("Compress ECal Hit Contribs",
-                         parameters_.getParameter<bool>("compressHitContribs"));
-  header.setIntParameter(
-      "Included Scoring Planes",
-      !parameters_.getParameter<std::string>("scoringPlanes").empty());
-  header.setIntParameter(
-      "Use Random Seed from Event Header",
-      parameters_.getParameter<bool>("rootPrimaryGenUseSeed"));
-
   // lambda function for dumping 3-vectors into the run header
   auto threeVectorDump = [&header](const std::string& name,
                                    const std::vector<double>& vec) {
