@@ -128,7 +128,7 @@ sim.generators = [ primary ]
 sim.time_shift_primaries = False
 
 # use detector.gdml file in current directory
-from LDMX.Detectors.write import write
+from LDMX.SimCore.write_detector import write
 sim.detector = write('.write_detector.gdml',material,arg.depth,hunk_transverse)
 
 #Activiate dark bremming with a certain A' mass and LHE library
