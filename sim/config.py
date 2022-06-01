@@ -132,7 +132,7 @@ from LDMX.Detectors.write import write
 sim.detector = write('.write_detector.gdml',material,arg.depth,hunk_transverse)
 
 #Activiate dark bremming with a certain A' mass and LHE library
-from LDMX.SimCore import dark_brem
+from LDMX.G4DarkBreM import dark_brem
 ## MGS
 if arg.method == 'mgs' :
     db_model = dark_brem.VertexLibraryModel(db_event_lib_path)

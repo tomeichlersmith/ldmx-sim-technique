@@ -87,7 +87,7 @@ class simulator(Producer):
         self.verbosity = 0
 
         #Dark Brem stuff
-        from LDMX.SimCore import dark_brem
+        from LDMX.G4DarkBreM import dark_brem
         self.dark_brem = dark_brem.DarkBrem()
 
     def setDetector(self, det_name , include_scoring_planes = False ) :
