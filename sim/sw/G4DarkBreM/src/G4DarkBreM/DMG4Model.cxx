@@ -1,9 +1,9 @@
 
-#include "SimCore/DarkBrem/DMG4Model.h"
+#include "G4DarkBreM/DMG4Model.h"
 
 #include "Framework/Exception/Exception.h"
 #include "Framework/Logger.h"
-#include "SimCore/DarkBrem/G4APrime.h"
+#include "G4DarkBreM/G4APrime.h"
 
 namespace simcore {
 namespace darkbrem {

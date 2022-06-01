@@ -10,7 +10,7 @@
 /*~~~~~~~~~~~~~*/
 /*   SimCore   */
 /*~~~~~~~~~~~~~*/
-#include "SimCore/DarkBrem/G4eDarkBremsstrahlung.h"
+#include "G4DarkBreM/G4eDarkBremsstrahlung.h"
 #include "SimCore/DetectorConstruction.h"
 #include "SimCore/G4Session.h"
 #include "SimCore/Geo/ParserFactory.h"

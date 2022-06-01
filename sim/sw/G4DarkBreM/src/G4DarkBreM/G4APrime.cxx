@@ -4,7 +4,7 @@
  * @author Michael Revering, University of Minnesota
  */
 
-#include "SimCore/DarkBrem/G4APrime.h"
+#include "G4DarkBreM/G4APrime.h"
 
 #include "Framework/Exception/Exception.h"
 #include "G4ParticleTable.hh"

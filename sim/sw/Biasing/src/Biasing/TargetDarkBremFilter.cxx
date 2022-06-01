@@ -10,7 +10,7 @@
 #include "Biasing/TargetDarkBremFilter.h"
 
 #include "G4Electron.hh"                   //to check if track is electron
-#include "SimCore/DarkBrem/G4APrime.h"     //checking if particles match A'
+#include "G4DarkBreM/G4APrime.h"     //checking if particles match A'
 #include "SimCore/UserTrackInformation.h"  //make sure A' is saved
 
 namespace biasing {

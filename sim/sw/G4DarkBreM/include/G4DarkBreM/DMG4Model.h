@@ -2,7 +2,7 @@
 #define SIMCORE_DARKBREM_DMG4MODEL_H_
 
 #include "Framework/Configure/Parameters.h"
-#include "SimCore/DarkBrem/G4eDarkBremsstrahlung.h"
+#include "G4DarkBreM/G4eDarkBremsstrahlung.h"
 
 // DMG4 DarkPhoton Model
 #include "DarkMatter.hh"

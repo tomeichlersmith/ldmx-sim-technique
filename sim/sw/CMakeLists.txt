@@ -59,6 +59,7 @@ add_subdirectory(DetDescr)
 add_subdirectory(DMG4)
 # need to globally include DMG4 headers
 include_directories(DMG4/include/ DMG4/include/DMG4)
+add_subdirectory(G4DarkBreM)
 add_subdirectory(SimCore)
 add_subdirectory(Biasing)
 add_subdirectory(Detectors)

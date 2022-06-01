@@ -9,8 +9,8 @@
 //-------------//
 //   ldmx-sw   //
 //-------------//
-#include "SimCore/DarkBrem/APrimePhysics.h"
-#include "SimCore/DarkBrem/G4eDarkBremsstrahlung.h"  //for process name
+#include "G4DarkBreM/APrimePhysics.h"
+#include "G4DarkBreM/G4eDarkBremsstrahlung.h"  //for process name
 #include "SimCore/DetectorConstruction.h"
 #include "SimCore/GammaPhysics.h"
 #include "SimCore/ParallelWorld.h"
