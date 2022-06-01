@@ -129,7 +129,8 @@ sim.time_shift_primaries = False
 
 # use detector.gdml file in current directory
 from LDMX.SimCore.write_detector import write
-sim.detector = write('.write_detector.gdml',material,arg.depth,hunk_transverse)
+sim.detector = write(p.histogramFile.replace("root","gdml").replace('ntuple','geo'),
+    material,arg.depth,hunk_transverse)
 
 #Activiate dark bremming with a certain A' mass and LHE library
 from LDMX.G4DarkBreM import dark_brem
