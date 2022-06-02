@@ -61,7 +61,7 @@ void APrimePhysics::ConstructProcess() {
     std::cout << "[ APrimePhysics ] : Connecting dark brem to " 
       << particle_def->GetParticleName() << " "
       << particle_def->GetPDGEncoding() << std::endl;
-    auto proc = new G4eDarkBremsstrahlung(parameters_);
+    auto proc = new G4DarkBremsstrahlung(parameters_);
     G4int ret = particle_def->GetProcessManager()->AddDiscreteProcess(proc);
     //G4int ret = particle_def->GetProcessManager()->AddProcess(proc,-1,1,1);
     if (ret < 0) {

@@ -1,5 +1,5 @@
 
-#include "G4DarkBreM/DarkBremVertexLibraryModel.h"
+#include "G4DarkBreM/G4DarkBreMModel.h"
 
 #include "Framework/Exception/Exception.h"
 #include "Framework/Logger.h"
@@ -24,9 +24,9 @@
 namespace simcore {
 namespace darkbrem {
 
-DarkBremVertexLibraryModel::DarkBremVertexLibraryModel(
+G4DarkBreMModel::G4DarkBreMModel(
     framework::config::Parameters &params)
-    : G4eDarkBremsstrahlungModel(params), method_(DarkBremMethod::Undefined) {
+    : G4DarkBremsstrahlungModel(params), method_(DarkBremMethod::Undefined) {
   method_name_ = params.getParameter<std::string>("method");
   if (method_name_ == "forward_only") {
     method_ = DarkBremMethod::ForwardOnly;
@@ -50,7 +50,7 @@ DarkBremVertexLibraryModel::DarkBremVertexLibraryModel(
   SetMadGraphDataLibrary(library_path_);
 }
 
-void DarkBremVertexLibraryModel::PrintInfo() const {
+void G4DarkBreMModel::PrintInfo() const {
   G4cout << " Dark Brem Vertex Library Model" << G4endl;
   G4cout << "   Threshold [GeV]: " << threshold_ << G4endl;
   G4cout << "   Epsilon:         " << epsilon_ << G4endl;
@@ -58,14 +58,14 @@ void DarkBremVertexLibraryModel::PrintInfo() const {
   G4cout << "   Vertex Library:  " << library_path_ << G4endl;
 }
 
-void DarkBremVertexLibraryModel::RecordConfig(ldmx::RunHeader &h) const {
+void G4DarkBreMModel::RecordConfig(ldmx::RunHeader &h) const {
   h.setFloatParameter("Minimum Threshold to DB [GeV]", threshold_);
   h.setFloatParameter("DB Xsec Epsilon", epsilon_);
   h.setStringParameter("Vertex Scaling Method", method_name_);
   h.setStringParameter("Vertex Library", library_path_);
 }
 
-G4double DarkBremVertexLibraryModel::ComputeCrossSectionPerAtom(
+G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
     G4double electronKE, G4double A, G4double Z) {
   static const double MA =
       G4APrime::APrime()->GetPDGMass() / CLHEP::GeV;  // mass A' in GeV
@@ -151,7 +151,7 @@ G4double DarkBremVertexLibraryModel::ComputeCrossSectionPerAtom(
   return cross;
 }
 
-void DarkBremVertexLibraryModel::GenerateChange(
+void G4DarkBreMModel::GenerateChange(
     G4ParticleChange &particleChange, const G4Track &track,
     const G4Step &step) {
   // mass A' in GeV
@@ -265,7 +265,7 @@ void DarkBremVertexLibraryModel::GenerateChange(
   }
 }
 
-void DarkBremVertexLibraryModel::SetMadGraphDataLibrary(std::string path) {
+void G4DarkBreMModel::SetMadGraphDataLibrary(std::string path) {
   // Assumptions:
   //  - Directory passed is a flat directory (no sub directories) containing LHE
   //  files
@@ -305,7 +305,7 @@ void DarkBremVertexLibraryModel::SetMadGraphDataLibrary(std::string path) {
   return;
 }
 
-void DarkBremVertexLibraryModel::Chi::operator()(const StateType &,
+void G4DarkBreMModel::Chi::operator()(const StateType &,
                                                  StateType &dxdt, double t) {
   G4double MUp = 2.79;   // mass up quark [GeV]
   G4double Mpr = 0.938;  // mass proton [GeV]
@@ -327,7 +327,7 @@ void DarkBremVertexLibraryModel::Chi::operator()(const StateType &,
   return;
 }
 
-void DarkBremVertexLibraryModel::DiffCross::operator()(const StateType &,
+void G4DarkBreMModel::DiffCross::operator()(const StateType &,
                                                        StateType &DsigmaDx,
                                                        double x) {
   G4double beta = sqrt(1 - MA * MA / E0 / E0);
@@ -339,7 +339,7 @@ void DarkBremVertexLibraryModel::DiffCross::operator()(const StateType &,
   return;
 }
 
-void DarkBremVertexLibraryModel::ParseLHE(std::string fname) {
+void G4DarkBreMModel::ParseLHE(std::string fname) {
   static const double MA =
       G4APrime::APrime()->GetPDGMass() / CLHEP::GeV;  // mass A' in GeV
 
@@ -403,7 +403,7 @@ void DarkBremVertexLibraryModel::ParseLHE(std::string fname) {
   ldmx_log(info) << "done parsing.";
 }
 
-void DarkBremVertexLibraryModel::MakePlaceholders() {
+void G4DarkBreMModel::MakePlaceholders() {
   currentDataPoints_.clear();
   maxIterations_ = 10000;
   for (const auto &iter : madGraphData_) {
@@ -413,8 +413,8 @@ void DarkBremVertexLibraryModel::MakePlaceholders() {
   }
 }
 
-DarkBremVertexLibraryModel::OutgoingKinematics
-DarkBremVertexLibraryModel::GetMadgraphData(double E0) {
+G4DarkBreMModel::OutgoingKinematics
+G4DarkBreMModel::GetMadgraphData(double E0) {
   OutgoingKinematics cmdata;  // data frame to return
 
   // Cycle through imported beam energies until the closest one above is found,

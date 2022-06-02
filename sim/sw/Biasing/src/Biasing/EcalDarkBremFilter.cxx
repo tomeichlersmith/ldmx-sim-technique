@@ -11,7 +11,7 @@
 
 #include "G4LogicalVolumeStore.hh"      //for the store
 #include "G4DarkBreM/G4APrime.h"  //checking if particles match A'
-#include "G4DarkBreM/G4eDarkBremsstrahlung.h"  //checking for dark brem secondaries
+#include "G4DarkBreM/G4DarkBremsstrahlung.h"  //checking for dark brem secondaries
 #include "SimCore/UserTrackInformation.h"            //make sure A' is saved
 
 namespace biasing {
@@ -98,7 +98,7 @@ void EcalDarkBremFilter::PostUserTrackingAction(const G4Track* track) {
 
   const G4VProcess* creator = track->GetCreatorProcess();
   if (creator and creator->GetProcessName().contains(
-                      simcore::darkbrem::G4eDarkBremsstrahlung::PROCESS_NAME)) {
+                      simcore::darkbrem::G4DarkBremsstrahlung::PROCESS_NAME)) {
     // make sure all secondaries of dark brem process are saved
     simcore::UserTrackInformation* userInfo = simcore::UserTrackInformation::get(track);
     // make sure A' is persisted into output file

@@ -9,7 +9,7 @@ namespace simcore {
 namespace darkbrem {
 
 DMG4Model::DMG4Model(framework::config::Parameters &params)
-    : G4eDarkBremsstrahlungModel(params) {
+    : G4DarkBremsstrahlungModel(params) {
   double apmass = G4APrime::APrime()->GetPDGMass()/CLHEP::GeV;
   epsilon_ = params.getParameter<double>("epsilon");
   dm_model_ = std::make_unique<DarkPhotons>(apmass,2.*apmass);

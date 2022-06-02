@@ -2,7 +2,7 @@
 #define SIMCORE_DARKBREM_DMG4MODEL_H_
 
 #include "Framework/Configure/Parameters.h"
-#include "G4DarkBreM/G4eDarkBremsstrahlung.h"
+#include "G4DarkBreM/G4DarkBremsstrahlung.h"
 
 // DMG4 DarkPhoton Model
 #include "DarkMatter.hh"
@@ -17,7 +17,7 @@ namespace darkbrem {
  * A model where we use NA64's DMG4 module to compare our
  * dark brem simulation to theirs.
  */
-class DMG4Model : public G4eDarkBremsstrahlungModel {
+class DMG4Model : public G4DarkBremsstrahlungModel {
  public:
   /**
    * Constructor

@@ -1,11 +1,11 @@
 /**
- * @file G4eDarkBremsstrahlung.cxx
+ * @file G4DarkBremsstrahlung.cxx
  * @brief Class providing the Dark Bremsstrahlung process class.
  * @author Michael Revering, University of Minnesota
  * @author Tom Eichlersmith, University of Minnesota
  */
 
-#include "G4DarkBreM/G4eDarkBremsstrahlung.h"
+#include "G4DarkBreM/G4DarkBremsstrahlung.h"
 
 #include "Framework/RunHeader.h"
 #include "G4Electron.hh"      //for electron definition
@@ -15,7 +15,7 @@
 #include "G4ProcessTable.hh"  //for deactivating dark brem process
 #include "G4ProcessType.hh"   //for type of process
 #include "G4RunManager.hh"    //for VerboseLevel
-#include "G4DarkBreM/DarkBremVertexLibraryModel.h"
+#include "G4DarkBreM/G4DarkBreMModel.h"
 #include "G4DarkBreM/DMG4Model.h"
 #include "G4DarkBreM/G4APrime.h"
 
@@ -57,12 +57,12 @@ ElementXsecCache::key_t ElementXsecCache::computeKey(G4double energy,
   return (ZKey * MAX_A + AKey) * MAX_E + energyKey;
 }
 
-const std::string G4eDarkBremsstrahlung::PROCESS_NAME = "eDarkBrem";
-G4eDarkBremsstrahlung* G4eDarkBremsstrahlung::the_process_ = nullptr;
+const std::string G4DarkBremsstrahlung::PROCESS_NAME = "eDarkBrem";
+G4DarkBremsstrahlung* G4DarkBremsstrahlung::the_process_ = nullptr;
 
-G4eDarkBremsstrahlung::G4eDarkBremsstrahlung(
+G4DarkBremsstrahlung::G4DarkBremsstrahlung(
     const framework::config::Parameters& params)
-    : G4VDiscreteProcess(G4eDarkBremsstrahlung::PROCESS_NAME,
+    : G4VDiscreteProcess(G4DarkBremsstrahlung::PROCESS_NAME,
                          fElectromagnetic) {
   // we need to pretend to be an EM process so the biasing framework recognizes
   // us
@@ -78,7 +78,7 @@ G4eDarkBremsstrahlung::G4eDarkBremsstrahlung(
   auto model{params.getParameter<framework::config::Parameters>("model")};
   auto model_name{model.getParameter<std::string>("name")};
   if (model_name == "vertex_library") {
-    model_ = std::make_shared<DarkBremVertexLibraryModel>(model);
+    model_ = std::make_shared<G4DarkBreMModel>(model);
   } else if (model_name == "dmg4") {
     model_ = std::make_shared<DMG4Model>(model);
   } else {
@@ -95,25 +95,25 @@ G4eDarkBremsstrahlung::G4eDarkBremsstrahlung(
   }
 }
 
-G4bool G4eDarkBremsstrahlung::IsApplicable(const G4ParticleDefinition& p) {
+G4bool G4DarkBremsstrahlung::IsApplicable(const G4ParticleDefinition& p) {
   if (muons_) return &p == G4MuonMinus::Definition() or &p == G4MuonPlus::Definition();
   else return &p == G4Electron::Definition();
 }
 
-void G4eDarkBremsstrahlung::PrintInfo() {
+void G4DarkBremsstrahlung::PrintInfo() {
   G4cout << " Only One Per Event               : " << only_one_per_event_
          << G4endl;
   G4cout << " A' Mass [MeV]                    : " << ap_mass_ << G4endl;
   model_->PrintInfo();
 }
 
-void G4eDarkBremsstrahlung::RecordConfig(ldmx::RunHeader& h) const {
+void G4DarkBremsstrahlung::RecordConfig(ldmx::RunHeader& h) const {
   h.setIntParameter("Only One DB Per Event", only_one_per_event_);
   h.setFloatParameter("A' Mass [MeV]", ap_mass_);
   model_->RecordConfig(h);
 }
 
-G4VParticleChange* G4eDarkBremsstrahlung::PostStepDoIt(const G4Track& track,
+G4VParticleChange* G4DarkBremsstrahlung::PostStepDoIt(const G4Track& track,
                                                        const G4Step& step) {
   // Debugging Purposes: Check if track we get is an electron
   if (not IsApplicable(*track.GetParticleDefinition()))
@@ -162,7 +162,7 @@ G4VParticleChange* G4eDarkBremsstrahlung::PostStepDoIt(const G4Track& track,
   return G4VDiscreteProcess::PostStepDoIt(track, step);
 }
 
-void G4eDarkBremsstrahlung::CalculateCommonXsec() {
+void G4DarkBremsstrahlung::CalculateCommonXsec() {
   // first in pair is A, second is Z
   std::vector<std::pair<G4double, G4double>> elements = {
       std::make_pair(183.84, 74),  // tungsten
@@ -179,7 +179,7 @@ void G4eDarkBremsstrahlung::CalculateCommonXsec() {
   }
 }
 
-G4double G4eDarkBremsstrahlung::GetMeanFreePath(const G4Track& track, G4double,
+G4double G4DarkBremsstrahlung::GetMeanFreePath(const G4Track& track, G4double,
                                                 G4ForceCondition*) {
   // won't happen if it isn't applicable
   if (not IsApplicable(*track.GetParticleDefinition())) return DBL_MAX;
@@ -212,7 +212,7 @@ G4double G4eDarkBremsstrahlung::GetMeanFreePath(const G4Track& track, G4double,
   }
   SIGMA *= global_bias_;
   /*
-  std::cout << "G4eDBrem : sigma = " << SIGMA 
+  std::cout << "G4DBrem : sigma = " << SIGMA 
     << " initIntLenLeft = " << theInitialNumberOfInteractionLength
     << " nIntLenLeft = " << theNumberOfInteractionLengthLeft << std::endl;
     */

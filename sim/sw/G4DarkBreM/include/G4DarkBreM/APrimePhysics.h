@@ -13,7 +13,7 @@
 
 // LDMX
 #include "Framework/Configure/Parameters.h"
-#include "G4DarkBreM/G4eDarkBremsstrahlung.h"
+#include "G4DarkBreM/G4DarkBremsstrahlung.h"
 
 namespace simcore {
 
@@ -35,12 +35,12 @@ namespace darkbrem {
  * electron.
  *
  * @see G4APrime
- * @see G4eDarkBremsstrahlung
+ * @see G4DarkBremsstrahlung
  *
  * @note
  * This class basically does not do anything except
  * register the custom particle (G4APrime) and custom
- * process (G4eDarkBremsstrahlung).
+ * process (G4DarkBremsstrahlung).
  */
 class APrimePhysics : public G4VPhysicsConstructor {
  public:
@@ -90,7 +90,7 @@ class APrimePhysics : public G4VPhysicsConstructor {
    * G4ProcessManager registers and cleans up any created processes,
    * so we can forget about it after creating it.
    *
-   * @see G4eDarkBremsstrahlung
+   * @see G4DarkBremsstrahlung
    */
   void ConstructProcess();
 

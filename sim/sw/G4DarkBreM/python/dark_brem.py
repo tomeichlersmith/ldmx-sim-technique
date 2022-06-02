@@ -23,13 +23,13 @@ class DarkBremModel() :
         string += ' }'
         return string
 
-class VertexLibraryModel(DarkBremModel) :
-    """Configuration for the vertex library dark brem model
+class G4DarkBreM(DarkBremModel) :
+    """Configuration for the G4DarkBreM dark brem model
 
     Parameters
     ----------
     library_path : str
-        Path to directory of LHE files containing dark brem vertices
+        Path to directory of LHE files containing dark brem events
 
     Attributes
     ----------
@@ -48,7 +48,7 @@ class VertexLibraryModel(DarkBremModel) :
         self.threshold    = 2.0 #GeV
         self.epsilon      = 0.01
 
-class DMG4Model(DarkBremModel) :
+class DMG4(DarkBremModel) :
     """Configuration for the DMG4 model
 
     Attributes

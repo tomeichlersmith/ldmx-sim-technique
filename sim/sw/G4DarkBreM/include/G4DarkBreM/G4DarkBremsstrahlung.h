@@ -1,12 +1,12 @@
 /**
- * @file G4eDarkBremsstrahlung.h
+ * @file G4DarkBremsstrahlung.h
  * @brief Class providing the Dark Bremsstrahlung process class.
  * @author Michael Revering, University of Minnesota
  * @author Tom Eichlersmith, University of Minnesota
  */
 
-#ifndef SIMCORE_DARKBREM_G4EDARKBREMSSTRAHLUNG_H_
-#define SIMCORE_DARKBREM_G4EDARKBREMSSTRAHLUNG_H_
+#ifndef SIMCORE_DARKBREM_G4DARKBREMSSTRAHLUNG_H_
+#define SIMCORE_DARKBREM_G4DARKBREMSSTRAHLUNG_H_
 
 #include "Framework/Configure/Parameters.h"
 #include "Framework/Logger.h"
@@ -22,7 +22,7 @@ namespace simcore {
 namespace darkbrem {
 
 /**
- * @class G4eDarkBremmsstrahlungModel
+ * @class G4DarkBremmsstrahlungModel
  * Abstract class representing a model for dark brem.
  *
  * The model is what actually determines two important things:
@@ -32,7 +32,7 @@ namespace darkbrem {
  * This class is the base class that shows what is necessary
  * for the model to function properly.
  */
-class G4eDarkBremsstrahlungModel {
+class G4DarkBremsstrahlungModel {
  public:
   /**
    * Constructor
@@ -41,13 +41,13 @@ class G4eDarkBremsstrahlungModel {
    *
    * Names the logger after the name for this model.
    */
-  G4eDarkBremsstrahlungModel(const framework::config::Parameters& p) {
+  G4DarkBremsstrahlungModel(const framework::config::Parameters& p) {
     theLog_ =
         framework::logging::makeLogger(p.getParameter<std::string>("name"));
   }
 
   /// Destructor, nothing on purpose
-  virtual ~G4eDarkBremsstrahlungModel() = default;
+  virtual ~G4DarkBremsstrahlungModel() = default;
 
   /**
    * Print the configuration of this model
@@ -67,7 +67,7 @@ class G4eDarkBremsstrahlungModel {
   /**
    * Calculate the cross section given the input parameters
    *
-   * @see G4eDarkBremmstrahlung::GetMeanFreePath
+   * @see G4DarkBremmstrahlung::GetMeanFreePath
    * @param[in] electronKE current electron kinetic energy
    * @param[in] atomicA atomic-mass number for the element the electron is in
    * @param[in] atomicZ atomic-number for the element the electron is in
@@ -84,7 +84,7 @@ class G4eDarkBremsstrahlungModel {
    * @note The input particleChange has already been cleared and then
    * initialized, so there is no need for the model to do those steps.
    *
-   * @see G4eDarkBremmstrahlung::PostStepDoIt
+   * @see G4DarkBremmstrahlung::PostStepDoIt
    * @param[in,out] particleChange particle change class that stores information
    * @param[in] track current track that needs the change
    * @param[in] step current step of the track
@@ -96,7 +96,7 @@ class G4eDarkBremsstrahlungModel {
   /// The logging apparatus for this model
   framework::logging::logger theLog_;
 
-};  // G4eDarkBremsstrahlungModel
+};  // G4DarkBremsstrahlungModel
 
 /**
  * The cache of already computed cross sections
@@ -118,7 +118,7 @@ class ElementXsecCache {
   /**
    * Constructor with a model to calculate the cross section.
    */
-  ElementXsecCache(std::shared_ptr<G4eDarkBremsstrahlungModel> model)
+  ElementXsecCache(std::shared_ptr<G4DarkBremsstrahlungModel> model)
       : model_{model} {}
 
   /**
@@ -185,19 +185,19 @@ class ElementXsecCache {
   std::map<key_t, G4double> the_cache_;
 
   /// shared pointer to the model for calculating cross sections
-  std::shared_ptr<G4eDarkBremsstrahlungModel> model_;
+  std::shared_ptr<G4DarkBremsstrahlungModel> model_;
 
 };  // ElementXsecCache
 
 /**
- * @class G4eDarkBremsstrahlung
+ * @class G4DarkBremsstrahlung
  *
  * Class that represents the dark brem process.
  * An electron is allowed to brem a dark photon
  *
  * @TODO allow positrons to dark brem as well
  */
-class G4eDarkBremsstrahlung : public G4VDiscreteProcess {
+class G4DarkBremsstrahlung : public G4VDiscreteProcess {
  public:
   /**
    * The name of this process in Geant4
@@ -216,7 +216,7 @@ class G4eDarkBremsstrahlung : public G4VDiscreteProcess {
    * The created instance. This will exist if dark brem has been enabled and _after_
    * run initialization where the physics lists are constructred
    */
-  static G4eDarkBremsstrahlung* Get() { return the_process_; }
+  static G4DarkBremsstrahlung* Get() { return the_process_; }
 
   /**
    * Constructor
@@ -234,12 +234,12 @@ class G4eDarkBremsstrahlung : public G4VDiscreteProcess {
    * it takes to simulate events.
    * @see CalculateCommonXsec
    */
-  G4eDarkBremsstrahlung(const framework::config::Parameters& params);
+  G4DarkBremsstrahlung(const framework::config::Parameters& params);
 
   /**
    * Destructor
    */
-  virtual ~G4eDarkBremsstrahlung() = default;
+  virtual ~G4DarkBremsstrahlung() = default;
 
   /**
    * Checks if the passed particle should be able to do this process
@@ -251,14 +251,14 @@ class G4eDarkBremsstrahlung : public G4VDiscreteProcess {
   /**
    * Reports the parameters to G4cout.
    *
-   * @see G4eDarkBremsstrahlungModel::PrintInfo
+   * @see G4DarkBremsstrahlungModel::PrintInfo
    */
   virtual void PrintInfo();
 
   /**
    * Records the configuration of this process into the RunHeader
    *
-   * @see G4eDarkBremsstrahlungModel::RecordConfig
+   * @see G4DarkBremsstrahlungModel::RecordConfig
    * @param[in,out] h RunHeader to write to
    */
   void RecordConfig(ldmx::RunHeader& h) const;
@@ -275,7 +275,7 @@ class G4eDarkBremsstrahlung : public G4VDiscreteProcess {
    * Reactivated in RunManager::TerminateOneEvent.
    *
    * @see RunManager::TerminateOneEvent
-   * @see G4eDarkBremsstrahlungModel::GenerateChange
+   * @see G4DarkBremsstrahlungModel::GenerateChange
    * @param[in] track current G4Track that is being stepped
    * @param[in] step current step that just finished
    * @returns G4VParticleChange detailing how this process changes the track
@@ -314,7 +314,7 @@ class G4eDarkBremsstrahlung : public G4VDiscreteProcess {
    * If you want to turn off the cache-ing behavior, set 'cache_xsec' to false
    * in the python configuratin for the dark brem process.
    *
-   * @see G4eDarkBremsstrahlungModel::ComputeCrossSectionPerAtom
+   * @see G4DarkBremsstrahlungModel::ComputeCrossSectionPerAtom
    * @param[in] track G4Track that is being stepped
    * @param[in] prevStepSize G4double measuring previous step size, unused
    * @param[in] condition G4ForceCondition, always NotForced for
@@ -326,10 +326,10 @@ class G4eDarkBremsstrahlung : public G4VDiscreteProcess {
 
  private:
   /** remove ability to assign this object */
-  G4eDarkBremsstrahlung& operator=(const G4eDarkBremsstrahlung& right);
+  G4DarkBremsstrahlung& operator=(const G4DarkBremsstrahlung& right);
 
   /** remove ability to copy construct */
-  G4eDarkBremsstrahlung(const G4eDarkBremsstrahlung&);
+  G4DarkBremsstrahlung(const G4DarkBremsstrahlung&);
 
   /**
    * Only allow the dark brem to happen once per event.
@@ -368,7 +368,7 @@ class G4eDarkBremsstrahlung : public G4VDiscreteProcess {
    *
    * Shared with the chaching class.
    */
-  std::shared_ptr<G4eDarkBremsstrahlungModel> model_;
+  std::shared_ptr<G4DarkBremsstrahlungModel> model_;
 
   /// Our instance of a cross section cache
   ElementXsecCache element_xsec_cache_;
@@ -378,10 +378,11 @@ class G4eDarkBremsstrahlung : public G4VDiscreteProcess {
       framework::logging::makeLogger("DarkBremProcess");
 
   /// the created process
-  static G4eDarkBremsstrahlung* the_process_;
-};  // G4eDarkBremsstrahlung
+  static G4DarkBremsstrahlung* the_process_;
+};  // G4DarkBremsstrahlung
 
 }  // namespace darkbrem
 }  // namespace simcore
 
-#endif  // SIMCORE_DARKBREM_G4EDARKBREMSSTRAHLUNG_H_
+#endif  // SIMCORE_DARKBREM_G4DARKBREMSSTRAHLUNG_H_
+

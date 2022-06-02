@@ -20,7 +20,6 @@ parser.add_argument('--max_events',default=50000,type=int,
 dbmethod_parser = parser.add_subparsers(title='method',
     help='Choose a method for simulating dark brem')
 
-# DMG4
 dmg4_parser = dbmethod_parser.add_parser('dmg4',help='Use DMG4 to calculate xsec and kinematics')
 dmg4_parser.set_defaults(method = 'dmg4')
 dmg4_parser.add_argument("run_number",default=1,type=int,
@@ -36,10 +35,9 @@ dmg4_parser.add_argument('--primary_energy',default=4.,type=float,
 dmg4_parser.add_argument('--ap_mass',default=1000.,type=float,
         help='A prime mass [MeV].')
 
-# MGS
-mgs_parser = dbmethod_parser.add_parser('mgs',help='Use MG-Scaled to calculate xsec and kinematics')
-mgs_parser.set_defaults(method = 'mgs')
-mgs_parser.add_argument("db_lib",type=str,default=None,
+g4db_parser = dbmethod_parser.add_parser('g4db',help='Use G4DarkBreM to calculate xsec and kinematics')
+g4db_parser.set_defaults(method = 'g4db')
+g4db_parser.add_argument("db_lib",type=str,default=None,
         help="Archive or directory for a dark brem event library to use for the model.")
 
 arg = parser.parse_args()
@@ -52,9 +50,8 @@ p = ldmxcfg.Process('db')
 p.maxEvents = arg.max_events
 p.maxTriesPerEvent = 1000
 
-## MGS
-if arg.method == 'mgs' :
-    # Dark Brem Vertex Library
+if arg.method == 'g4db' :
+    # Dark Brem Event Library
     if arg.db_lib.endswith('.tar.gz') :
         # 1) Unpack the archive
         import tarfile
@@ -134,13 +131,12 @@ sim.detector = write(p.histogramFile.replace("root","gdml").replace('ntuple','ge
 
 #Activiate dark bremming with a certain A' mass and LHE library
 from LDMX.G4DarkBreM import dark_brem
-## MGS
-if arg.method == 'mgs' :
-    db_model = dark_brem.VertexLibraryModel(db_event_lib_path)
+if arg.method == 'g4db' :
+    db_model = dark_brem.G4DarkBreM(db_event_lib_path)
     db_model.threshold = 2*min_e/1000. #GeV - minimum energy electron needs to have to dark brem
     db_model.epsilon   = 0.01 #decrease epsilon from one to help with Geant4 biasing calculations
 else :
-    db_model = dark_brem.DMG4Model()
+    db_model = dark_brem.DMG4()
     db_model.epsilon = 0.0001 # default in DMG4
 
 sim.dark_brem.activate( ap_mass , db_model , muons = (primary.particle == 'mu-'))

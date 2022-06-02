@@ -10,7 +10,7 @@
 /*~~~~~~~~~~~~~*/
 /*   SimCore   */
 /*~~~~~~~~~~~~~*/
-#include "G4DarkBreM/G4eDarkBremsstrahlung.h"
+#include "G4DarkBreM/G4DarkBremsstrahlung.h"
 #include "SimCore/DetectorConstruction.h"
 #include "SimCore/G4Session.h"
 #include "SimCore/Persist/RootPersistencyManager.h"
@@ -147,8 +147,8 @@ void Simulator::beforeNewRun(ldmx::RunHeader& header) {
     bop->RecordConfig(header);
   }
 
-  if (darkbrem::G4eDarkBremsstrahlung::Get()) {
-    darkbrem::G4eDarkBremsstrahlung::Get()->RecordConfig(header);
+  if (darkbrem::G4DarkBremsstrahlung::Get()) {
+    darkbrem::G4DarkBremsstrahlung::Get()->RecordConfig(header);
   }
 
   auto generators{

@@ -56,18 +56,18 @@ __main__() {
   __status__ thick targets
 
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thick} \
-    mgs \
+    g4db \
     ${LDMX_BASE}/dblib/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/ \
-    &>> ${_output_dir}/mgs_muon_thick.log &
+    &>> ${_output_dir}/g4db_muon_thick.log &
   
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thick} \
     dmg4 -m brass --particle muon --primary_energy 100. --ap_mass 1000 1 \
     &>> ${_output_dir}/dmg4_muon_thick.log &
 
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thick} \
-    mgs \
+    g4db \
     ${LDMX_BASE}/dblib/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/ \
-    &>> ${_output_dir}/mgs_electron_thick.log &
+    &>> ${_output_dir}/g4db_electron_thick.log &
   
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thick} \
     dmg4 -m tungsten --particle electron --primary_energy 4. --ap_mass 100 1 \
@@ -77,18 +77,18 @@ __main__() {
   __status__ thin targets
 
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thin} \
-    mgs \
+    g4db \
     ${LDMX_BASE}/dblib/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/ \
-    &>> ${_output_dir}/mgs_muon_thin.log &
+    &>> ${_output_dir}/g4db_muon_thin.log &
   
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thin} \
     dmg4 -m brass --particle muon --primary_energy 100. --ap_mass 1000 1 \
     &>> ${_output_dir}/dmg4_muon_thin.log &
 
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thin} \
-    mgs \
+    g4db \
     ${LDMX_BASE}/dblib/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/ \
-    &>> ${_output_dir}/mgs_electron_thin.log &
+    &>> ${_output_dir}/g4db_electron_thin.log &
   
   fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thin} \
     dmg4 -m tungsten --particle electron --primary_energy 4. --ap_mass 100 1 \

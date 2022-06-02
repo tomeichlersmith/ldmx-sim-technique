@@ -1,8 +1,8 @@
-#ifndef SIMCORE_DARKBREM_DARKBREMVERTEXLIBRARYMODLE_H_
-#define SIMCORE_DARKBREM_DARKBREMVERTEXLIBRARYMODLE_H_
+#ifndef SIMCORE_DARKBREM_G4DARKBREMMODEL_H_
+#define SIMCORE_DARKBREM_G4DARKBREMMODEL_H_
 
 #include "Framework/Configure/Parameters.h"
-#include "G4DarkBreM/G4eDarkBremsstrahlung.h"
+#include "G4DarkBreM/G4DarkBremsstrahlung.h"
 
 // ROOT
 #include "TLorentzVector.h"
@@ -11,7 +11,7 @@ namespace simcore {
 namespace darkbrem {
 
 /**
- * @class DarkBremVertexLibraryModel
+ * @class G4DarkBreMModel
  *
  * Geant4 implementation of the model for a particle undergoing a dark brem
  * where we use an imported vertex library to decide the outgoing kinematics.
@@ -34,7 +34,7 @@ namespace darkbrem {
  * model's behavior. An example library for each of the major mass points is
  * installed with SimCore and is compressed as stored in the data directory.
  */
-class DarkBremVertexLibraryModel : public G4eDarkBremsstrahlungModel {
+class G4DarkBreMModel : public G4DarkBremsstrahlungModel {
  public:
   /**
    * Constructor
@@ -48,12 +48,12 @@ class DarkBremVertexLibraryModel : public G4eDarkBremsstrahlungModel {
    *
    * The library path is immediately passed to SetMadGraphDataLibrary.
    */
-  DarkBremVertexLibraryModel(framework::config::Parameters& params);
+  G4DarkBreMModel(framework::config::Parameters& params);
 
   /**
    * Destructor
    */
-  virtual ~DarkBremVertexLibraryModel() {}
+  virtual ~G4DarkBreMModel() {}
 
   /**
    * Print the configuration of this model
@@ -347,4 +347,4 @@ class DarkBremVertexLibraryModel : public G4eDarkBremsstrahlungModel {
 }  // namespace darkbrem
 }  // namespace simcore
 
-#endif  // SIMCORE_DARKBREM_DARKBREMVERTEXLIBRARYMODLE_H_
+#endif  // SIMCORE_DARKBREM_G4DARKBREMMODEL_H_
