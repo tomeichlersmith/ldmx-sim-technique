@@ -90,8 +90,7 @@ def bundle(data_dir) :
     
     return thin_tgt, thick_tgt
 
-def side_by_side(data_packet, kinematic_variable, xlabel, 
-                 file_name, file_ext = ['pdf'],
+def side_by_side(data_packet, kinematic_variable, xlabel, file_name,
                  weight = True, ylabel = 'Weighted Event Fraction', yscale = 'log', 
                  drop_mg = False, fig_ext = ['pdf'],
                  el_kwargs = {}, mu_kwargs = {}, 
@@ -135,8 +134,7 @@ def side_by_side(data_packet, kinematic_variable, xlabel,
                    histtype = 'step', **mu_kwargs, **hist_kwargs)
     mu_ax.legend(title = '$m_{A\'}=1$ GeV', **legend_kwargs)
     
-    for ext in file_ext :
-        plt.savefig(f'{file_name}.{ext}')
+    plt.savefig(file_name)
         
 def main() :
     import argparse
