@@ -13,7 +13,7 @@ the cross section calculations and dark brem simulation is done in a "Dark Brem 
 The class `G4DarkBremsstrahlungModel` is an abstract class detailing the necessary methods for defining a specific dark brem model. 
 Two specific models are defined.
 
-1. `G4DarkBreM` -- the new model using an imported library of dark brem events as described in the paper
+1. `G4DarkBreMModel` -- the new model using an imported library of dark brem events as described in the paper
 2. `DMG4Model` -- model using the DMG4 package to simulate dark brem events
 
 This design choice was implemented with the assumption that future, alternative dark brem models can be implemented.
@@ -85,11 +85,11 @@ Three options for different interpretation or "scaling" methods are implemented.
 
 While energy fraction and transverse momentum are found to be accurate scaling variables, 
 they do not define the sign of the outgoing longitudinal momentum. 
-To solve this, the simulation always assumes that the lepton goes forwards and this scaling method is referred to as ``Forward Only". 
+To solve this, the simulation always assumes that the lepton goes forwards and this scaling method is referred to as "Forward Only". 
 To recover these backwards scattering events, an alternate scaling method has been developed using the center of mass of the lepton/dark photon system. 
-Study of \mg events with varying incident lepton energies showed that the transverse momentum of the center of mass of the scattered lepton and 
+Study of MadGraph events with varying incident lepton energies showed that the transverse momentum of the center of mass of the scattered lepton and 
 dark photon changes very slowly, and that its longitudinal momentum scaled linearly with incident energy. 
-Applying this information, the ``CM Scaling" method works by finding the center of mass of the lepton and dark photon from the sampled \mg event, 
+Applying this information, the "CM Scaling" method works by finding the center of mass of the lepton and dark photon from the sampled MadGraph event, 
 then reducing its longitudinal momentum and total energy by the difference between the sampled and desired incident energies. 
 The sampled lepton is then boosted from the initial center of mass to the new one, and its outgoing angle in the new frame is collected. 
 While using this angle preserves backwards-going events, the total energy was less reliable than using the initial method. 
