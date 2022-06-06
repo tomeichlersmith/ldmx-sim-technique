@@ -48,7 +48,7 @@ def read(beam_E, bias, fp) :
     df['relative_weight'] = bias*df['weight']
     return df
 
-def bundle(data_dir) :
+def bundle(data_dir, mg_dir) :
     """Bundle the data from the input directory into stacked tuples+dicts to make plotting eaiser below
     
     This is where the names of the files are defined. If the output names are changed
@@ -61,14 +61,14 @@ def bundle(data_dir) :
          { # electrons
           'G4DarkBreM' : read(el_beam,1e8,f'{data_dir}/ntuple_mgs_electron_tungsten_depthmm_0.35_mAMeV_100_events_50000_run_3000.root'),
           'DMG4' : read(el_beam,1e12,f'{data_dir}/ntuple_dmg4_electron_tungsten_depthmm_0.35_mAMeV_100_events_50000_run_1.root'),
-          'MG' : read(el_beam/1000.,5e5,'../dblib/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000_IncidentEnergy_4.0_unweighted_events.lhe')
+          'MG' : read(el_beam/1000.,5e5,f'{mg_dir}/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000_IncidentEnergy_4.0_unweighted_events.lhe')
          }
         ),
         ('100 GeV Muons on 100 mm Brass',
          { # muons
           'G4DarkBreM' : read(mu_beam,1e7,f'{data_dir}/ntuple_mgs_muon_brass_depthmm_100.0_mAMeV_1000_events_50000_run_3000.root'),
           'DMG4' : read(mu_beam,1e11,f'{data_dir}/ntuple_dmg4_muon_brass_depthmm_100.0_mAMeV_1000_events_50000_run_1.root'),
-          'MG' : read(mu_beam/1000.,5e5,'../dblib/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000_IncidentEnergy_100.0_unweighted_events.lhe')
+          'MG' : read(mu_beam/1000.,5e5,f'{mg_dir}/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000_IncidentEnergy_100.0_unweighted_events.lhe')
          }
         )
     )
@@ -143,11 +143,12 @@ def main() :
     parser = argparse.ArgumentParser()
     parser.add_argument('data_dir',help='Directory data is in')
     parser.add_argument('--out_dir',help='Directory to put plots',default=os.getcwd())
+    parser.add_argument('--mg_dir',help='Directory MG libraries are in',default='dblib')
     
     arg = parser.parse_args()
     
     # load data into memory bundles
-    thin_tgt, thick_tgt = bundle(arg.data_dir)
+    thin_tgt, thick_tgt = bundle(arg.data_dir, arg.mg_dir)
     
     # make sure output directory exists
     os.makedirs(arg.out_dir, exist_ok=True)
