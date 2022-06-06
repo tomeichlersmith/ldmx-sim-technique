@@ -59,14 +59,14 @@ def bundle(data_dir, mg_dir) :
     thin_tgt = (
         ('4 GeV Electrons on 0.35 mm Tungsten',
          { # electrons
-          'G4DarkBreM' : read(el_beam,1e8,f'{data_dir}/ntuple_mgs_electron_tungsten_depthmm_0.35_mAMeV_100_events_50000_run_3000.root'),
+          'G4DarkBreM' : read(el_beam,1e8,f'{data_dir}/ntuple_g4db_electron_tungsten_depthmm_0.35_mAMeV_100_events_50000_run_3000.root'),
           'DMG4' : read(el_beam,1e12,f'{data_dir}/ntuple_dmg4_electron_tungsten_depthmm_0.35_mAMeV_100_events_50000_run_1.root'),
           'MG' : read(el_beam/1000.,5e5,f'{mg_dir}/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000_IncidentEnergy_4.0_unweighted_events.lhe')
          }
         ),
         ('100 GeV Muons on 100 mm Brass',
          { # muons
-          'G4DarkBreM' : read(mu_beam,1e7,f'{data_dir}/ntuple_mgs_muon_brass_depthmm_100.0_mAMeV_1000_events_50000_run_3000.root'),
+          'G4DarkBreM' : read(mu_beam,1e7,f'{data_dir}/ntuple_g4db_muon_brass_depthmm_100.0_mAMeV_1000_events_50000_run_3000.root'),
           'DMG4' : read(mu_beam,1e11,f'{data_dir}/ntuple_dmg4_muon_brass_depthmm_100.0_mAMeV_1000_events_50000_run_1.root'),
           'MG' : read(mu_beam/1000.,5e5,f'{mg_dir}/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000_IncidentEnergy_100.0_unweighted_events.lhe')
          }
@@ -76,13 +76,13 @@ def bundle(data_dir, mg_dir) :
     thick_tgt = (
         ('4 GeV Electrons on 18mm Tungsten',
          {
-          'G4DarkBreM' : read(el_beam,1e8,f'{data_dir}/ntuple_mgs_electron_tungsten_depthmm_18.0_mAMeV_100_events_50000_run_3000.root'),
+          'G4DarkBreM' : read(el_beam,1e8,f'{data_dir}/ntuple_g4db_electron_tungsten_depthmm_18.0_mAMeV_100_events_50000_run_3000.root'),
           'DMG4' : read(el_beam,1e12,f'{data_dir}/ntuple_dmg4_electron_tungsten_depthmm_18.0_mAMeV_100_events_50000_run_1.root')
          }
         ),
         ('100 GeV Muons on 2m Brass',
          {
-          'G4DarkBreM' : read(mu_beam,1e7,f'{data_dir}/ntuple_mgs_muon_brass_depthmm_2000.0_mAMeV_1000_events_50000_run_3000.root'),
+          'G4DarkBreM' : read(mu_beam,1e7,f'{data_dir}/ntuple_g4db_muon_brass_depthmm_2000.0_mAMeV_1000_events_50000_run_3000.root'),
           'DMG4' : read(mu_beam,1e11,f'{data_dir}/ntuple_dmg4_muon_brass_depthmm_2000.0_mAMeV_1000_events_50000_run_1.root')
          }
         )
@@ -142,7 +142,7 @@ def main() :
     
     parser = argparse.ArgumentParser()
     parser.add_argument('data_dir',help='Directory data is in')
-    parser.add_argument('--out_dir',help='Directory to put plots',default=os.getcwd())
+    parser.add_argument('--out_dir',help='Directory to put plots (Default: data_dir)')
     parser.add_argument('--mg_dir',help='Directory MG libraries are in',default='dblib')
     
     arg = parser.parse_args()
@@ -151,6 +151,8 @@ def main() :
     thin_tgt, thick_tgt = bundle(arg.data_dir, arg.mg_dir)
     
     # make sure output directory exists
+    if arg.out_dir is None :
+        arg.out_dir = arg.data_dir
     os.makedirs(arg.out_dir, exist_ok=True)
     
     # get to plotting
