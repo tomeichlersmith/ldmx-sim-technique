@@ -1,7 +1,7 @@
-# local dark brem libraries for testing
+# local dark brem libraries
 dblib
-# local generated gdml for testing
-.write_detector.gdml
+# local generated data
+data
 # data files
 **.root
 # sim log files
@@ -15,3 +15,5 @@ build
 ldmx-sw/install
 # container images
 **.sif
+# generated images
+**.pdf
