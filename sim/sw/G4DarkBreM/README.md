@@ -40,10 +40,13 @@ The WW approximation is done using Boost's ODE library to numerically calculate 
 $$
 \sigma = 4 \frac{pb}{GeV}\alpha_{EW}^3 \int^{m_A^2}_{m_A^4/(4E_0^2)} \chi(t)dt \int_0^{\min(1-m_e/E_0,1-m_A/E_0)} \frac{d\sigma}{dx}(x)dx
 $$
+
 where
+
 $$
 \chi(t) = \left( \frac{Z^2a^4t^2}{(1+a^2t)^2(1+t/d)^2}+\frac{Za_p^4t^2}{(1+a_p^2t)^2(1+t/0.71)^8}\left(\frac{1+t(m_{up}^2-1)}{4m_p^2}\right)^2\right)\frac{t-m_A^4/(4E_0^2)}{t^2}
 $$
+
 $$
 a = \frac{111.0}{m_e Z^{1/3}}
 \quad
@@ -51,10 +54,20 @@ a_p = \frac{773.0}{m_e Z^{2/3}}
 \quad
 d = \frac{0.164}{A^{2/3}}
 $$
+
 $$
 \frac{d\sigma}{dx}(x) = \sqrt{1-\frac{m_A^2}{E_0^2}}\frac{1-x+x^2/3}{m_A^2(1-x)/x+m_e^2x}
 $$
-$E_0$ is the incoming lepton's energy in GeV, $m_e$ is the mass of the lepton in GeV, $m_A$ is the mass of the dark photon in GeV, $m_p = 0.938$ is the mass of the proton in GeV, $m_{up} = 2.79$ is the mass of the up-quark in MeV\footnote{Not very confident on the meaning of this parameter.}, $A$ is the atomic mass of the target nucleus in amu, $Z$ is the atomic number of the target nucleus, $\alpha_{EW} = 1/137$ is the fine-structure constant, and $pb/GeV = 3.894\times10^8$ is a conversion factor from GeV to pico-barns.
+
+$E_0$ is the incoming lepton's energy in GeV, 
+$m_e$ is the mass of the lepton in GeV, 
+$m_A$ is the mass of the dark photon in GeV, 
+$m_p = 0.938$ is the mass of the proton in GeV, 
+$m_{up} = 2.79$ is the mass of the up-quark in MeV, 
+$A$ is the atomic mass of the target nucleus in amu, 
+$Z$ is the atomic number of the target nucleus, 
+$\alpha_{EW} = 1/137$ is the fine-structure constant, 
+and $pb/GeV = 3.894\times10^8$ is a conversion factor from GeV to pico-barns.
 
 This approximation is not perfect; however, it follows the trend expected from generating events in MadGraph. 
 
