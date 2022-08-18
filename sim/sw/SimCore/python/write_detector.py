@@ -224,6 +224,14 @@ material_options = {
          <fraction n="0.014" ref="Mn"/>
          <fraction n="0.0017" ref="C"/>
       </material> 
+      """,
+      'lead' : """
+      <material Z="82" name="hunk_material" state="solid">
+          <T unit="K" value="293.15"/>
+          <MEE unit="eV" value="823.0"/>
+          <D unit="g/cm3" value="11.350"/>
+          <atom unit="g/mole" value="207.2"/>
+      </material>
       """
         }
 

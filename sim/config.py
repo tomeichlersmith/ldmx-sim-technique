@@ -25,7 +25,7 @@ dmg4_parser.set_defaults(method = 'dmg4')
 dmg4_parser.add_argument("run_number",default=1,type=int,
         help='Run number controlling rand numbers')
 dmg4_parser.add_argument('-m','--material',default='tungsten',
-        choices=['tungsten','silicon','brass'],
+        choices=['tungsten','silicon','brass','lead'],
         help='Material to use as target in simulation.')
 dmg4_parser.add_argument('--particle',default='electron',
         choices=['electron','muon'],
