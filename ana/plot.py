@@ -2,12 +2,22 @@
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import uproot
 import mplhep
+plt.style.use(mplhep.style.ROOT)
+
+# if the dvipng executable exists
+# then we can /probably/ use TeX to write the text
+import shutil
+if shutil.which('dvipng') is not None :
+    plt.rcParams.update({
+        'text.usetex' : True,
+        'font.family' : 'sans-serif',
+        'font.sans-serif' : ['Helvetica']})
+
+import uproot
 import numpy as np
 import dark_brem_lhe
 
-plt.style.use(mplhep.style.ROOT)
 mu_beam = 100105.658372 #MeV
 el_beam = 4000.510999 #MeV
 
@@ -61,14 +71,14 @@ def bundle(data_dir, mg_dir) :
          { # electrons
           'G4DarkBreM' : read(el_beam,1e8,f'{data_dir}/ntuple_g4db_electron_tungsten_depthmm_0.35_mAMeV_100_events_50000_run_3000.root'),
           'DMG4' : read(el_beam,1e12,f'{data_dir}/ntuple_dmg4_electron_tungsten_depthmm_0.35_mAMeV_100_events_50000_run_1.root'),
-          'MG' : read(el_beam/1000.,5e5,f'{mg_dir}/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000_IncidentEnergy_4.0_unweighted_events.lhe')
+          'MG/ME' : read(el_beam/1000.,5e5,f'{mg_dir}/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000_IncidentEnergy_4.0_unweighted_events.lhe')
          }
         ),
         ('100 GeV Muons on 100 mm Brass',
          { # muons
           'G4DarkBreM' : read(mu_beam,1e7,f'{data_dir}/ntuple_g4db_muon_brass_depthmm_100.0_mAMeV_1000_events_50000_run_3000.root'),
           'DMG4' : read(mu_beam,1e11,f'{data_dir}/ntuple_dmg4_muon_brass_depthmm_100.0_mAMeV_1000_events_50000_run_1.root'),
-          'MG' : read(mu_beam/1000.,5e5,f'{mg_dir}/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000_IncidentEnergy_100.0_unweighted_events.lhe')
+          'MG/ME' : read(mu_beam/1000.,5e5,f'{mg_dir}/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000_IncidentEnergy_100.0_unweighted_events.lhe')
          }
         )
     )
@@ -78,14 +88,14 @@ def bundle(data_dir, mg_dir) :
          {
           'G4DarkBreM' : read(el_beam,1e8,f'{data_dir}/ntuple_g4db_electron_tungsten_depthmm_18.0_mAMeV_100_events_50000_run_3000.root'),
           'DMG4' : read(el_beam,1e12,f'{data_dir}/ntuple_dmg4_electron_tungsten_depthmm_18.0_mAMeV_100_events_50000_run_1.root'),
-          'Monoenergetic 4GeV MG' : read(el_beam/1000.,5e5,f'{mg_dir}/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000_IncidentEnergy_4.0_unweighted_events.lhe')
+          'Monoenergetic 4GeV MG/ME' : read(el_beam/1000.,5e5,f'{mg_dir}/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000_IncidentEnergy_4.0_unweighted_events.lhe')
          }
         ),
         ('100 GeV Muons on 2m Brass',
          {
           'G4DarkBreM' : read(mu_beam,1e7,f'{data_dir}/ntuple_g4db_muon_brass_depthmm_2000.0_mAMeV_1000_events_50000_run_3000.root'),
           'DMG4' : read(mu_beam,1e11,f'{data_dir}/ntuple_dmg4_muon_brass_depthmm_2000.0_mAMeV_1000_events_50000_run_1.root'),
-          'Monoenergetic 100GeV MG' : read(mu_beam/1000.,5e5,f'{mg_dir}/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000_IncidentEnergy_100.0_unweighted_events.lhe')
+          'Monoenergetic 100GeV MG/ME' : read(mu_beam/1000.,5e5,f'{mg_dir}/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000_IncidentEnergy_100.0_unweighted_events.lhe')
          }
         )
     )
@@ -101,7 +111,7 @@ def bundle(data_dir, mg_dir) :
 
 def single(data_packet, kinematic_variable, xlabel, file_name,
            weight = True, ylabel = 'Weighted Event Fraction', yscale = 'log', 
-           drop_mg = False, fig_ext = ['pdf'],
+           drop_mg = False, 
            hist_kwargs = {}, legend_kwargs = {}) :
     """Plot a single kinematic variable for the input data packet"""
     (title, data) = data_packet
@@ -113,7 +123,7 @@ def single(data_packet, kinematic_variable, xlabel, file_name,
     ax.set_ylabel(ylabel)
     ax.set_title(title)
     for name, df in data.items() :
-        if drop_mg and name == 'MG' :
+        if drop_mg and 'MG/ME' in name :
             continue
         weights = None
         if weight :
@@ -129,7 +139,7 @@ def single(data_packet, kinematic_variable, xlabel, file_name,
 
 def side_by_side(data_packet, kinematic_variable, xlabel, file_name,
                  weight = True, ylabel = 'Weighted Event Fraction', yscale = 'log', 
-                 drop_mg = False, fig_ext = ['pdf'],
+                 drop_mg = False,
                  el_kwargs = {}, mu_kwargs = {}, 
                  hist_kwargs = {}, legend_kwargs = {}) :
     """Plot same kinematic variable side-by-side with a shared y-axis"""
@@ -147,7 +157,7 @@ def side_by_side(data_packet, kinematic_variable, xlabel, file_name,
     
     el_ax.set_title(el_title)
     for name, df in el_data.items() :
-        if drop_mg and name == 'MG' :
+        if drop_mg and 'MG/ME' in name :
             continue
         weights = None
         if weight :
@@ -160,7 +170,7 @@ def side_by_side(data_packet, kinematic_variable, xlabel, file_name,
     
     mu_ax.set_title(mu_title)
     for name, df in mu_data.items() :
-        if drop_mg and name == 'MG' :
+        if drop_mg and 'MG/ME' in name :
             continue
         weights = None
         if weight :
@@ -175,7 +185,7 @@ def side_by_side(data_packet, kinematic_variable, xlabel, file_name,
 
 def side_by_side_no_share(data_packet, kinematic_variable, xlabel, file_name,
                  weight = True, ylabel = 'Weighted Event Fraction', yscale = 'log', 
-                 drop_mg = False, fig_ext = ['pdf'],
+                 drop_mg = False, 
                  el_ylim = None, mu_ylim = None,
                  el_kwargs = {}, mu_kwargs = {}, 
                  hist_kwargs = {}, legend_kwargs = {}) :
@@ -193,7 +203,7 @@ def side_by_side_no_share(data_packet, kinematic_variable, xlabel, file_name,
     
     el_ax.set_title(el_title)
     for name, df in el_data.items() :
-        if drop_mg and name == 'MG' :
+        if drop_mg and 'MG/ME' in name :
             continue
         weights = None
         if weight :
@@ -208,7 +218,7 @@ def side_by_side_no_share(data_packet, kinematic_variable, xlabel, file_name,
     
     mu_ax.set_title(mu_title)
     for name, df in mu_data.items() :
-        if drop_mg and name == 'MG' :
+        if drop_mg and 'MG/ME' in name :
             continue
         weights = None
         if weight :
