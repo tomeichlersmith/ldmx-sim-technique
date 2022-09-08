@@ -97,14 +97,27 @@ __main__() {
   wait
   __status__ electron lead
 
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thick} \
+  _elec_thin=1.
+
+  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thin} \
     g4db \
     ${LDMX_BASE}/dblib/electron_lead_MaxE_100.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/ \
-    &>> ${_output_dir}/g4db_electron_100GeV_lead.log&
+    &>> ${_output_dir}/g4db_electron_100GeV_lead_thin.log &
   
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thick} \
+  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thin} \
     dmg4 -m lead --particle electron --primary_energy 100. --ap_mass 100 1 \
-    &>> ${_output_dir}/dmg4_electron_100GeV_lead.log &
+    &>> ${_output_dir}/dmg4_electron_100GeV_lead_thin.log &
+
+  _elec_thin=0.035
+
+  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thin} \
+    g4db \
+    ${LDMX_BASE}/dblib/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/ \
+    &>> ${_output_dir}/g4db_electron_extra_thin.log &
+  
+  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thin} \
+    dmg4 -m tungsten --particle electron --primary_energy 4. --ap_mass 100 1 \
+    &>> ${_output_dir}/dmg4_electron_extra_thin.log &
 
   wait
   __status__ done
