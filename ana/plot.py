@@ -100,14 +100,22 @@ def bundle(data_dir, mg_dir) :
         )
     )
 
-    na64 = ('100 GeV Electrons on 18mm Lead',
+    na64 = ('100 GeV Electrons on 1mm Lead',
         {
-          'G4DarkBreM' : read(el_beam,1e8,f'{data_dir}/ntuple_g4db_electron_lead_depthmm_18.0_mAMeV_100_events_50000_run_3000.root'),
-          'DMG4' : read(el_beam,1e12,f'{data_dir}/ntuple_dmg4_electron_lead_depthmm_18.0_mAMeV_100_events_50000_run_1.root')
+          'G4DarkBreM' : read(el_beam,1e8,f'{data_dir}/ntuple_g4db_electron_lead_depthmm_1.0_mAMeV_100_events_50000_run_3000.root'),
+          'DMG4' : read(el_beam,1e12,f'{data_dir}/ntuple_dmg4_electron_lead_depthmm_1.0_mAMeV_100_events_50000_run_1.root')
+        }
+        )
+
+    extra_thin = ('4 GeV Electrons on 0.035mm Tungsten',
+        {
+          'G4DarkBreM' : read(el_beam,1e8,f'{data_dir}/ntuple_g4db_electron_tungsten_depthmm_0.035_mAMeV_100_events_50000_run_3000.root'),
+          'DMG4' : read(el_beam,1e12,f'{data_dir}/ntuple_dmg4_electron_tungsten_depthmm_0.035_mAMeV_100_events_50000_run_1.root'),
+          'MG' : read(el_beam/1000.,5e5,f'{mg_dir}/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000_IncidentEnergy_4.0_unweighted_events.lhe')
         }
         )
     
-    return thin_tgt, thick_tgt, na64
+    return thin_tgt, thick_tgt, na64, extra_thin
 
 def single(data_packet, kinematic_variable, xlabel, file_name,
            weight = True, ylabel = 'Weighted Event Fraction', yscale = 'log', 
@@ -245,7 +253,7 @@ def main() :
     arg = parser.parse_args()
     
     # load data into memory bundles
-    thin_tgt, thick_tgt, na64 = bundle(arg.data_dir, arg.mg_dir)
+    thin_tgt, thick_tgt, na64, extra_thin = bundle(arg.data_dir, arg.mg_dir)
     
     # make sure output directory exists
     if arg.out_dir is None :
@@ -262,6 +270,7 @@ def main() :
            file_name = arg.out_dir+'/100GeV-electron-lead-visible-energy')
     single(na64, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
            ylabel = 'Fraction Events Below Energy Cut',
+           yscale = 'linear',
            hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
            legend_kwargs = {'loc':'lower center'},
            file_name = arg.out_dir+'/100GeV-electron-lead-visible-energy-cumulative')
@@ -277,6 +286,31 @@ def main() :
            drop_mg = True,
            file_name = arg.out_dir+'/100GeV-electron-lead-event-weight')
 
+    single(extra_thin, 'recoil_angle', 'Lepton Recoil Angle [rad]',
+           #el_ylim = (7e-4,2),
+           hist_kwargs = {'range' : (0,2), 'bins' : 50},
+           file_name = arg.out_dir+'/4GeV-electron-extra-thin-recoil-angle')
+    single(extra_thin, 'visible_energy_frac', 'Visible Energy Fraction of Beam',
+           hist_kwargs = {'range' : (0,1), 'bins' : 50},
+           file_name = arg.out_dir+'/4GeV-electron-extra-thin-visible-energy')
+    single(extra_thin, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
+           ylabel = 'Fraction Events Below Energy Cut',
+           yscale = 'linear',
+           hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
+           legend_kwargs = {'loc':'lower center'},
+           file_name = arg.out_dir+'/4GeV-electron-extra-thin-visible-energy-cumulative')
+    single(extra_thin, 'incident_kinetic_energy_GeV', 
+           'Lepton Kinetic Energy Prior to DB [GeV]',
+           hist_kwargs = {'range' : (0.,100.), 'bins' : 50 },
+           legend_kwargs = {'loc' : 'upper left'},
+           drop_mg = True,
+           file_name = arg.out_dir+'/4GeV-electron-extra-thin-incident-energy')
+    single(extra_thin, 'relative_weight', 'Event Weight',
+           weight = False, 
+           hist_kwargs = {'range':(1,1.2),'bins':50},
+           drop_mg = True,
+           file_name = arg.out_dir+'/4GeV-electron-extra-thin-event-weight')
+
     side_by_side_no_share(thin_tgt, 'recoil_angle', 'Lepton Recoil Angle [rad]',
                  el_ylim = (7e-4,2),
                  hist_kwargs = {'range' : (0,2), 'bins' : 50},
@@ -286,6 +320,7 @@ def main() :
                  file_name = arg.out_dir+'/thin-visible-energy')
     side_by_side(thin_tgt, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
                  ylabel = 'Fraction Events Below Energy Cut',
+                 yscale = 'linear',
                  hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
                  legend_kwargs = {'loc':'lower center'},
                  file_name = arg.out_dir+'/thin-visible-energy-cumulative')
@@ -311,6 +346,7 @@ def main() :
                  file_name = arg.out_dir+'/thick-visible-energy')
     side_by_side(thick_tgt, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
                  ylabel = 'Fraction Events Below Energy Cut',
+                 yscale = 'linear',
                  hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
                  legend_kwargs = {'loc':'lower center'},
                  file_name = arg.out_dir+'/thick-visible-energy-cumulative')
