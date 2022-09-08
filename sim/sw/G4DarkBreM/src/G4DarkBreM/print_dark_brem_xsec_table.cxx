@@ -10,6 +10,7 @@
 //----------//
 #include "Framework/Configure/Parameters.h"
 #include "G4DarkBreM/G4DarkBremsstrahlung.h"
+#include "G4DarkBreM/G4APrime.h"
 
 /**
  * @func printUsage
@@ -49,6 +50,10 @@ int main(int argc, char* argv[]) {
   process.addParameter("only_one_per_event", false);
   process.addParameter("cache_xsec", true);
   process.addParameter("global_bias", 1.);
+  process.addParameter("muons", false);
+
+  // the process accesses the A' mass from the G4 particle
+  simcore::darkbrem::G4APrime::APrime(100.);
 
   simcore::darkbrem::G4DarkBremsstrahlung db_process(process);
 
