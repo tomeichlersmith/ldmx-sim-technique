@@ -33,6 +33,8 @@ int main(int argc, char* argv[]) try {
     ("ap-mass",
       boost::program_options::value<double>()->default_value(100.),
       "mass of A' in MeV")
+    ("muons",
+      "use muons as incident lepton rather than electrons")
   ;
 
   boost::program_options::variables_map vm;
@@ -45,7 +47,6 @@ int main(int argc, char* argv[]) try {
     std::cout << desc;
     return 0;
   }
-
 
   std::string model_name{vm["model"].as<std::string>()};
   if (model_name == "g4db") {
@@ -66,11 +67,15 @@ int main(int argc, char* argv[]) try {
 
   framework::config::Parameters model;
   model.addParameter<std::string>("name", model_name);
-  model.addParameter<std::string>("library_path", "NOTNEEDED");
-  model.addParameter<std::string>("method", "forward_only");
-  model.addParameter("threshold", 0.0);
   model.addParameter("epsilon", 1.);
-  model.addParameter("load_library", false);
+  if (model_name == "vertex_library") {
+    model.addParameter<std::string>("library_path", "NOTNEEDED");
+    model.addParameter<std::string>("method", "forward_only");
+    model.addParameter("threshold", 0.0);
+    model.addParameter("load_library", false);
+  } else {
+    // no other DMG4 parameters at the moment
+  }
 
   framework::config::Parameters process;
   process.addParameter("model", model);
@@ -79,7 +84,7 @@ int main(int argc, char* argv[]) try {
   process.addParameter("only_one_per_event", false);
   process.addParameter("cache_xsec", true);
   process.addParameter("global_bias", 1.);
-  process.addParameter("muons", false);
+  process.addParameter("muons", vm.count("muons") > 0);
 
   // the process accesses the A' mass from the G4 particle
   simcore::darkbrem::G4APrime::APrime(process.getParameter<double>("ap_mass"));
