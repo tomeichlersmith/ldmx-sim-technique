@@ -12,7 +12,8 @@ DMG4Model::DMG4Model(framework::config::Parameters &params)
     : G4DarkBremsstrahlungModel(params) {
   double apmass = G4APrime::APrime()->GetPDGMass()/CLHEP::GeV;
   epsilon_ = params.getParameter<double>("epsilon");
-  dm_model_ = std::make_unique<DarkPhotons>(apmass,2.*apmass);
+  // A' mass [GeV], min threshold [GeV], sigma norm, A nucl, Z nucl, density, epsilon
+  dm_model_ = std::make_unique<DarkPhotons>(apmass,2.*apmass,1.,207.,82.,8.96,epsilon_);
   dm_model_->PrepareTable();
 }
 

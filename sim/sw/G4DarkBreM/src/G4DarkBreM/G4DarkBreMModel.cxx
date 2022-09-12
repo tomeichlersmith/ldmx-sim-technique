@@ -71,6 +71,7 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
   using int_method = boost::math::quadrature::gauss_kronrod<double, 61>;
   static const double MA =
       G4APrime::APrime()->GetPDGMass() / CLHEP::GeV;  // mass A' in GeV
+  static const double MA2 = MA*MA;
 
   // TODO switch depending on which is activated
   static const double Mel = G4Electron::Electron()->GetPDGMass() /
@@ -103,7 +104,7 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
     return Under;
   };
 
-  double tmax = MA * MA;
+  double tmax = MA2;
 
   double form_factor = int_method::integrate(chi_form_factor_integrand, tmin, tmax, 5, 1e-9);
   //std::cout << "FF: " << form_factor << " ";
@@ -111,13 +112,22 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
   /**
    * Differential cross section with respect to x and theta
    */
-  static auto diff_cross = [&](double x) { //, double theta) {
+  static auto diff_cross = [&](double x, double theta) {
     if (x*electronKE < threshold_) return 0.;
-    G4double beta = sqrt(1 - MA*MA / electronKE / electronKE);
-    G4double num = 1. - x + x*x/3.;
-    G4double denom = MA*MA*(1.-x)/x + Mel*Mel*x;
 
-    return beta * num / denom;
+    double KE_sq = electronKE*electronKE;
+    double theta_sq = theta*theta;
+    double x_sq = x*x;
+
+    double utilde = -x*KE_sq*theta_sq - MA2*(1.-x)/x - Mel*Mel*x;
+    double utilde_sq = utilde*utilde;
+
+    double factor1 = 2.0*(2.0 - 2.*x + x_sq)/(1. - x);
+    double factor2 = 4.0*(MA2 + 2.0*Mel*Mel)/utilde_sq;
+    double factor3 = utilde*x + MA2*(1. - x) + Mel*Mel*x_sq;
+    double amplitude = factor1 + factor2*factor3;
+
+    return KE_sq*sin(theta)*sqrt(x_sq - MA2 / KE_sq)*(1 - x)/utilde_sq * amplitude;
   };
 
   // deduce integral bounds
@@ -128,7 +138,14 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
   else
     xmax = 1 - MA / electronKE;
 
-  double theta_max{0.3}; // max angle of A' - set to 0.3 for some reason???
+  /**
+   * max recoil angle of A'
+   *
+   * DMG4 hard-codes this to 0.3 for some reason???
+   * not sure if this is just a cutoff since the wide angle A'
+   * is negligible or if this is theoretically motivated
+   */
+  double theta_max{0.3};
 
   /**
    * Numerical 2D integration
@@ -137,20 +154,17 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
    * by defining the theta_integral function to numerically integrate
    * the integrand at a fixed x and then we put that through the same integration
    * procedure going through the possible x.
+   */
   auto theta_integral = [&](double x) {
     auto theta_integrand = [&](double theta) {
       return diff_cross(x, theta);
     };
     // integrand, min, max, max_depth, tolerance, error, pL1
-    return int_method::integrate(theta_integrand, 0., theta_max, 5);
+    return int_method::integrate(theta_integrand, 0., theta_max, 5, 1e-9);
   };
 
   double error;
   double integrated_xsec = int_method::integrate(theta_integral, xmin, xmax, 5, 1e-9, &error);
-   */
-
-  double error;
-  double integrated_xsec = int_method::integrate(diff_cross, xmin, xmax, 5, 1e-9, &error);
   //std::cout << "XSec: " << integrated_xsec << " ";
 
   G4double GeVtoPb = 3.894E08;
