@@ -13,7 +13,7 @@
 #include "G4SystemOfUnits.hh"
 
 // Boost
-#include <boost/numeric/odeint.hpp>
+#include <boost/math/quadrature/gauss_kronrod.hpp>
 
 // STL
 #include <dirent.h>
@@ -47,7 +47,8 @@ G4DarkBreMModel::G4DarkBreMModel(
   epsilon_ = params.getParameter<double>("epsilon");
 
   library_path_ = params.getParameter<std::string>("library_path");
-  SetMadGraphDataLibrary(library_path_);
+  if (params.getParameter("load_library",true))
+    SetMadGraphDataLibrary(library_path_);
 }
 
 void G4DarkBreMModel::PrintInfo() const {
@@ -67,6 +68,7 @@ void G4DarkBreMModel::RecordConfig(ldmx::RunHeader &h) const {
 
 G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
     G4double electronKE, G4double A, G4double Z) {
+  using int_method = boost::math::quadrature::gauss_kronrod<double, 61>;
   static const double MA =
       G4APrime::APrime()->GetPDGMass() / CLHEP::GeV;  // mass A' in GeV
 
@@ -81,42 +83,44 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
   // TODO move to first cut above
   if (electronKE < threshold_) return 0.;  // can't produce a prime
 
-  // begin: chi-formfactor calculation
-  Chi chiformfactor;
-  //  set parameters
-  chiformfactor.A = A;
-  chiformfactor.Z = Z;
-  chiformfactor.E0 = electronKE;
-  chiformfactor.MA = MA;
-  chiformfactor.Mel = Mel;
-
+  // tmin is used in integrand
   double tmin = MA * MA * MA * MA / (4. * electronKE * electronKE);
+
+  static auto chi_form_factor_integrand = [&](double t) {
+    G4double MUp = 2.79;   // mass up quark [GeV]
+    G4double Mpr = 0.938;  // mass proton [GeV]
+  
+    G4double d = 0.164 / pow(A, 2. / 3.);
+    G4double ap = 773.0 / (Mel * pow(Z, 2. / 3.));
+    G4double a = 111.0 / (Mel * pow(Z, 1. / 3.));
+    G4double G2el = pow(Z, 2) * pow(a, 4) * pow(t, 2) /
+                    (pow(1.0 + a * a * t, 2) * pow(1.0 + t / d, 2));
+    G4double G2in = Z * pow(ap, 4) * pow(t, 2) /
+                    (pow(1.0 + ap * ap * t, 2) * pow(1.0 + t / 0.71, 8)) *
+                    pow(1.0 + t * (pow(MUp, 2) - 1.0) / (4.0 * pow(Mpr, 2)), 2);
+    G4double G2 = G2el + G2in;
+    G4double Under = G2 * (t - tmin) / t / t;
+    return Under;
+  };
+
   double tmax = MA * MA;
 
-  // Integrate over chi.
-  StateType integral(1);
-  integral[0] = 0.;  // start integral value at zero
-  boost::numeric::odeint::integrate(
-      chiformfactor  // how to calculate integrand
-      ,
-      integral  // integral result
-      ,
-      tmin  // integral lower limit
-      ,
-      tmax  // integral upper limit
-      ,
-      (tmax - tmin) / 1000  // dt - initial, adapts based off error
-  );
+  double form_factor = int_method::integrate(chi_form_factor_integrand, tmin, tmax, 5, 1e-9);
+  //std::cout << "FF: " << form_factor << " ";
 
-  G4double ChiRes = integral[0];
+  /**
+   * Differential cross section with respect to x and theta
+   */
+  static auto diff_cross = [&](double x) { //, double theta) {
+    if (x*electronKE < threshold_) return 0.;
+    G4double beta = sqrt(1 - MA*MA / electronKE / electronKE);
+    G4double num = 1. - x + x*x/3.;
+    G4double denom = MA*MA*(1.-x)/x + Mel*Mel*x;
 
-  // Integrate over x. Can use log approximation instead, which falls off at
-  // high A' mass.
-  DiffCross diffcross;
-  diffcross.E0 = electronKE;
-  diffcross.MA = MA;
-  diffcross.Mel = Mel;
+    return beta * num / denom;
+  };
 
+  // deduce integral bounds
   double xmin = 0;
   double xmax = 1;
   if ((Mel / electronKE) > (MA / electronKE))
@@ -124,27 +128,38 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
   else
     xmax = 1 - MA / electronKE;
 
-  // Integrate over differential cross section.
-  integral[0] = 0.;  // start integral value at zero
-  boost::numeric::odeint::integrate(
-      diffcross  // how to calculate integrand
-      ,
-      integral  // integral result
-      ,
-      xmin  // integral lower limit
-      ,
-      xmax  // integral upper limit
-      ,
-      (xmax - xmin) / 1000  // dx - initial, adapts based off error
-  );
+  double theta_max{0.3}; // max angle of A' - set to 0.3 for some reason???
 
-  G4double DsDx = integral[0];
+  /**
+   * Numerical 2D integration
+   *
+   * Its pretty simple, we cast the 2D integration down to 2 1D integrations
+   * by defining the theta_integral function to numerically integrate
+   * the integrand at a fixed x and then we put that through the same integration
+   * procedure going through the possible x.
+  auto theta_integral = [&](double x) {
+    auto theta_integrand = [&](double theta) {
+      return diff_cross(x, theta);
+    };
+    // integrand, min, max, max_depth, tolerance, error, pL1
+    return int_method::integrate(theta_integrand, 0., theta_max, 5);
+  };
+
+  double error;
+  double integrated_xsec = int_method::integrate(theta_integral, xmin, xmax, 5, 1e-9, &error);
+   */
+
+  double error;
+  double integrated_xsec = int_method::integrate(diff_cross, xmin, xmax, 5, 1e-9, &error);
+  //std::cout << "XSec: " << integrated_xsec << " ";
 
   G4double GeVtoPb = 3.894E08;
   G4double alphaEW = 1.0 / 137.0;
 
-  G4double cross = GeVtoPb * 4. * alphaEW * alphaEW * alphaEW * epsilon_ *
-                   epsilon_ * ChiRes * DsDx * CLHEP::picobarn;
+  G4double cross = 4. * alphaEW * alphaEW * alphaEW * 
+                   epsilon_ * epsilon_ * 
+                   form_factor * integrated_xsec * 
+                   GeVtoPb * CLHEP::picobarn;
 
   if (cross < 0.) return 0.;  // safety check all the math
 
@@ -301,40 +316,6 @@ void G4DarkBreMModel::SetMadGraphDataLibrary(std::string path) {
     ldmx_log(info) << "\t" << std::setw(8) << kV.first << " GeV Beam -> "
                    << std::setw(6) << kV.second.size() << " Events";
   }
-
-  return;
-}
-
-void G4DarkBreMModel::Chi::operator()(const StateType &,
-                                                 StateType &dxdt, double t) {
-  G4double MUp = 2.79;   // mass up quark [GeV]
-  G4double Mpr = 0.938;  // mass proton [GeV]
-
-  G4double d = 0.164 / pow(A, 2. / 3.);
-  G4double ap = 773.0 / (Mel * pow(Z, 2. / 3.));
-  G4double a = 111.0 / (Mel * pow(Z, 1. / 3.));
-  G4double G2el = pow(Z, 2) * pow(a, 4) * pow(t, 2) /
-                  (pow(1.0 + a * a * t, 2) * pow(1.0 + t / d, 2));
-  G4double G2in = Z * pow(ap, 4) * pow(t, 2) /
-                  (pow(1.0 + ap * ap * t, 2) * pow(1.0 + t / 0.71, 8)) *
-                  pow(1.0 + t * (pow(MUp, 2) - 1.0) / (4.0 * pow(Mpr, 2)), 2);
-  G4double G2 = G2el + G2in;
-  G4double ttmin = MA * MA * MA * MA / 4.0 / E0 / E0;
-  G4double Under = G2 * (t - ttmin) / t / t;
-
-  dxdt[0] = Under;
-
-  return;
-}
-
-void G4DarkBreMModel::DiffCross::operator()(const StateType &,
-                                                       StateType &DsigmaDx,
-                                                       double x) {
-  G4double beta = sqrt(1 - MA * MA / E0 / E0);
-  G4double num = 1. - x + x * x / 3.;
-  G4double denom = MA * MA * (1. - x) / x + Mel * Mel * x;
-
-  DsigmaDx[0] = beta * num / denom;
 
   return;
 }

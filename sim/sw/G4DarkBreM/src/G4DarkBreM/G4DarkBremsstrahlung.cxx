@@ -169,7 +169,7 @@ void G4DarkBremsstrahlung::CalculateCommonXsec() {
       std::make_pair(28.085, 14)   // silicon
   };
 
-  G4double current_energy = 2.0 * GeV;
+  G4double current_energy = 1.0 * MeV;
   G4double maximum_energy = 4.0 * GeV;
   G4double energy_step = 1.0 * MeV;
   while (current_energy <= maximum_energy) {

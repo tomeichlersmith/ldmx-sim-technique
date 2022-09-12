@@ -72,6 +72,9 @@ class G4DarkBreMModel : public G4DarkBremsstrahlungModel {
    *
    * Numerical integrals are done using boost::numeric::odeint.
    *
+   * Boost has [many methods of integration](https://www.boost.org/doc/libs/master/libs/math/doc/html/quadrature.html)
+   * and no study on their differing performacne has been done.
+   *
    * Integrate Chi from \f$m_A^4/(4E_0^2)\f$ to \f$m_A^2\f$
    *
    * Integrate DiffCross from 0 to \f$min(1-m_e/E_0,1-m_A/E_0)\f$
@@ -79,6 +82,30 @@ class G4DarkBreMModel : public G4DarkBremsstrahlungModel {
    * Total cross section is given by
    * \f[ \sigma = 4 \frac{pb}{GeV} \epsilon^2 \alpha_{EW}^3 \int \chi(t)dt \int
    * \frac{d\sigma}{dx}(x)dx \f]
+   *
+   * \f[ \chi(t) = \left(
+   * \frac{Z^2a^4t^2}{(1+a^2t)^2(1+t/d)^2}+\frac{Za_p^4t^2}{(1+a_p^2t)^2(1+t/0.71)^8}\left(\frac{1+t(m_{up}^2-1)}{4m_p^2}\right)^2\right)\frac{t-m_A^4/(4E_0^2)}{t^2}
+   * \f]
+   *
+   * where
+   * \f$m_A\f$ = mass of A' in GeV,
+   * \f$m_e\f$ = mass of electron in GeV,
+   * \f$E_0\f$ = incoming energy of electron in GeV,
+   * \f$A\f$ = atomic number of target atom,
+   * \f$Z\f$ = atomic mass of target atom,
+   * \f[a = \frac{111.0}{m_e Z^{1/3}}\f]
+   * \f[a_p = \frac{773.0}{m_e Z^{2/3}}\f]
+   * \f[d = \frac{0.164}{A^{2/3}}\f]
+   * \f$m_{up}\f$ = mass of up quark, and
+   * \f$m_{p}\f$ = mass of proton
+   *
+   * \f[ \frac{d\sigma}{dx}(x) =
+   * \sqrt{1-\frac{m_A^2}{E_0^2}}\frac{1-x+x^2/3}{m_A^2(1-x)/x+m_e^2x} \f]
+   *
+   * where
+   * \f$m_A\f$ = mass of A' in GeV
+   * \f$m_e\f$ = mass of electron in GeV
+   * \f$E_0\f$ = incoming energy of electron in GeV
    *
    * @param E0 energy of beam (incoming particle)
    * @param Z atomic number of atom
@@ -124,87 +151,6 @@ class G4DarkBreMModel : public G4DarkBremsstrahlungModel {
    * @param file path to directory of LHE files
    */
   void SetMadGraphDataLibrary(std::string path);
-
-  /**
-   * Helpful typedef for boost integration.
-   */
-  typedef std::vector<double> StateType;
-
-  /**
-   * @struct Chi
-   *
-   * Stores parameters for chi function used in integration.
-   * Implements function as member operator compatible with
-   * boost::numeric::odeint
-   *
-   * \f[ \chi(t) = \left(
-   * \frac{Z^2a^4t^2}{(1+a^2t)^2(1+t/d)^2}+\frac{Za_p^4t^2}{(1+a_p^2t)^2(1+t/0.71)^8}\left(\frac{1+t(m_{up}^2-1)}{4m_p^2}\right)^2\right)\frac{t-m_A^4/(4E_0^2)}{t^2}
-   * \f]
-   *
-   * where
-   * \f$m_A\f$ = mass of A' in GeV,
-   * \f$m_e\f$ = mass of electron in GeV,
-   * \f$E_0\f$ = incoming energy of electron in GeV,
-   * \f$A\f$ = atomic number of target atom,
-   * \f$Z\f$ = atomic mass of target atom,
-   * \f[a = \frac{111.0}{m_e Z^{1/3}}\f]
-   * \f[a_p = \frac{773.0}{m_e Z^{2/3}}\f]
-   * \f[d = \frac{0.164}{A^{2/3}}\f]
-   * \f$m_{up}\f$ = mass of up quark, and
-   * \f$m_{p}\f$ = mass of proton
-   */
-  struct Chi {
-    /// atomic number
-    double A;
-    /// atomic mass
-    double Z;
-    /// incoming beam energy [GeV]
-    double E0;
-    /// A' mass [GeV]
-    double MA;
-    /// electron mass [GeV]
-    double Mel;
-
-    /**
-     * Access function in style required by boost::numeric::odeint
-     *
-     * Calculates dxdt from t and other paramters.
-     */
-    void operator()(const StateType&, StateType& dxdt, double t);
-  };
-
-  /**
-   * @struct DiffCross
-   *
-   * Implementation of the differential scattering cross section.
-   * Stores parameters.
-   *
-   * Implements function as member operator compatible with
-   * boost::numeric::odeint
-   *
-   * \f[ \frac{d\sigma}{dx}(x) =
-   * \sqrt{1-\frac{m_A^2}{E_0^2}}\frac{1-x+x^2/3}{m_A^2(1-x)/x+m_e^2x} \f]
-   *
-   * where
-   * \f$m_A\f$ = mass of A' in GeV
-   * \f$m_e\f$ = mass of electron in GeV
-   * \f$E_0\f$ = incoming energy of electron in GeV
-   */
-  struct DiffCross {
-    /// incoming beam energy [GeV]
-    double E0;
-    /// A' mass [GeV]
-    double MA;
-    /// electron mass [GeV]
-    double Mel;
-
-    /**
-     * Access function in style required by boost::numeric::odeint
-     *
-     * Calculates DsigmaDx from x and other paramters.
-     */
-    void operator()(const StateType&, StateType& DsigmaDx, double x);
-  };
 
   /**
    * @struct OutgoingKinematics

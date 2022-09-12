@@ -23,7 +23,7 @@ void printUsage();
  * The executable main for printing out the table.
  */
 int main(int argc, char* argv[]) {
-  if (argc < 3) {
+  if (argc < 2) {
     printUsage();
     return 1;
   }
@@ -36,16 +36,19 @@ int main(int argc, char* argv[]) {
     return 2;
   }
 
+  double ap_mass_MeV = 100.;
+
   framework::config::Parameters model;
   model.addParameter<std::string>("name", "vertex_library");
-  model.addParameter<std::string>("library_path", argv[2]);
+  model.addParameter<std::string>("library_path", "NOTNEEDED");
   model.addParameter<std::string>("method", "forward_only");
-  model.addParameter("threshold", 2.0);
+  model.addParameter("threshold", 0.0);
   model.addParameter("epsilon", 0.01);
+  model.addParameter("load_library", false);
 
   framework::config::Parameters process;
   process.addParameter("model", model);
-  process.addParameter("ap_mass", 10.);
+  process.addParameter("ap_mass", ap_mass_MeV);
   process.addParameter("enable", true);
   process.addParameter("only_one_per_event", false);
   process.addParameter("cache_xsec", true);
@@ -53,13 +56,16 @@ int main(int argc, char* argv[]) {
   process.addParameter("muons", false);
 
   // the process accesses the A' mass from the G4 particle
-  simcore::darkbrem::G4APrime::APrime(100.);
-
+  simcore::darkbrem::G4APrime::APrime(process.getParameter<double>("ap_mass"));
+  // create the process to do proper initializations
+  //    this calculates "common" cross sections as well
   simcore::darkbrem::G4DarkBremsstrahlung db_process(process);
 
   table_file << db_process.getCache();
 
   table_file.close();
+
+  db_process.PrintInfo();
 
   return 0;
 }
@@ -67,10 +73,9 @@ int main(int argc, char* argv[]) {
 void printUsage() {
   std::cout << 
     "\n"
-    "USAGE: print-dark-brem-xsec-table {xsec_table.csv} {evetn_lib}\n"
+    "USAGE: print-dark-brem-xsec-table {xsec_table.csv}\n"
     "\n"
     "  ARGUMENTS:\n"
     "     xsec_table.csv  (required) file to print table to\n"
-    "     event_lib       (required) directory of darkbrem event library\n"
     << std::endl;
 }
