@@ -1,2 +1,4 @@
 # from running configs through fire
 __pycache__
+# any build products
+*.so

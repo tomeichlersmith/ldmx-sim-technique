@@ -100,20 +100,12 @@ void StepPrinter::stepping(const G4Step* step) {
     } 
   };
 
-  std::cout << "[ StepPrinter ] : lepton process tables" << std::endl;
-  auto muon_processes{G4MuonMinus::Definition()->GetProcessManager()->GetProcessList()};
-  if (muon_processes) {
-    std::cout << " MUONS" << std::endl;
-    print_proc_table(*muon_processes);
+  std::cout << "[ StepPrinter ] : process table" << std::endl;
+  auto processes{track->GetDefinition()->GetProcessManager()->GetProcessList()};
+  if (processes) {
+    print_proc_table(*processes);
   } else {
-    std::cout << "  EMPTY muon process vector" << std::endl;
-  }
-  auto elec_processes{G4Electron::Definition()->GetProcessManager()->GetProcessList()};
-  if (elec_processes) {
-    std::cout << " ELECTRONS" << std::endl;
-    print_proc_table(*elec_processes);
-  } else {
-    std::cout << "  EMPTY electron process vector" << std::endl;
+    std::cout << "  EMPTY process vector" << std::endl;
   }
 }
 

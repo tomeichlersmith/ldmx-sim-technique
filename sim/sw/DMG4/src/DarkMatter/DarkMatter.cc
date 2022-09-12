@@ -256,8 +256,10 @@ double DarkMatter::SimulateEmission(double E0, double* angles)
       //PhiAcc = G4UniformRand() * 2. * 3.1415926;
       PhiAcc = 0.;
 
+      /*
       printf ("Accepted at iteration %d\n", iii);
       printf( "EParent = %e XAcc = %e ThetaAcc = %e\n ", E0, XAcc, ThetaAcc);
+      */
 
       angles[0] = ThetaAcc;
       angles[1] = PhiAcc;
@@ -346,8 +348,10 @@ double DarkMatter::SimulateEmissionWithAngle(double E0, double* angles)
         ThetaAcc =sqrt(2.0*UThetaEv); // this is just a theta accepted!!!
         PhiAcc = G4UniformRand() * 2. * 3.1415926;
 
+        /*
         printf ("Accepted at iteration %d\n", iii);
         printf( "EParent = %e XAcc = %e ThetaAcc = %e\n ", E0, XAcc, ThetaAcc);
+        */
 
         angles[0] = ThetaAcc;
         angles[1] = PhiAcc;
@@ -479,8 +483,10 @@ double DarkMatter::SimulateEmissionWithAngle2(double E0, double* angles)
         ThetaAcc =sqrt(2.0*UThetaEv); // this is just a theta accepted!!!
         PhiAcc = G4UniformRand() * 2. * 3.1415926;
 
+        /*
         std::cout << "Accepted after " << NIterX << " iterations for X and " << iii << " iterations for Angle" << std::endl;
         printf( "EParent = %e XAcc = %e ThetaAcc = %e\n ", E0, XAcc, ThetaAcc);
+        */
 
         angles[0] = ThetaAcc;
         angles[1] = PhiAcc;
@@ -589,8 +595,10 @@ double DarkMatter::SimulateEmissionByMuon2(double E0, double* angles)
       PsiAcc =sqrt(2.0*UPsiEv);
       PhiAcc = G4UniformRand() * 2. * 3.1415926;
 
+      /*
       std::cout << "Accepted after " << NIterX << " iterations for X and " << iii << " iterations for Angle" << std::endl;
       printf( "EParent = %e XAcc = %e PsiAcc = %e\n ", E0, XAcc, PsiAcc);
+      */
 
       angles[0] = PsiAcc;
       angles[1] = PhiAcc;
@@ -675,8 +683,10 @@ double DarkMatter::SimulateEmissionByMuon(double E0, double* angles)
       PsiAcc = sqrt(2.0*UPsiEv);
       PhiAcc = G4UniformRand() * 2. * 3.1415926;
 
+      /*
       std::cout << "Accepted after " << iii << " iterations" << std::endl;
       printf( "EParent = %e XAcc = %e PsiAcc = %e\n ", E0, XAcc, PsiAcc);
+      */
 
       angles[0] = PsiAcc;
       angles[1] = PhiAcc;
@@ -720,8 +730,10 @@ double DarkMatter::SimulateEmissionVector(double E0, double* angles)
       ThetaAcc = ThetaEv;
       PhiAcc = G4UniformRand() * 2. * 3.1415926;
 
+      /*
       std::cout << "Accepted after " << iii << " iterations" << std::endl;
       printf( "EParent = %e XAcc = %e ThetaAcc = %e\n ", E0, XAcc, ThetaAcc);
+      */
 
       angles[0] = ThetaAcc;
       angles[1] = PhiAcc;
