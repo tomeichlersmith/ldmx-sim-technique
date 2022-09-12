@@ -6,6 +6,12 @@
 #define  nMA 24
 #define  nE0 8
 
+
+struct BoundParms {
+   DarkPhotons * this_;
+   double E0;
+};
+
 template <int NY>
 double BilinearInterpolation(double X, double Y, double ArgX[], double ArgY[], double Func[][NY], int NX, int iprint)
 {
@@ -163,6 +169,7 @@ ANucl(ANuclIn), ZNucl(ZNuclIn), Density(DensityIn), epsilBench(1), epsil(epsilIn
 AccumulatedProbability(0.)
 {
    nptable = NPTAB;
+   MParent = Mmu;
    double epi[NPTAB]={MA+Mmu, MA+Mmu+.1,MA+Mmu+2., MA+Mmu+10., MA+Mmu+20., MA+Mmu+50., MA+Mmu+100., MA+Mmu+150., MA+Mmu+250., MA+Mmu+500., MA+Mmu+800., MA+Mmu+1500., MA+Mmu+2000., MA+Mmu+2500., MA+Mmu+4000.};
    for(int ip=0; ip < nptable; ip++) {ep[ip] = epi[ip];}
    if(fname.find("lhe")!=std::string::npos){ParseLHE(fname);}
@@ -333,6 +340,378 @@ double chi_inel (double t, void * pp)
 //  std::cout << "Under: " << Under << " d: " << d << " AA " << params->AA << " a: " << a << std::endl;
   return Under;
 }
+
+
+double DarkPhotons::DMG4CrossSectionCalc(double E0, int IApprox)
+{
+  if(IApprox == 1) return TotalCrossSectionCalc_IWW(E0);
+  if(IApprox == 2) return TotalCrossSectionCalc_WW2(E0); // Integral of ds/dxdTheta
+  if(IApprox == 3) return TotalCrossSectionCalc_WW3(E0); // Integral of ds/dxdPsi
+  if(IApprox == 4) return TotalCrossSectionCalc_WW(E0);  // Integral of ds/dx
+}
+
+static double _DarkZDsDxMuon_WW(double x1, void * parms_) {
+    BoundParms * parms = reinterpret_cast<BoundParms*>(parms_);
+    return parms->this_->CrossSectionDSDX_WW( x1, parms->E0 );
+}
+
+static double _DarkZDsDxMuon(double x1, void * parms_) {
+    BoundParms * parms = reinterpret_cast<BoundParms*>(parms_);
+    return parms->this_->CrossSectionDSDX_IWW( x1, parms->E0 );
+}
+
+static double _DarkZDsDxDThetaMuon(double x[], size_t dim, void * parms_) {
+    BoundParms * parms = reinterpret_cast<BoundParms*>(parms_);
+    return parms->this_->CrossSectionDSDXDTheta( x[0], x[1], parms->E0 );
+}
+
+static double _DarkZDsDxDPsiMuon(double x[], size_t dim, void * parms_) {
+    BoundParms * parms = reinterpret_cast<BoundParms*>(parms_);
+    return parms->this_->CrossSectionDSDXDPSI_WW( x[0], x[1], parms->E0 );
+}
+
+double DarkPhotons::CrossSectionDSDX_WW(double XEv, double E0)
+{
+  if( XEv*E0 <= MA ){ return 0.0; }
+  double ThetaMax = 0.3;
+  double XEv2 = XEv*XEv, Mmu2 = Mmu*Mmu, MA2 = MA*MA, E02 = E0*E0;
+  double uMax   = - MA2 * (1.0 - XEv) / XEv - Mmu2*XEv
+       , uMin   = -  XEv*E02*ThetaMax*ThetaMax -  MA2*(1.0 - XEv)/XEv - Mmu2*XEv
+       , uMax2  = uMax*uMax, uMin2 = uMin*uMin;
+  double aa     = 111.*pow(ZNucl,-1./3.)/Mel;
+  double d      = 0.164*pow(ANucl,-2./3.);
+  double t_scr  = pow(1./aa,2.) // nuclear shielding
+       , t_size = d;            // nuclear size
+  double tMax = 10000;
+  double tmax = tMax;
+  if(fabs(tMax - 10000.) < 0.001) tmax = E0*E0;
+  double gZ   = 1.0 / ( 2.0*E0*(1.0 - XEv) ), gZ2 = gZ*gZ;
+  double JZ   = 2.0 * ( (2.0 - 2.0*XEv + XEv2) / (1.0 - XEv) )
+       , K    = 4.0 * (MA2 + 2.0*Mmu2) * XEv
+       , LZ   = 4.0 * (MA2 + 2.0*Mmu2) * (MA2*(1.0 - XEv) + Mmu2*XEv2 );
+  double
+  genCoef   = t_size*t_size / ( pow( t_scr - t_size, 3.0 ) ),
+        D   =  genCoef * ( (t_scr - t_size) * t_scr / (tmax + t_scr)
+                         + (t_scr - t_size) * t_size / (tmax + t_size)
+                         - 2.0 * ( t_scr - t_size )
+                         + ( t_scr + t_size )
+                           * std::log( (tmax + t_size)/(tmax + t_scr) )
+                         ),
+        F   = genCoef *gZ2 * (
+                               (t_scr - t_size) / (tmax + t_scr)
+                             + (t_scr - t_size) / (tmax + t_size)
+                             + 2.0 * std::log( (tmax + t_size)/(tmax + t_scr) )
+                             ),
+        H   = - genCoef*(t_size + t_scr),
+        I   = - 2.0*genCoef*gZ2;
+  double lnuMax       = std::log( (gZ2*uMax2 + t_scr) / (gZ2*uMax2 + t_size) )
+       , lnuMin       = std::log( (gZ2*uMin2 + t_scr) / (gZ2*uMin2 + t_size) )
+       , aTantSizeMax = std::atan( gZ*uMax / sqrt(t_size) )
+       , aTantSizeMin = std::atan( gZ*uMin / sqrt(t_size) )
+       , aTantScrMax  = std::atan( gZ*uMax / sqrt(t_scr) )
+       , aTantScrMin  = std::atan( gZ*uMin / sqrt(t_scr) );
+  double
+  Ing1 =   JZ*F * (uMax - uMin) + K*F  * ( log(uMax / uMin) )
+         - ( JZ*D + LZ*F ) / uMax
+         - K*D / ( 2.0*uMax2 )
+         - LZ*D / ( 3.0*pow(uMax, 3.0) )
+         + ( JZ*D + LZ*F ) / uMin
+         + K*D / ( 2.0*uMin2 )
+         + LZ*D / ( 3.0*pow(uMin, 3.0) ),
+
+  Ing2 = LZ * H
+           * ( lnuMax / ( 3.0*pow( uMax, 3.0 ) )
+             - 2.0*gZ2 / ( 3.0*t_size*uMax )
+             + 2.0*gZ2 / ( 3.0*t_scr*uMax )
+             -  ( 2.0*pow( gZ, 3.0 ) / 3.0 )
+                * ( pow(t_size, -3.0/2.0)*aTantSizeMax
+                  - pow(t_scr, -3.0/2.0)*aTantScrMax
+                  )
+             - lnuMin / ( 3.0*pow( uMin, 3.0 ) )
+             + 2.0*gZ2 / ( 3.0*t_size*uMin )
+             - 2.0*gZ2 / ( 3.0*t_scr*uMin )
+             +  ( 2.0*pow( gZ, 3.0 ) / 3.0 )
+                * ( pow(t_size, -3.0/2.0)*aTantSizeMin
+                  - pow(t_scr, -3.0/2.0)*aTantScrMin
+                  )
+             ),
+
+  Ing3 = (K * H / 2.0)
+           * ( lnuMax / (uMax2)
+             + gZ2
+               * ( std::log( (uMax2) / (gZ2*uMax2 + t_size) ) / t_size
+                 - std::log( (uMax2) / (gZ2*uMax2 + t_scr) ) / t_scr
+                 )
+             - lnuMin / (uMin2)
+             - gZ2
+               * ( std::log( (uMin2) / (gZ2*uMin2 + t_size) ) / t_size
+                 - std::log( (uMin2) / (gZ2*uMin2 + t_scr) ) / t_scr
+                 )
+             ),
+
+  Ing4 = ( JZ*H + LZ*I )
+         * ( lnuMax / uMax
+           + 2.0* gZ * ( std::pow(t_size, -1.0/2.0) * aTantSizeMax
+                      - std::pow(t_scr, -1.0/2.0) * aTantScrMax )
+           - lnuMin / uMin
+           - 2.0* gZ * ( std::pow(t_size, -1.0/2.0) * aTantSizeMin
+                      - std::pow(t_scr, -1.0/2.0) * aTantScrMin )
+           ),
+
+  Ing5 = K * I
+           * ( std::log( std::abs(uMax) ) * std::log( t_size / t_scr )
+             + (1.0/2.0) * ( gsl_sf_dilog(- uMax2*gZ2/t_scr )
+                           - gsl_sf_dilog(- uMax2*gZ2/t_size ) )
+             - std::log( std::abs(uMin) ) * std::log( t_size / t_scr )
+             - (1.0/2.0) * ( gsl_sf_dilog(- uMin2*gZ2/t_scr )
+                           - gsl_sf_dilog(- uMin2*gZ2/t_size ) )
+             ),
+  Ing6 = JZ * I
+           * ( - ( lnuMax * uMax )
+             + (2/gZ)
+               * ( std::pow(t_size, 1./2) * aTantSizeMax
+                 - std::pow(t_scr, 1./2) * aTantScrMax )
+             + ( lnuMin * uMin )
+             - (2/gZ)
+               * ( std::pow(t_size, 1./2) * aTantSizeMin
+                 - std::pow(t_scr, 1./2) * aTantScrMin )
+             );
+  double sumIng = Ing1 + Ing2 + Ing3 + Ing4 + Ing5 + Ing6;
+  double coef = sqrt( XEv*XEv - (MA2) / (E02) )*( 1.0 - XEv ) / ( XEv );
+  return sumIng*coef;
+}
+
+double DarkPhotons::CrossSectionDSDXDPSI_WW(double XEv, double auxpsi, double E0)
+{
+  if(E0*XEv < EThresh) return 0.;
+  double Xmin = MA/E0;
+  double Xmax = 1. - MA*MA*MA*MA/(8.*E0*E0*E0*ANucl) - MParent/E0;
+  if(XEv < Xmin || XEv > Xmax) return 0.;
+  double y = 1. - XEv;
+  double aa = 111.*pow(ZNucl,-1./3)/Mel;
+  double d = 0.164*pow(ANucl,-2./3);
+  double ta = pow(1./aa,2.);
+  double td = d;
+  double t2 = -(y*E0*E0*2.*auxpsi + Mmu*Mmu*(1.-y)/y + Mmu*Mmu*y) + Mmu*Mmu;
+  double t  = MA*MA - t2;
+  double q = t/(2.*E0*(1.0-y));
+  double tmin = q*q;
+  double tMax = 10000;
+  double tmax = tMax;
+  if(fabs(tMax - 10000.) < 0.001) tmax = E0*E0;
+  if(tmax < tmin) return 0.;
+  double flux = -((td*td*(((ta - td)*(ta + td + 2.0*tmax)*(tmax - tmin))/((ta + tmax)*(td + tmax)) + (ta + td + 2.0*tmin)*(log(ta + tmax)
+                  - log(td + tmax) - log(ta + tmin) + log(td + tmin))))/((ta-td)*(ta-td)*(ta-td)));
+  if(flux < 0.) return 0.;
+  double fac1 = (1.-y)/(t*t);
+  double fac2 = 1./(2.*y)+y/2.;
+  double fac3 = (MA*MA + 2.0*Mmu*Mmu)*(1.-y)*(1.-y)/(t*t*y);
+  double fac4 = Mmu*Mmu*(1.-y)*(1.-y)/y + MA*MA - t;
+  double part1 = fac1*(fac2 + fac3*fac4);
+  double beta = sqrt(y*y - Mmu*Mmu/(E0*E0));
+  double rescs = flux*part1*beta;
+  if(std::isnan(rescs) || rescs < 0.) {
+    rescs = 0.;
+  }
+  return rescs;
+}
+
+double DarkPhotons::CrossSectionDSDXDTheta(double XEv, double ThetaEv, double E0)
+{
+  if(E0*XEv < EThresh) return 0.;
+  double x2=XEv*XEv;
+  double theta2=ThetaEv*ThetaEv;
+  double aa = 111.*pow(ZNucl,-1./3)/Mel;
+  double d = 0.164*pow(ANucl,-2./3);
+  double MA2= MA*MA;
+  double Mmu2= Mmu*Mmu;
+  double E02= E0*E0;
+  double utilde = -XEv*E02*theta2-MA2*(1.0-XEv)/XEv-Mmu2*XEv;
+  double utilde2=utilde*utilde;
+  double ta = 1.0/(aa*aa);
+  double td = d;
+  double tMax=10000;
+  double tmax = tMax;
+  if(fabs(tMax - 10000.) < 0.001) tmax = E0*E0;
+  double tmin= utilde2/(4.0*E02*(1.0-XEv)*(1.0-XEv));
+  double ChiWWAnalytical = -ZNucl*ZNucl*((td*td*(((ta - td)*(ta + td + 2.0*tmax)*(tmax - tmin))/((ta + tmax)*(td + tmax)) + (ta + td + 2.0*tmin)*(log(ta + tmax)
+                           - log(td + tmax) - log(ta + tmin) + log(td + tmin))))/((ta-td)*(ta-td)*(ta-td)));
+  double Factor1= 2.0*(2.0-2.0*XEv+x2)/(1.0-XEv);
+  double Factor2= 4.0*(MA2+2.0*Mmu2)/utilde2;
+  double Factor3= utilde*XEv+MA2*(1.0-XEv)+Mmu2*x2;
+  double AmplZpr2WWVEGAS = Factor1+Factor2*Factor3;
+  double PrefactorWithoutE0EpsilonAlphaEW=sqrt(x2-MA2/E02)*(1.0-XEv)/utilde2;
+  double DsDxDthetaWithoutE0EpsilonAlphaEW=sin(ThetaEv)*PrefactorWithoutE0EpsilonAlphaEW*AmplZpr2WWVEGAS*ChiWWAnalytical;
+
+  double ResTemporary;
+  if (DsDxDthetaWithoutE0EpsilonAlphaEW < 0.0 ) {
+    ResTemporary = 0.0;
+  } else {
+    ResTemporary = DsDxDthetaWithoutE0EpsilonAlphaEW;
+  }
+  return ResTemporary;
+}
+
+double DarkPhotons::TotalCrossSectionCalc_WW(double E0)
+{
+  double sigmaTot;
+  gsl_error_handler_t * old_handler=gsl_set_error_handler_off();
+
+  gsl_integration_workspace* w1 = gsl_integration_workspace_alloc (1000);
+  double result1, error1;
+  double Xmin1 = MA/E0;
+  if(EThresh/E0 > Xmin1) Xmin1 = EThresh/E0;
+  double Xmax1 = 1. - MA*MA*MA*MA/(8.*E0*E0*E0*ANucl) - MParent/E0;
+  if(Xmax1 < Xmin1) return 0.;
+  gsl_function F1;
+  BoundParms parms = {this, E0};
+  F1.function = _DarkZDsDxMuon_WW;
+  F1.params = &parms;
+  double relerr=1.0e-7;   //initial error tolerance (relative error)
+  int status=1;
+  while(status) {
+    status=gsl_integration_qags (&F1, Xmin1, Xmax1, 0, relerr, 1000, w1, &result1, &error1);
+    relerr *= 1.2;
+  }
+  gsl_set_error_handler(old_handler); //reset error handler (might be unneccessary.)
+
+  double IntDsDx = result1;
+  gsl_integration_workspace_free (w1);
+  double PrefactorMuonZTotCS = epsilBench*epsilBench*alphaEW*alphaEW*alphaEW*ZNucl*ZNucl;
+  sigmaTot= GeVtoPb*PrefactorMuonZTotCS*IntDsDx;
+
+  return sigmaTot;
+}
+
+
+double DarkPhotons::TotalCrossSectionCalc_WW2(double E0)
+{
+  if(E0 < 2.*MA) return 0.;
+
+  double Xmin1 = MA/E0;
+  if(EThresh/E0 > Xmin1) Xmin1 = EThresh/E0;
+  double Xmax1 = 1. - MA*MA*MA*MA/(8.*E0*E0*E0*ANucl) - MParent/E0;
+  if(Xmax1 < Xmin1) return 0.;
+
+  double PrefactorEpsilonAlphaEWE0 = 2.0*epsilBench*epsilBench*alphaEW*alphaEW*alphaEW*E0*E0;
+
+  double ThetaMax = 0.3;
+  double xl[2] = { Xmin1, 0.};
+  double xu[2] = { Xmax1, ThetaMax};
+
+  const gsl_rng_type *T;
+  gsl_rng *r;
+
+  gsl_monte_function G;
+  BoundParms parms = {this, E0};
+  G.f = _DarkZDsDxDThetaMuon;
+  G.dim = 2;
+  G.params = &parms;
+  gsl_rng_env_setup();
+
+  T = gsl_rng_default;
+  r = gsl_rng_alloc (T);
+
+  double res, err, sigmaTot;
+  size_t calls = 5000000;
+  gsl_monte_miser_state* stat = gsl_monte_miser_alloc(2);
+  gsl_monte_miser_integrate(&G, xl, xu, 2, calls, r, stat, &res, &err);
+  gsl_monte_miser_free(stat);
+  sigmaTot = GeVtoPb*res*PrefactorEpsilonAlphaEWE0;
+  gsl_rng_free (r);
+  return sigmaTot;
+}
+
+double DarkPhotons::TotalCrossSectionCalc_WW3(double E0)
+{
+  if(E0 < 2.*MA) return 0.;
+
+  double Xmin1 = MA/E0;
+  if(EThresh/E0 > Xmin1) Xmin1 = EThresh/E0;
+  double Xmax1 = 1. - MA*MA*MA*MA/(8.*E0*E0*E0*ANucl) - MParent/E0;
+  if(Xmax1 < Xmin1) return 0.;
+
+  double PrefactorEpsilonAlphaEWE0 = 8.0*epsilBench*epsilBench*alphaEW*alphaEW*alphaEW*E0*E0*ZNucl*ZNucl;
+
+  double xl[2] = { Xmin1, 0.};
+  double PsiMax = 1.;
+  double xu[2] = { Xmax1, PsiMax};
+
+  const gsl_rng_type *T;
+  gsl_rng *r;
+
+  gsl_monte_function G;
+  BoundParms parms = {this, E0};
+  G.f = _DarkZDsDxDPsiMuon;
+  G.dim = 2;
+  G.params = &parms;
+
+  gsl_rng_env_setup();
+
+  T = gsl_rng_default;
+  r = gsl_rng_alloc (T);
+
+  double res, err, sigmaTot;
+  size_t calls = 5000000;
+  gsl_monte_miser_state* stat = gsl_monte_miser_alloc(2);
+  gsl_monte_miser_integrate(&G, xl, xu, 2, calls, r, stat, &res, &err);
+  gsl_monte_miser_free(stat);
+  sigmaTot = GeVtoPb*res*PrefactorEpsilonAlphaEWE0;
+  gsl_rng_free (r);
+  return sigmaTot;
+}
+
+double DarkPhotons::CrossSectionDSDX_IWW(double XEv, double E0)
+{
+  if(XEv*E0 <= MA) return 0.;
+  double momentumOfDP = sqrt(XEv*XEv*E0*E0-MA*MA);
+  double ThetaMax=0.3;
+  double thetamax2 = ThetaMax*ThetaMax;
+  double umintilde = -XEv*E0*E0*thetamax2 - MA*MA*(1.0-XEv)/XEv - Mmu*Mmu*XEv;
+  double umaxtilde = -MA*MA*(1.0-XEv)/XEv - Mmu*Mmu*XEv;
+  double NumeratorMax = Mmu*Mmu*XEv*(-2. + 2.*XEv + XEv*XEv) - 2.*umaxtilde*(3. - 3.*XEv + XEv*XEv);
+  double DenominatorMax = 3.*XEv*umaxtilde*umaxtilde;
+  double NumeratorMin = Mmu*Mmu*XEv*(-2. + 2.*XEv + XEv*XEv) - 2.*umintilde*(3. - 3.*XEv + XEv*XEv);
+  double DenominatorMin = 3.*XEv*umintilde*umintilde;
+  double sigma = momentumOfDP*(NumeratorMax/DenominatorMax - NumeratorMin/DenominatorMin);
+  return sigma;
+}
+
+double DarkPhotons::TotalCrossSectionCalc_IWW(double E0)
+{
+  if(E0 < 2.*MA) return 0.;
+
+  gsl_integration_workspace* w1 = gsl_integration_workspace_alloc (1000);
+  double result1, error1;
+  double tmin = MA*MA*MA*MA/(4.*E0*E0);
+  double tMax = 10000;
+  double tmax = tMax;
+  if(fabs(tMax - 10000.) < 0.001) tmax = E0*E0;
+  double Xmin1=MA/E0;
+  double Xmax1 = 1. - MA*MA*MA*MA/(8.*E0*E0*E0*ANucl) - MParent/E0;
+
+  gsl_function F1;
+  BoundParms parms = { this, E0 };
+  F1.function = _DarkZDsDxMuon;
+  F1.params = &parms;
+
+  gsl_integration_qags (&F1, Xmin1, Xmax1, 0, 1e-7, 1000, w1, &result1, &error1);
+
+  double aa = 111.*pow(ZNucl,-1./3)/Mel;
+  double d = 0.164*pow(ANucl,-2./3);
+  double ta = pow(1./aa,2.);
+  double td = d;
+  double fluxAnalytical = ZNucl*ZNucl*(-((td*td*(((ta - td)*(ta + td + 2.0*tmax)*(tmax - tmin))/((ta + tmax)*(td + tmax)) + (ta + td + 2.0*tmin)*(log(ta + tmax)
+                          - log(td + tmax) - log(ta + tmin) + log(td + tmin))))/((ta-td)*(ta-td)*(ta-td))));
+  double IntDsDx = result1;
+  gsl_integration_workspace_free (w1);
+
+  double PrefactorMuonZTotCS= 2.0*epsilBench*epsilBench*alphaEW*alphaEW*alphaEW/E0;
+
+  double sigmaTot= GeVtoPb*PrefactorMuonZTotCS*fluxAnalytical*IntDsDx;
+  return sigmaTot;
+}
+
 
 
 double DarkPhotons::TotalCrossSectionCalc(double E0, bool KFactor)

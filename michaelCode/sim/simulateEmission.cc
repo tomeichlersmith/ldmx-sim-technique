@@ -8,7 +8,7 @@
 #include <iostream>
 #include <string>
 
-//./whatever A'mass ebeam randomSeed 
+//./whatever A'mass ebeam randomSeed scalefile outputfilename
 int main(int argc, char* argv[])
 {
    srand48(std::atof(argv[3]));
@@ -23,8 +23,8 @@ int main(int argc, char* argv[])
    std::string ofname = argv[5];
    double e_m = 0.1056;
    std::string fname = ofname + ".root";
-   TFile *f = new TFile(fname.c_str(),"recreate");
-   
+   std::unique_ptr<TFile> f(TFile::Open(fname.c_str(),"recreate"));
+   f->cd();
    TTree * tree = new TTree("ForwardEvents", "Tree containing fw only Lorentz Vectors from Geant");
    TLorentzVector * evec = new TLorentzVector();
    TLorentzVector * avec = new TLorentzVector();
@@ -53,7 +53,8 @@ int main(int argc, char* argv[])
       avec->SetPxPyPzE(a_x,a_y,a_z,a_E);
       tree->Fill();
    }
-
+   f->cd();
+   tree->Write("forward_only");
    TTree * cmtree = new TTree("cmEvents", "Tree containing cm scaled Lorentz Vectors from Geant");
    TLorentzVector * cmevec = new TLorentzVector();
    TLorentzVector * cmavec = new TLorentzVector();
@@ -79,8 +80,9 @@ int main(int argc, char* argv[])
       cmavec->SetPxPyPzE(a_x,a_y,a_z,a_E);
       cmtree->Fill();
    }
-
-   f->Write();
+   f->cd();
+   cmtree->Write("cm_scaling");
+//   f->Write();
    f->Close();
 
    return 0;

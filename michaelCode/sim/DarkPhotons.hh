@@ -30,6 +30,7 @@
 #include <gsl/gsl_monte_plain.h>
 #include <gsl/gsl_monte_miser.h>
 #include <gsl/gsl_monte_vegas.h>
+#include <gsl/gsl_sf_dilog.h>
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_rng.h>
 
@@ -51,6 +52,15 @@ class DarkPhotons
     void ParseLHE(std::string fname);
     void ParseROOT(std::string fname);
     void MakePlaceholders();
+    double DMG4CrossSectionCalc(double E0, int IApprox);
+    double TotalCrossSectionCalc_IWW(double E0);
+    double TotalCrossSectionCalc_WW2(double E0);
+    double TotalCrossSectionCalc_WW3(double E0);
+    double TotalCrossSectionCalc_WW(double E0);
+    double CrossSectionDSDXDPSI_WW(double XEv, double auxpsi, double E0);
+    double CrossSectionDSDXDTheta(double XEv, double ThetaEv, double E0);
+    double CrossSectionDSDX_IWW(double XEv, double E0);
+    double CrossSectionDSDX_WW(double XEv, double E0);
     double TotalCrossSectionCalc(double E0, bool KFactor=false);
     double TotalMuCrossSectionCalc(double E0);
     double MaxCrossSectionCalc(double E0);
@@ -68,6 +78,7 @@ class DarkPhotons
     TLorentzVector* SimulateEmission(double E0, std::string type);
     TLorentzVector* MuSimulateEmission(double E0, std::string type);
     double GetAccumulatedProbability() {return AccumulatedProbability;}
+    double MParent;
     frame GetMadgraphData(double E0);
 
   private:
