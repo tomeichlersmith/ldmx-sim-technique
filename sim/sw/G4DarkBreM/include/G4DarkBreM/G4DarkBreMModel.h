@@ -48,7 +48,7 @@ class G4DarkBreMModel : public G4DarkBremsstrahlungModel {
    *
    * The library path is immediately passed to SetMadGraphDataLibrary.
    */
-  G4DarkBreMModel(framework::config::Parameters& params);
+  G4DarkBreMModel(framework::config::Parameters& params, bool muons);
 
   /**
    * Destructor

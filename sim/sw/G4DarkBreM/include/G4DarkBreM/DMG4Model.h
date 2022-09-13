@@ -25,7 +25,7 @@ class DMG4Model : public G4DarkBremsstrahlungModel {
    * We pass parameters to the underlying DarkPhoton class
    * from the DMG4 library.
    */
-  DMG4Model(framework::config::Parameters& params);
+  DMG4Model(framework::config::Parameters& params, bool muons);
 
   /**
    * Destructor

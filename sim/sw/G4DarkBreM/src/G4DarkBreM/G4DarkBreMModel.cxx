@@ -7,6 +7,7 @@
 
 // Geant4
 #include "G4Electron.hh"
+#include "G4MuonMinus.hh"
 #include "G4EventManager.hh"  //for EventID number
 #include "G4PhysicalConstants.hh"
 #include "G4RunManager.hh"  //for VerboseLevel
@@ -24,9 +25,8 @@
 namespace simcore {
 namespace darkbrem {
 
-G4DarkBreMModel::G4DarkBreMModel(
-    framework::config::Parameters &params)
-    : G4DarkBremsstrahlungModel(params), method_(DarkBremMethod::Undefined) {
+G4DarkBreMModel::G4DarkBreMModel(framework::config::Parameters &params, bool muons)
+    : G4DarkBremsstrahlungModel(params, muons), method_(DarkBremMethod::Undefined) {
   method_name_ = params.getParameter<std::string>("method");
   if (method_name_ == "forward_only") {
     method_ = DarkBremMethod::ForwardOnly;
@@ -67,33 +67,36 @@ void G4DarkBreMModel::RecordConfig(ldmx::RunHeader &h) const {
 }
 
 G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
-    G4double electronKE, G4double A, G4double Z) {
+    G4double lepton_ke, G4double A, G4double Z) {
   using int_method = boost::math::quadrature::gauss_kronrod<double, 61>;
-  static const double MA =
-      G4APrime::APrime()->GetPDGMass() / CLHEP::GeV;  // mass A' in GeV
+  static const double MA = G4APrime::APrime()->GetPDGMass() / GeV;
   static const double MA2 = MA*MA;
 
-  // TODO switch depending on which is activated
-  static const double Mel = G4Electron::Electron()->GetPDGMass() /
-                            CLHEP::GeV;  // mass electron in GeV
+  static const double lepton_mass{
+    (muons_ ? G4MuonMinus::MuonMinus()->GetPDGMass() : G4Electron::Electron()->GetPDGMass()) / GeV};
+  static const double lepton_mass_sq{lepton_mass*lepton_mass};
 
-  if (electronKE < keV) return 0.;  // outside viable region for model
+  // the cross section is zero if the lepton does not have enough
+  // energy to create an A'
+  // the threshold_ can also be set by the user to a higher value
+  // to prevent dark-brem within inaccessible regions of phase
+  // space
+  if (lepton_ke < keV or lepton_ke < threshold_*GeV) return 0.;
 
-  electronKE = electronKE / CLHEP::GeV;  // Change energy to GeV.
-
-  // TODO move to first cut above
-  if (electronKE < threshold_) return 0.;  // can't produce a prime
+  lepton_ke /= GeV;  // Change energy to GeV.
+  double lepton_ke_sq = lepton_ke*lepton_ke;
 
   // tmin is used in integrand
-  double tmin = MA * MA * MA * MA / (4. * electronKE * electronKE);
+  double tmin = MA2 * MA2 / (4. * lepton_ke_sq);
 
   static auto chi_form_factor_integrand = [&](double t) {
     G4double MUp = 2.79;   // mass up quark [GeV]
     G4double Mpr = 0.938;  // mass proton [GeV]
+    static const double electron_mass{G4Electron::Electron()->GetPDGMass() / CLHEP::GeV};
   
     G4double d = 0.164 / pow(A, 2. / 3.);
-    G4double ap = 773.0 / (Mel * pow(Z, 2. / 3.));
-    G4double a = 111.0 / (Mel * pow(Z, 1. / 3.));
+    G4double ap = 773.0 / (electron_mass * pow(Z, 2. / 3.));
+    G4double a = 111.0 / (electron_mass * pow(Z, 1. / 3.));
     G4double G2el = pow(Z, 2) * pow(a, 4) * pow(t, 2) /
                     (pow(1.0 + a * a * t, 2) * pow(1.0 + t / d, 2));
     G4double G2in = Z * pow(ap, 4) * pow(t, 2) /
@@ -111,32 +114,41 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
 
   /**
    * Differential cross section with respect to x and theta
+   *
+   * Equation (16) from Appendix A of https://arxiv.org/pdf/2101.12192.pdf
    */
   static auto diff_cross = [&](double x, double theta) {
-    if (x*electronKE < threshold_) return 0.;
+    static const G4double alphaEW = 1.0 / 137.0;
+    if (x*lepton_ke < threshold_) return 0.;
 
-    double KE_sq = electronKE*electronKE;
     double theta_sq = theta*theta;
     double x_sq = x*x;
 
-    double utilde = -x*KE_sq*theta_sq - MA2*(1.-x)/x - Mel*Mel*x;
+    double utilde = -x*lepton_ke_sq*theta_sq - MA2*(1.-x)/x - lepton_mass_sq*x;
     double utilde_sq = utilde*utilde;
 
+    /**
+     * Amplitude squared is taken from 
+     * Equation (17) from Appendix A of https://arxiv.org/pdf/2101.12192.pdf
+     * with X = V
+     */
     double factor1 = 2.0*(2.0 - 2.*x + x_sq)/(1. - x);
-    double factor2 = 4.0*(MA2 + 2.0*Mel*Mel)/utilde_sq;
-    double factor3 = utilde*x + MA2*(1. - x) + Mel*Mel*x_sq;
-    double amplitude = factor1 + factor2*factor3;
+    double factor2 = 4.0*(MA2 + 2.0*lepton_mass_sq)/utilde_sq;
+    double factor3 = utilde*x + MA2*(1. - x) + lepton_mass_sq*x_sq;
+    double amplitude_sq = factor1 + factor2*factor3;
 
-    return KE_sq*sin(theta)*sqrt(x_sq - MA2 / KE_sq)*(1 - x)/utilde_sq * amplitude;
+    return 2.*pow(epsilon_,2.)*pow(alphaEW,3.)
+             *sqrt(x_sq*lepton_ke_sq - MA2)*lepton_ke*(1.-x)
+             *(form_factor/utilde_sq)*amplitude_sq*sin(theta);
   };
 
   // deduce integral bounds
   double xmin = 0;
   double xmax = 1;
-  if ((Mel / electronKE) > (MA / electronKE))
-    xmax = 1 - Mel / electronKE;
+  if ((lepton_mass / lepton_ke) > (MA / lepton_ke))
+    xmax = 1 - lepton_mass / lepton_ke;
   else
-    xmax = 1 - MA / electronKE;
+    xmax = 1 - MA / lepton_ke;
 
   /**
    * max recoil angle of A'
@@ -168,12 +180,12 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
   //std::cout << "XSec: " << integrated_xsec << " ";
 
   G4double GeVtoPb = 3.894E08;
-  G4double alphaEW = 1.0 / 137.0;
 
-  G4double cross = 4. * alphaEW * alphaEW * alphaEW * 
-                   epsilon_ * epsilon_ * 
-                   form_factor * integrated_xsec * 
-                   GeVtoPb * CLHEP::picobarn;
+  /**
+   * The integrated_xsec should be the correct value, we are just
+   * converting it to Geant4's pb units here
+   */
+  G4double cross = integrated_xsec * GeVtoPb * picobarn;
 
   if (cross < 0.) return 0.;  // safety check all the math
 

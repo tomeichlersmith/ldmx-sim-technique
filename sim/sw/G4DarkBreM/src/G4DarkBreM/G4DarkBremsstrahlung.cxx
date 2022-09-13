@@ -78,9 +78,9 @@ G4DarkBremsstrahlung::G4DarkBremsstrahlung(
   auto model{params.getParameter<framework::config::Parameters>("model")};
   auto model_name{model.getParameter<std::string>("name")};
   if (model_name == "vertex_library") {
-    model_ = std::make_shared<G4DarkBreMModel>(model);
+    model_ = std::make_shared<G4DarkBreMModel>(model, muons_);
   } else if (model_name == "dmg4") {
-    model_ = std::make_shared<DMG4Model>(model);
+    model_ = std::make_shared<DMG4Model>(model, muons_);
   } else {
     EXCEPTION_RAISE("DarkBremModel",
                     "Model named '" + model_name + "' is not known.");

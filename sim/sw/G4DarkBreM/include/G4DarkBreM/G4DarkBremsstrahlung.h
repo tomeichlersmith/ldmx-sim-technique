@@ -41,9 +41,10 @@ class G4DarkBremsstrahlungModel {
    *
    * Names the logger after the name for this model.
    */
-  G4DarkBremsstrahlungModel(const framework::config::Parameters& p) {
+  G4DarkBremsstrahlungModel(const framework::config::Parameters& p, bool muons) {
     theLog_ =
         framework::logging::makeLogger(p.getParameter<std::string>("name"));
+    muons_ = muons;
   }
 
   /// Destructor, nothing on purpose
@@ -95,7 +96,8 @@ class G4DarkBremsstrahlungModel {
  protected:
   /// The logging apparatus for this model
   framework::logging::logger theLog_;
-
+  /// whether muons (true) or electrons (false) are dark bremming
+  bool muons_;
 };  // G4DarkBremsstrahlungModel
 
 /**
