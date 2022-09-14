@@ -163,7 +163,7 @@ class ElementXsecCache {
   static const key_t MAX_A{1000};
 
   /// The maximum value for energy [MeV]
-  static const key_t MAX_E{30000};
+  static const key_t MAX_E{1500000};
 
   /**
    * Compute a key for the cache map

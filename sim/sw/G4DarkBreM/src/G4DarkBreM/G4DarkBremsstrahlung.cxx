@@ -43,7 +43,7 @@ void ElementXsecCache::stream(std::ostream& o) const {
     key_t E = key % MAX_E;
     key_t A = ((key - E) / MAX_E) % MAX_A;
     key_t Z = ((key - E) / MAX_E - A) / MAX_A;
-    o << A << "," << Z << "," << E << "," << xsec / CLHEP::picobarn << "\n";
+    o << A << "," << Z << "," << E << "," << xsec / picobarn << "\n";
   }
   o << std::endl;
 }
@@ -170,7 +170,8 @@ void G4DarkBremsstrahlung::CalculateCommonXsec() {
   };
 
   G4double current_energy = 1.0 * MeV;
-  G4double maximum_energy = 4.0 * GeV;
+  G4double maximum_energy = 100.0 * GeV;
+  if (muons_) maximum_energy *= 10;
   G4double energy_step = 1.0 * MeV;
   while (current_energy <= maximum_energy) {
     for (auto const& [A, Z] : elements)
@@ -189,7 +190,10 @@ G4double G4DarkBremsstrahlung::GetMeanFreePath(const G4Track& track, G4double,
 
   if (dynamic_cast<DMG4Model*>(model_.get())) {
     // DMG4 does not use atomic data
-    SIGMA = model_->ComputeCrossSectionPerAtom(energy,0,0);
+    if (cache_xsec_)
+      SIGMA = element_xsec_cache_.get(energy, 0, 0);
+    else
+      SIGMA = model_->ComputeCrossSectionPerAtom(energy, 0, 0);
   } else {
     G4Material* materialWeAreIn = track.GetMaterial();
     const G4ElementVector* theElementVector = materialWeAreIn->GetElementVector();
