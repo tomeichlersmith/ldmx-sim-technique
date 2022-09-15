@@ -119,17 +119,25 @@ int main(int argc, char* argv[]) try {
   //    this calculates "common" cross sections as well
   simcore::darkbrem::G4DarkBremsstrahlung db_process(process);
 
-  /*
-  std::vector<std::pair<G4double, G4double>> elements = {
-      std::make_pair(183.84, 74),  // tungsten
-      std::make_pair(28.085, 14)   // silicon
-  };
-  */
-
+  int bar_width = 80;
+  int pos = 0;
   while (current_energy <= maximum_energy) {
     db_process.getCache().get(current_energy, vm["target-A"].as<double>(), vm["target-Z"].as<int>());
     current_energy += energy_step;
+    int old_pos{pos};
+    pos = bar_width * current_energy / maximum_energy;
+    if (pos != old_pos) {
+      std::cout << "[";
+      for (int i{0}; i < bar_width; ++i) {
+        if (i < pos) std::cout << "=";
+        else if (i == pos) std::cout << ">";
+        else std::cout << " ";
+      }
+      std::cout << "] " << int(current_energy / maximum_energy * 100.0) << " %\r";
+      std::cout.flush();
+    }
   }
+  std::cout << std::endl;
 
   table_file << db_process.getCache();
 
