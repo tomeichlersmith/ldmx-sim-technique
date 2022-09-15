@@ -1,5 +1,9 @@
 
 #include "G4DarkBreM/DMG4Model.h"
+// these must come after DarkMatter.hh include because they don't include it themselves
+#include "DarkPhotons.hh"
+#include "DarkZ.hh"
+
 
 #include "Framework/Exception/Exception.h"
 #include "Framework/Logger.h"
@@ -13,8 +17,9 @@ DMG4Model::DMG4Model(framework::config::Parameters &params, bool muons)
   double apmass = G4APrime::APrime()->GetPDGMass()/CLHEP::GeV;
   epsilon_ = params.getParameter<double>("epsilon");
   // A' mass [GeV], min threshold [GeV], sigma norm, A nucl, Z nucl, density, epsilon
-  dm_model_ = std::make_unique<DarkPhotons>(apmass,2.*apmass,1.,207.,82.,8.96,epsilon_);
-  dm_model_->PrepareTable();
+  if (muons) dm_model_ = std::make_unique<DarkZ>(apmass,2.*apmass,1.,207.,82.,8.96,epsilon_);
+  else dm_model_ = std::make_unique<DarkPhotons>(apmass,2.*apmass,1.,207.,82.,8.96,epsilon_);
+  std::cout << "built" << std::endl;
 }
 
 void DMG4Model::PrintInfo() const {

@@ -35,6 +35,21 @@ int main(int argc, char* argv[]) try {
       "mass of A' in MeV")
     ("muons",
       "use muons as incident lepton rather than electrons")
+    ("min-energy",
+      boost::program_options::value<double>(),
+      "minimum energy [GeV] to start xsec calculation from (defaults to 2*ap-mass)")
+    ("max-energy",
+      boost::program_options::value<double>(),
+      "maximum energy [GeV] to calculate xsec to (defaults to 100GeV for electrons and 1000GeV for muons)")
+    ("energy-step",
+      boost::program_options::value<double>()->default_value(10.),
+      "difference between adjacent steps in energy [MeV]")
+    ("target-Z",
+      boost::program_options::value<int>()->default_value(74),
+      "Z of target nucleus")
+    ("target-A",
+      boost::program_options::value<double>()->default_value(183.84),
+      "A of target nucleus")
   ;
 
   boost::program_options::variables_map vm;
@@ -64,6 +79,7 @@ int main(int argc, char* argv[]) try {
   }
 
   double ap_mass_MeV = vm["ap-mass"].as<double>();
+  bool muons = vm.count("muons") > 0;
 
   framework::config::Parameters model;
   model.addParameter<std::string>("name", model_name);
@@ -84,13 +100,36 @@ int main(int argc, char* argv[]) try {
   process.addParameter("only_one_per_event", false);
   process.addParameter("cache_xsec", true);
   process.addParameter("global_bias", 1.);
-  process.addParameter("muons", vm.count("muons") > 0);
+  process.addParameter("muons", muons);
+  process.addParameter("calc_common",false);
+
+  G4double current_energy = 2 * ap_mass_MeV * MeV;
+  if (vm.count("min-energy")) {
+    current_energy = vm["min-energy"].as<double>() * GeV;
+  }
+  G4double maximum_energy = (muons ? 1000. : 100) * GeV;
+  if (vm.count("max-energy")) {
+    maximum_energy = vm["max-energy"].as<double>() * GeV;
+  }
+  G4double energy_step = vm["energy-step"].as<double>() * MeV;
 
   // the process accesses the A' mass from the G4 particle
   simcore::darkbrem::G4APrime::APrime(process.getParameter<double>("ap_mass"));
   // create the process to do proper initializations
   //    this calculates "common" cross sections as well
   simcore::darkbrem::G4DarkBremsstrahlung db_process(process);
+
+  /*
+  std::vector<std::pair<G4double, G4double>> elements = {
+      std::make_pair(183.84, 74),  // tungsten
+      std::make_pair(28.085, 14)   // silicon
+  };
+  */
+
+  while (current_energy <= maximum_energy) {
+    db_process.getCache().get(current_energy, vm["target-A"].as<double>(), vm["target-Z"].as<int>());
+    current_energy += energy_step;
+  }
 
   table_file << db_process.getCache();
 

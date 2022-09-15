@@ -91,7 +91,7 @@ G4DarkBremsstrahlung::G4DarkBremsstrahlung(
   if (cache_xsec_) {
     element_xsec_cache_ =
         ElementXsecCache(model_);  // remake cache with model attached
-    CalculateCommonXsec();         // calculate common cross sections
+    if (params.getParameter<bool>("calc_common", true)) CalculateCommonXsec();
   }
 }
 

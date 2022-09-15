@@ -4,9 +4,8 @@
 #include "Framework/Configure/Parameters.h"
 #include "G4DarkBreM/G4DarkBremsstrahlung.h"
 
-// DMG4 DarkPhoton Model
+// DMG4 DarkMatter Model
 #include "DarkMatter.hh"
-#include "DarkPhotons.hh"
 
 namespace simcore {
 namespace darkbrem {
