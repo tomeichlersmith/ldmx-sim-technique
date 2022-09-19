@@ -132,12 +132,12 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
   // space
   if (lepton_ke < keV or lepton_ke < threshold_*GeV) return 0.;
 
-  lepton_ke /= GeV;  // Change energy to GeV.
-  double lepton_ke_sq = lepton_ke*lepton_ke;
+  // Change energy to GeV.
+  double lepton_e = lepton_ke/GeV + lepton_mass;
+  double lepton_e_sq = lepton_e*lepton_e;
 
   double chi_no_recoil = flux_factor_chi_numerical(A,Z,
-      MA2*MA2/(4*(lepton_ke+lepton_mass)*(lepton_ke+lepton_mass)),
-      MA2);
+      MA2*MA2/(4*lepton_e_sq), MA2);
 
   /**
    * Differential cross section with respect to x and theta
@@ -146,16 +146,16 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
    */
   auto diff_cross = [&](double x, double theta) {
     static const G4double alphaEW = 1.0 / 137.0;
-    if (x*lepton_ke < threshold_) return 0.;
+    if (x*lepton_e < threshold_) return 0.;
 
     double theta_sq = theta*theta;
     double x_sq = x*x;
 
-    double utilde = -x*lepton_ke_sq*theta_sq - MA2*(1.-x)/x - lepton_mass_sq*x;
+    double utilde = -x*lepton_e_sq*theta_sq - MA2*(1.-x)/x - lepton_mass_sq*x;
     double utilde_sq = utilde*utilde;
 
-    double tmin= utilde_sq/(4.0*lepton_ke_sq*(1.0-x)*(1.0-x));
-    double tmax = lepton_ke_sq;
+    double tmin= utilde_sq/(4.0*lepton_e_sq*(1.0-x)*(1.0-x));
+    double tmax = lepton_e_sq;
 
     /**
      * Amplitude squared is taken from 
@@ -168,17 +168,17 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
     double amplitude_sq = factor1 + factor2*factor3;
 
     return 2.*pow(epsilon_,2.)*pow(alphaEW,3.)
-             *sqrt(x_sq*lepton_ke_sq - MA2)*lepton_ke*(1.-x)
+             *sqrt(x_sq*lepton_e_sq - MA2)*lepton_e*(1.-x)
              *(chi_no_recoil/utilde_sq)*amplitude_sq*sin(theta);
   };
 
   // deduce integral bounds
   double xmin = 0;
   double xmax = 1;
-  if ((lepton_mass / lepton_ke) > (MA / lepton_ke))
-    xmax = 1 - lepton_mass / lepton_ke;
+  if ((lepton_mass / lepton_e) > (MA / lepton_e))
+    xmax = 1 - lepton_mass / lepton_e;
   else
-    xmax = 1 - MA / lepton_ke;
+    xmax = 1 - MA / lepton_e;
 
   /**
    * max recoil angle of A'
