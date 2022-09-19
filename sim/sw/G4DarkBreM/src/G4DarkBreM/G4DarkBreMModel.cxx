@@ -25,6 +25,56 @@
 namespace simcore {
 namespace darkbrem {
 
+/**
+ * The integration method we will be using for our numerical integrals
+ *
+ * The Gauss-Kronrod method was chosen due to its ability to limit the
+ * number of calls to the function representing the integrand which
+ * should help improve performance for us due to the complexity of our
+ * integrand. The order of the GK method was chosen after some 
+ * experimentation, starting at a high value (61) and then lowering
+ * it to achieve better performance while checking the accuracy of
+ * the results.
+ *
+ * As explained in the [Boost GK Docs](https://www.boost.org/doc/libs/master/libs/math/doc/html/math_toolkit/gauss_kronrod.html),
+ * generally the error estimation technique for this method is
+ * overly pessimistic, so we can confidently set the maximum
+ * depth low and the desired relative error high compared
+ * to other methods. We have followed the examples in the docs
+ * where we use max_depth to 5 and relative error to 1e-9.
+ */
+using int_method = boost::math::quadrature::gauss_kronrod<double, 61>;
+
+/**
+ * numerically integrate the value of the flux factory chi
+ *
+ * The integration of the form factor into the flux factor can
+ * be done analytically with a tool like mathematica, but when
+ * including the inelastic term, it produces such a complicated 
+ * result that the numerical integration is actually *faster*
+ * than the analytical one.
+ */
+static double flux_factor_chi_numerical(G4double A, G4double Z, double tmin, double tmax) {
+  static const double mup = 2.79,
+                        mpr = 0.938,
+                        mel = 0.000511;
+  const double ael = 111.0*pow(Z,-1./3.)/mel,
+                 del = 0.164*pow(A,-2./3.),
+                 ain = 773.0*pow(Z,-2./3.)/mel,
+                 din = 0.71;
+
+  static auto integrand = [&](double t) {
+    return (pow(ael,4)*pow(t,2.)*pow(Z,2.)/
+              (pow(1+ael*ael*t,2.)*pow(1+t/del,2.))
+            +
+            pow(ain,4)*pow(t,2.)*Z *(1 + (mup*mup - 1) * t / (4*mpr*mpr)) /
+              (pow(1+ain*ain*t,2.)*pow(1+t/din,8))
+           )*(t-tmin)/pow(t,2.);
+  };
+
+  return int_method::integrate(integrand,tmin,tmax,5,1e-9);
+}
+
 G4DarkBreMModel::G4DarkBreMModel(framework::config::Parameters &params, bool muons)
     : G4DarkBremsstrahlungModel(params, muons), method_(DarkBremMethod::Undefined) {
   method_name_ = params.getParameter<std::string>("method");
@@ -68,13 +118,12 @@ void G4DarkBreMModel::RecordConfig(ldmx::RunHeader &h) const {
 
 G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
     G4double lepton_ke, G4double A, G4double Z) {
-  using int_method = boost::math::quadrature::gauss_kronrod<double, 61>;
   static const double MA = G4APrime::APrime()->GetPDGMass() / GeV;
   static const double MA2 = MA*MA;
 
-  static const double lepton_mass{
+  const double lepton_mass{
     (muons_ ? G4MuonMinus::MuonMinus()->GetPDGMass() : G4Electron::Electron()->GetPDGMass()) / GeV};
-  static const double lepton_mass_sq{lepton_mass*lepton_mass};
+  const double lepton_mass_sq{lepton_mass*lepton_mass};
 
   // the cross section is zero if the lepton does not have enough
   // energy to create an A'
@@ -86,38 +135,14 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
   lepton_ke /= GeV;  // Change energy to GeV.
   double lepton_ke_sq = lepton_ke*lepton_ke;
 
-  // tmin is used in integrand
-  double tmin = MA2 * MA2 / (4. * lepton_ke_sq);
-
-  static auto chi_form_factor_integrand = [&](double t) {
-    G4double MUp = 2.79;   // mass up quark [GeV]
-    G4double Mpr = 0.938;  // mass proton [GeV]
-    static const double electron_mass{G4Electron::Electron()->GetPDGMass() / CLHEP::GeV};
-  
-    G4double d = 0.164 / pow(A, 2. / 3.);
-    G4double ap = 773.0 / (electron_mass * pow(Z, 2. / 3.));
-    G4double a = 111.0 / (electron_mass * pow(Z, 1. / 3.));
-    G4double G2el = pow(Z, 2) * pow(a, 4) * pow(t, 2) /
-                    (pow(1.0 + a * a * t, 2) * pow(1.0 + t / d, 2));
-    G4double G2in = Z * pow(ap, 4) * pow(t, 2) /
-                    (pow(1.0 + ap * ap * t, 2) * pow(1.0 + t / 0.71, 8)) *
-                    pow(1.0 + t * (pow(MUp, 2) - 1.0) / (4.0 * pow(Mpr, 2)), 2);
-    G4double G2 = G2el + G2in;
-    G4double Under = G2 * (t - tmin) / t / t;
-    return Under;
-  };
-
-  double tmax = MA2;
-
-  double form_factor = int_method::integrate(chi_form_factor_integrand, tmin, tmax, 5, 1e-9);
-  //std::cout << "FF: " << form_factor << " ";
+  double chi_no_recoil = flux_factor_chi_numerical(A,Z,MA2*MA2/(4*lepton_ke_sq),MA2);
 
   /**
    * Differential cross section with respect to x and theta
    *
    * Equation (16) from Appendix A of https://arxiv.org/pdf/2101.12192.pdf
    */
-  static auto diff_cross = [&](double x, double theta) {
+  auto diff_cross = [&](double x, double theta) {
     static const G4double alphaEW = 1.0 / 137.0;
     if (x*lepton_ke < threshold_) return 0.;
 
@@ -126,6 +151,9 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
 
     double utilde = -x*lepton_ke_sq*theta_sq - MA2*(1.-x)/x - lepton_mass_sq*x;
     double utilde_sq = utilde*utilde;
+
+    double tmin= utilde_sq/(4.0*lepton_ke_sq*(1.0-x)*(1.0-x));
+    double tmax = lepton_ke_sq;
 
     /**
      * Amplitude squared is taken from 
@@ -139,7 +167,7 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
 
     return 2.*pow(epsilon_,2.)*pow(alphaEW,3.)
              *sqrt(x_sq*lepton_ke_sq - MA2)*lepton_ke*(1.-x)
-             *(form_factor/utilde_sq)*amplitude_sq*sin(theta);
+             *(chi_no_recoil/utilde_sq)*amplitude_sq*sin(theta);
   };
 
   // deduce integral bounds
@@ -177,7 +205,6 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
 
   double error;
   double integrated_xsec = int_method::integrate(theta_integral, xmin, xmax, 5, 1e-9, &error);
-  //std::cout << "XSec: " << integrated_xsec << " ";
 
   G4double GeVtoPb = 3.894E08;
 
