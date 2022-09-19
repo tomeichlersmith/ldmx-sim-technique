@@ -135,7 +135,9 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
   lepton_ke /= GeV;  // Change energy to GeV.
   double lepton_ke_sq = lepton_ke*lepton_ke;
 
-  double chi_no_recoil = flux_factor_chi_numerical(A,Z,MA2*MA2/(4*lepton_ke_sq),MA2);
+  double chi_no_recoil = flux_factor_chi_numerical(A,Z,
+      MA2*MA2/(4*(lepton_ke+lepton_mass)*(lepton_ke+lepton_mass)),
+      MA2);
 
   /**
    * Differential cross section with respect to x and theta
