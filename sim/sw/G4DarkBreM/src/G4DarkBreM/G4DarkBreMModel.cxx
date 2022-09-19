@@ -59,16 +59,20 @@ static double flux_factor_chi_numerical(G4double A, G4double Z, double tmin, dou
                         mpr = 0.938,
                         mel = 0.000511;
   const double ael = 111.0*pow(Z,-1./3.)/mel,
-                 del = 0.164*pow(A,-2./3.),
-                 ain = 773.0*pow(Z,-2./3.)/mel,
-                 din = 0.71;
+               del = 0.164*pow(A,-2./3.),
+               ain = 773.0*pow(Z,-2./3.)/mel,
+               din = 0.71;
 
   static auto integrand = [&](double t) {
-    return (pow(ael,4)*pow(t,2.)*pow(Z,2.)/
-              (pow(1+ael*ael*t,2.)*pow(1+t/del,2.))
+    double ael_factor = (ael*ael*t)/(1 + ael*ael*t),
+           del_factor = 1./(1+t/del),
+           ain_factor = (ain*ain*t)/(1 + ain*ain*t),
+           din_factor = 1./(1+t/din),
+           nucl = (1 + t*(mup*mup - 1))/(4*mpr*mpr);
+    
+    return (ael_factor*ael_factor*del_factor*del_factor*Z*Z
             +
-            pow(ain,4)*pow(t,2.)*Z *(1 + (mup*mup - 1) * t / (4*mpr*mpr)) /
-              (pow(1+ain*ain*t,2.)*pow(1+t/din,8))
+            ain_factor*ain_factor*pow(din_factor,8)*Z*nucl*nucl
            )*(t-tmin)/pow(t,2.);
   };
 
