@@ -53,26 +53,32 @@ using int_method = boost::math::quadrature::gauss_kronrod<double, 61>;
  * including the inelastic term, it produces such a complicated 
  * result that the numerical integration is actually *faster*
  * than the analytical one.
+ *
+ * The form factors are copied from Appendix A (Eq A18 and A19) of
+ * https://journals.aps.org/prd/pdf/10.1103/PhysRevD.80.075018
  */
 static double flux_factor_chi_numerical(G4double A, G4double Z, double tmin, double tmax) {
-  static const double mup = 2.79,
-                        mpr = 0.938,
-                        mel = 0.000511;
+  /**
+   * bin = (mu_p^2 - 1)/(4 m_pr^2)
+   * mel = mass of electron in GeV
+   */
+  static const double bin = (2.79*2.79 - 1)/(4*0.938*0.938),
+                      mel = 0.000511;
   const double ael = 111.0*pow(Z,-1./3.)/mel,
                del = 0.164*pow(A,-2./3.),
                ain = 773.0*pow(Z,-2./3.)/mel,
                din = 0.71;
 
-  static auto integrand = [&](double t) {
+  auto integrand = [&](double t) {
     double ael_factor = (ael*ael*t)/(1 + ael*ael*t),
            del_factor = 1./(1+t/del),
            ain_factor = (ain*ain*t)/(1 + ain*ain*t),
            din_factor = 1./(1+t/din),
-           nucl = (1 + t*(mup*mup - 1))/(4*mpr*mpr);
+           nucl = (1 + t*bin);
     
-    return (ael_factor*ael_factor*del_factor*del_factor*Z*Z
+    return (pow(ael_factor*del_factor*Z, 2)
             +
-            ain_factor*ain_factor*pow(din_factor,8)*Z*nucl*nucl
+            Z*pow(ain_factor*nucl*din*din*din*din, 2)
            )*(t-tmin)/pow(t,2.);
   };
 
@@ -140,8 +146,13 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
   double lepton_e = lepton_ke/GeV + lepton_mass;
   double lepton_e_sq = lepton_e*lepton_e;
 
-  double chi_no_recoil = flux_factor_chi_numerical(A,Z,
-      MA2*MA2/(4*lepton_e_sq), MA2);
+  /**
+   * IWW
+   *
+   * assume theta = 0, and x = 1 for form factor integration
+   * i.e. now chi is a constant pulled out of the integration
+  double chi = flux_factor_chi_numerical(A,Z,MA2*MA2/(4*lepton_e_sq),MA2+lepton_mass_sq);
+   */
 
   /**
    * Differential cross section with respect to x and theta
@@ -158,8 +169,32 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
     double utilde = -x*lepton_e_sq*theta_sq - MA2*(1.-x)/x - lepton_mass_sq*x;
     double utilde_sq = utilde*utilde;
 
-    double tmin= utilde_sq/(4.0*lepton_e_sq*(1.0-x)*(1.0-x));
-    double tmax = lepton_e_sq;
+    /**
+     * WW
+     *
+     * keep form factor integration limits dependent on x and theta
+     */
+    // non-zero theta and non-zero m_l
+    double tmin = utilde_sq/(4.0*lepton_e_sq*(1.0-x)*(1.0-x));
+    // zero theta
+    //double tmin = pow((MA2*(1-x)/x-lepton_mass_sq*x),2)/(4*lepton_e_sq*(1-x)*(1-x));
+    // zero theta and zero lepton mass
+    //double tmin = MA2*MA2/(4*lepton_e_sq*x_sq);
+
+    // maximum t is the incident energy ?
+    //double tmax = lepton_e_sq;
+    // maximum t is all energy goes to A' ?
+    //double tmax = lepton_e_sq*x_sq;
+    // maximum  is the A' mass ?
+    //double tmax = MA2;
+    // maximum is the outgoing masses summed in quadrature ?
+    double tmax = MA2 + lepton_mass_sq;
+
+    // require 0 < tmin < tmax to procede
+    if (tmin < 0) return 0.;
+    if (tmax < tmin) return 0.;
+
+    double chi = flux_factor_chi_numerical(A,Z, tmin, tmax);
 
     /**
      * Amplitude squared is taken from 
@@ -173,7 +208,7 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
 
     return 2.*pow(epsilon_,2.)*pow(alphaEW,3.)
              *sqrt(x_sq*lepton_e_sq - MA2)*lepton_e*(1.-x)
-             *(chi_no_recoil/utilde_sq)*amplitude_sq*sin(theta);
+             *(chi/utilde_sq)*amplitude_sq*sin(theta);
   };
 
   // deduce integral bounds

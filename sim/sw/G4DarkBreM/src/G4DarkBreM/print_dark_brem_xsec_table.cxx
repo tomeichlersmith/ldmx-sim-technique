@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) try {
 
   int bar_width = 80;
   int pos = 0;
-  while (current_energy <= max_energy) {
+  while (current_energy < max_energy + energy_step) {
     db_process.getCache().get(current_energy, target_A, target_Z);
     current_energy += energy_step;
     int old_pos{pos};
