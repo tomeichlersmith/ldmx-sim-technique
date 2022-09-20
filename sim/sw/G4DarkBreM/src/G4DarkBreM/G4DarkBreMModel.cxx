@@ -85,6 +85,23 @@ static double flux_factor_chi_numerical(G4double A, G4double Z, double tmin, dou
   return int_method::integrate(integrand,tmin,tmax,5,1e-9);
 }
 
+/**
+ * analytic flux factor chi integrated and simplified by DMG4 authors
+ *
+ * This only includes the elastic form factor term
+ */
+static double flux_factor_chi_analytic(G4double A, G4double Z, double tmin, double tmax) {
+  static const double mel = 0.000511;
+  const double a_el = 111.*pow(Z,-1./3)/mel,
+               d_el = 0.164*pow(A,-2./3);
+  double ta = 1.0/(a_el*a_el);
+  double td = d_el;
+  return -Z*Z*((td*td*(
+              ((ta - td)*(ta + td + 2.0*tmax)*(tmax - tmin))/((ta + tmax)*(td + tmax)) 
+              + (ta + td + 2.0*tmin)*(log(ta + tmax) - log(td + tmax) - log(ta + tmin) + log(td + tmin))
+             ))/((ta-td)*(ta-td)*(ta-td)));
+}
+
 G4DarkBreMModel::G4DarkBreMModel(framework::config::Parameters &params, bool muons)
     : G4DarkBremsstrahlungModel(params, muons), method_(DarkBremMethod::Undefined) {
   method_name_ = params.getParameter<std::string>("method");
@@ -182,19 +199,23 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
     //double tmin = MA2*MA2/(4*lepton_e_sq*x_sq);
 
     // maximum t is the incident energy ?
-    //double tmax = lepton_e_sq;
-    // maximum t is all energy goes to A' ?
-    //double tmax = lepton_e_sq*x_sq;
-    // maximum  is the A' mass ?
-    //double tmax = MA2;
-    // maximum is the outgoing masses summed in quadrature ?
-    double tmax = MA2 + lepton_mass_sq;
+    double tmax = lepton_e_sq;
 
     // require 0 < tmin < tmax to procede
     if (tmin < 0) return 0.;
     if (tmax < tmin) return 0.;
 
+    /**
+     * numerically integrate to calculate chi ourselves
+     * this _has not_ been well defined probably due to the extreme values of t
+     * that must be handled
     double chi = flux_factor_chi_numerical(A,Z, tmin, tmax);
+     */
+
+    /**
+     * use analytic elastic-only chi derived for DMG4
+     */
+    double chi = flux_factor_chi_analytic(A,Z,tmin,tmax);
 
     /**
      * Amplitude squared is taken from 
@@ -222,9 +243,11 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
   /**
    * max recoil angle of A'
    *
-   * DMG4 hard-codes this to 0.3 for some reason???
-   * not sure if this is just a cutoff since the wide angle A'
-   * is negligible or if this is theoretically motivated
+   * The wide angle A' are produced at a negligible rate
+   * so we enforce a hard-coded cut-off to stay within
+   * the small-angle regime.
+   *
+   * We choose the same cutoff as DMG4.
    */
   double theta_max{0.3};
 
