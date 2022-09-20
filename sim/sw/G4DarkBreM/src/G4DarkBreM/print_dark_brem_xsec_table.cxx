@@ -14,6 +14,12 @@
 #include "G4DarkBreM/G4DarkBremsstrahlung.h"
 #include "G4DarkBreM/G4APrime.h"
 
+template<typename T>
+const T& get(boost::program_options::variables_map& vm, const std::string& name, const T& def) {
+  if (vm.count(name)) return vm[name].as<T>();
+  else return def;
+}
+
 /**
  * The executable main for printing out the table.
  */
@@ -31,8 +37,8 @@ int main(int argc, char* argv[]) try {
       boost::program_options::value<std::string>()->default_value("g4db"), 
       "model to use for calculating")
     ("ap-mass",
-      boost::program_options::value<double>()->default_value(100.),
-      "mass of A' in MeV")
+      boost::program_options::value<double>(),
+      "mass of A' in MeV (defaults to 100 for electrons and 200 for muons)")
     ("muons",
       "use muons as incident lepton rather than electrons")
     ("min-energy",
@@ -42,14 +48,14 @@ int main(int argc, char* argv[]) try {
       boost::program_options::value<double>(),
       "maximum energy [GeV] to calculate xsec to (defaults to 100GeV for electrons and 1000GeV for muons)")
     ("energy-step",
-      boost::program_options::value<double>()->default_value(10.),
+      boost::program_options::value<double>()->default_value(1000.),
       "difference between adjacent steps in energy [MeV]")
     ("target-Z",
-      boost::program_options::value<int>()->default_value(74),
-      "Z of target nucleus")
+      boost::program_options::value<int>(),
+      "Z of target nucleus (defaults to 74 for electrons and 29 for muons)")
     ("target-A",
-      boost::program_options::value<double>()->default_value(183.84),
-      "A of target nucleus")
+      boost::program_options::value<double>(),
+      "A of target nucleus (defaults to 183.84 for electrons and 64.0 for muons)")
   ;
 
   boost::program_options::variables_map vm;
@@ -78,8 +84,22 @@ int main(int argc, char* argv[]) try {
     return 2;
   }
 
-  double ap_mass_MeV = vm["ap-mass"].as<double>();
   bool muons = vm.count("muons") > 0;
+
+  G4double ap_mass, max_energy;
+  double target_A;
+  int target_Z;
+  if (muons) {
+    ap_mass     = get(vm, "ap-mass"   , 200. ) * MeV;
+    max_energy  = get(vm, "max-energy", 1000.) * GeV;
+    target_Z    = get(vm, "target-Z"  , 29   );
+    target_A    = get(vm, "target-A"  , 64.0 );
+  } else {
+    ap_mass     = get(vm, "ap-mass"   , 100.   ) * MeV;
+    max_energy  = get(vm, "max-energy", 100.   ) * GeV;
+    target_Z    = get(vm, "target-Z"  , 74     );
+    target_A    = get(vm, "target-A"  , 183.84 );
+  }
 
   framework::config::Parameters model;
   model.addParameter<std::string>("name", model_name);
@@ -95,7 +115,7 @@ int main(int argc, char* argv[]) try {
 
   framework::config::Parameters process;
   process.addParameter("model", model);
-  process.addParameter("ap_mass", ap_mass_MeV);
+  process.addParameter("ap_mass", ap_mass/MeV);
   process.addParameter("enable", true);
   process.addParameter("only_one_per_event", false);
   process.addParameter("cache_xsec", true);
@@ -103,14 +123,7 @@ int main(int argc, char* argv[]) try {
   process.addParameter("muons", muons);
   process.addParameter("calc_common",false);
 
-  G4double current_energy = 2 * ap_mass_MeV * MeV;
-  if (vm.count("min-energy")) {
-    current_energy = vm["min-energy"].as<double>() * GeV;
-  }
-  G4double maximum_energy = (muons ? 1000. : 100) * GeV;
-  if (vm.count("max-energy")) {
-    maximum_energy = vm["max-energy"].as<double>() * GeV;
-  }
+  G4double current_energy = get(vm, "min-energy", 2 * ap_mass / GeV) * GeV;
   G4double energy_step = vm["energy-step"].as<double>() * MeV;
 
   // the process accesses the A' mass from the G4 particle
@@ -121,11 +134,11 @@ int main(int argc, char* argv[]) try {
 
   int bar_width = 80;
   int pos = 0;
-  while (current_energy <= maximum_energy) {
-    db_process.getCache().get(current_energy, vm["target-A"].as<double>(), vm["target-Z"].as<int>());
+  while (current_energy <= max_energy) {
+    db_process.getCache().get(current_energy, target_A, target_Z);
     current_energy += energy_step;
     int old_pos{pos};
-    pos = bar_width * current_energy / maximum_energy;
+    pos = bar_width * current_energy / max_energy;
     if (pos != old_pos) {
       std::cout << "[";
       for (int i{0}; i < bar_width; ++i) {
@@ -133,7 +146,7 @@ int main(int argc, char* argv[]) try {
         else if (i == pos) std::cout << ">";
         else std::cout << " ";
       }
-      std::cout << "] " << int(current_energy / maximum_energy * 100.0) << " %\r";
+      std::cout << "] " << int(current_energy / max_energy * 100.0) << " %\r";
       std::cout.flush();
     }
   }
