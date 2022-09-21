@@ -168,8 +168,8 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
    *
    * assume theta = 0, and x = 1 for form factor integration
    * i.e. now chi is a constant pulled out of the integration
-  double chi = flux_factor_chi_numerical(A,Z,MA2*MA2/(4*lepton_e_sq),MA2+lepton_mass_sq);
    */
+  double chi = flux_factor_chi_numerical(A,Z,MA2*MA2/(4*lepton_e_sq),MA2+lepton_mass_sq);
 
   /**
    * Differential cross section with respect to x and theta
@@ -186,36 +186,39 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
     double utilde = -x*lepton_e_sq*theta_sq - MA2*(1.-x)/x - lepton_mass_sq*x;
     double utilde_sq = utilde*utilde;
 
-    /**
-     * WW
-     *
-     * keep form factor integration limits dependent on x and theta
-     */
-    // non-zero theta and non-zero m_l
-    double tmin = utilde_sq/(4.0*lepton_e_sq*(1.0-x)*(1.0-x));
-    // zero theta
-    //double tmin = pow((MA2*(1-x)/x-lepton_mass_sq*x),2)/(4*lepton_e_sq*(1-x)*(1-x));
-    // zero theta and zero lepton mass
-    //double tmin = MA2*MA2/(4*lepton_e_sq*x_sq);
-
-    // maximum t is the incident energy ?
-    double tmax = lepton_e_sq;
-
-    // require 0 < tmin < tmax to procede
-    if (tmin < 0) return 0.;
-    if (tmax < tmin) return 0.;
-
-    /**
-     * numerically integrate to calculate chi ourselves
-     * this _has not_ been well defined probably due to the extreme values of t
-     * that must be handled
-    double chi = flux_factor_chi_numerical(A,Z, tmin, tmax);
-     */
-
-    /**
-     * use analytic elastic-only chi derived for DMG4
-     */
-    double chi = flux_factor_chi_analytic(A,Z,tmin,tmax);
+    if (muons_) {
+      /**
+       * WW
+       *
+       * Since muons are so much more massive than electrons, the
+       * keep form factor integration limits dependent on x and theta
+       */
+      // non-zero theta and non-zero m_l
+      double tmin = utilde_sq/(4.0*lepton_e_sq*(1.0-x)*(1.0-x));
+      // zero theta
+      //double tmin = pow((MA2*(1-x)/x-lepton_mass_sq*x),2)/(4*lepton_e_sq*(1-x)*(1-x));
+      // zero theta and zero lepton mass
+      //double tmin = MA2*MA2/(4*lepton_e_sq*x_sq);
+  
+      // maximum t is the incident energy ?
+      double tmax = lepton_e_sq;
+  
+      // require 0 < tmin < tmax to procede
+      if (tmin < 0) return 0.;
+      if (tmax < tmin) return 0.;
+  
+      /**
+       * numerically integrate to calculate chi ourselves
+       * this _has not_ been well defined probably due to the extreme values of t
+       * that must be handled
+      double chi = flux_factor_chi_numerical(A,Z, tmin, tmax);
+       */
+  
+      /**
+       * use analytic elastic-only chi derived for DMG4
+       */
+      chi = flux_factor_chi_analytic(A,Z,tmin,tmax);
+    }
 
     /**
      * Amplitude squared is taken from 
