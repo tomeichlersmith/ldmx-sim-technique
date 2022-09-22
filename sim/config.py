@@ -141,18 +141,13 @@ else :
 
 sim.dark_brem.activate( ap_mass , db_model , muons = (primary.particle == 'mu-'))
 sim.dark_brem.only_one_per_event = True
+sim.dark_brem.calc_common = False
 
 #Biasing dark brem up inside of the ecal volumes
-from math import log10
-#need a higher power for the higher mass A'
-mass_power = max(log10(sim.dark_brem.ap_mass),2.)
-if particle == 'muon' :
-    mass_power = 1
-
 from LDMX.SimCore import bias_operators
 sim.biasing_operators = [ 
         bias_operators.DarkBrem('hunk',True,
-          sim.dark_brem.ap_mass**mass_power / db_model.epsilon**2,
+          sim.dark_brem.ap_mass**2 / db_model.epsilon**2,
           particle = primary.particle)
         ]
 
