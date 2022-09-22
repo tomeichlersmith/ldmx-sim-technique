@@ -110,7 +110,10 @@ int main(int argc, char* argv[]) try {
     model.addParameter("threshold", 0.0);
     model.addParameter("load_library", false);
   } else {
-    // no other DMG4 parameters at the moment
+    // DMG4 requires target-material at construction time
+    model.addParameter("density", 11.35);
+    model.addParameter("targetA", target_A);
+    model.addParameter<double>("targetZ", target_Z);
   }
 
   framework::config::Parameters process;

@@ -62,6 +62,22 @@ class DMG4(DarkBremModel) :
     def __init__(self) :
         super().__init__('dmg4')
         self.epsilon      = 0.01
+        self.tungsten_target()
+
+    def tungsten_target(self) :
+        self.targetA = 183.84
+        self.targetZ = 74.0
+        self.density = 19.30
+
+    def lead_target(self) :
+        self.targetA = 207.2
+        self.targetZ = 82.0
+        self.density = 11.35
+
+    def copper_target(self) :
+        self.targetA = 63.546
+        self.targetZ = 29.0
+        self.density = 8.960
 
 class DarkBrem:
     """Storage for parameters of dark brem process

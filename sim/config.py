@@ -138,6 +138,12 @@ if arg.method == 'g4db' :
 else :
     db_model = dark_brem.DMG4()
     db_model.epsilon = 0.0001 # default in DMG4
+    if material == 'tungsten' :
+        db_model.tungsten_target()
+    elif material == 'lead' :
+        db_model.lead_target()
+    elif materal == 'brass' :
+        db_model.copper_target()
 
 sim.dark_brem.activate( ap_mass , db_model , muons = (primary.particle == 'mu-'))
 sim.dark_brem.only_one_per_event = True

@@ -20,8 +20,11 @@ DMG4Model::DMG4Model(framework::config::Parameters &params, bool muons)
   //    use tungsten for electrons and copper for muons
   //    since that is the material hunk we will be testing this in
   //    could have the nuclear properties be passed as parameters?
-  if (muons) dm_model_ = std::make_unique<DarkZ>(apmass,2.*apmass,1.,64.,29.,8.96,epsilon_);
-  else dm_model_ = std::make_unique<DarkPhotons>(apmass,2.*apmass,1.,183.84,82.,19.30,epsilon_);
+  double A{params.getParameter<double>("targetA")},
+         Z{params.getParameter<double>("targetZ")},
+         density{params.getParameter<double>("density")};
+  if (muons) dm_model_ = std::make_unique<DarkZ>(apmass,2.*apmass,1.,A,Z,density,epsilon_);
+  else dm_model_ = std::make_unique<DarkPhotons>(apmass,2.*apmass,1.,A,Z,density,epsilon_);
 }
 
 void DMG4Model::PrintInfo() const {
