@@ -17,9 +17,11 @@ DMG4Model::DMG4Model(framework::config::Parameters &params, bool muons)
   double apmass = G4APrime::APrime()->GetPDGMass()/CLHEP::GeV;
   epsilon_ = params.getParameter<double>("epsilon");
   // A' mass [GeV], min threshold [GeV], sigma norm, A nucl, Z nucl, density, epsilon
-  if (muons) dm_model_ = std::make_unique<DarkZ>(apmass,2.*apmass,1.,207.,82.,8.96,epsilon_);
-  else dm_model_ = std::make_unique<DarkPhotons>(apmass,2.*apmass,1.,207.,82.,8.96,epsilon_);
-  std::cout << "built" << std::endl;
+  //    use tungsten for electrons and copper for muons
+  //    since that is the material hunk we will be testing this in
+  //    could have the nuclear properties be passed as parameters?
+  if (muons) dm_model_ = std::make_unique<DarkZ>(apmass,2.*apmass,1.,64.,29.,8.96,epsilon_);
+  else dm_model_ = std::make_unique<DarkPhotons>(apmass,2.*apmass,1.,183.84,82.,19.30,epsilon_);
 }
 
 void DMG4Model::PrintInfo() const {
@@ -37,7 +39,12 @@ G4double DMG4Model::ComputeCrossSectionPerAtom(
     G4double electronKE, G4double A, G4double Z) {
   electronKE /= GeV; //DMG4 uses GeV internally
   if (electronKE < dm_model_->GetEThresh()) return 0.;  // outside viable region for model
-  return dm_model_->TotalCrossSectionCalc(electronKE) * picobarn;
+  // DMG4 for some god-foresaken reason uses epsilBench instead of epsil in its
+  // xsec calculations - epsilBench is hardcoded to a value of 0.0001 inside of
+  // the DarkMatter constructor, here we convert epsilBench to the epsil we are using
+  return dm_model_->TotalCrossSectionCalc(electronKE) 
+    * pow(dm_model_->Getepsil()*dm_model_->Getepsil()/0.0001, 2)
+    * picobarn;
 }
 
 /**
