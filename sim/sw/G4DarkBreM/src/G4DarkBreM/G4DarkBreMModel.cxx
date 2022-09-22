@@ -147,6 +147,7 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
     G4double lepton_ke, G4double A, G4double Z) {
   static const double MA = G4APrime::APrime()->GetPDGMass() / GeV;
   static const double MA2 = MA*MA;
+  static const double alphaEW = 1.0 / 137.0;
 
   const double lepton_mass{
     (muons_ ? G4MuonMinus::MuonMinus()->GetPDGMass() : G4Electron::Electron()->GetPDGMass()) / GeV};
@@ -177,7 +178,6 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
    * Equation (16) from Appendix A of https://arxiv.org/pdf/2101.12192.pdf
    */
   auto diff_cross = [&](double x, double theta) {
-    static const G4double alphaEW = 1.0 / 137.0;
     if (x*lepton_e < threshold_) return 0.;
 
     double theta_sq = theta*theta;
@@ -263,11 +263,19 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
    * procedure going through the possible x.
    */
   auto theta_integral = [&](double x) {
-    auto theta_integrand = [&](double theta) {
-      return diff_cross(x, theta);
-    };
-    // integrand, min, max, max_depth, tolerance, error, pL1
-    return int_method::integrate(theta_integrand, 0., theta_max, 5, 1e-9);
+    if (muons_) {
+      auto theta_integrand = [&](double theta) {
+        return diff_cross(x, theta);
+      };
+      // integrand, min, max, max_depth, tolerance, error, pL1
+      return int_method::integrate(theta_integrand, 0., theta_max, 5, 1e-9);
+    } else {
+      if (x*lepton_e < threshold_) return 0.;
+      double beta = sqrt(1 - MA2/lepton_e_sq),
+             nume = 1. - x + x*x/3.,
+             deno = MA2*(1-x)/x + lepton_mass_sq;
+      return 4*pow(epsilon_,2)*pow(alphaEW,3)*chi*beta*nume/deno;
+    }
   };
 
   double error;
