@@ -187,32 +187,23 @@ G4double G4DarkBremsstrahlung::GetMeanFreePath(const G4Track& track, G4double,
 
   G4double energy = track.GetDynamicParticle()->GetKineticEnergy();
   G4double SIGMA = 0;
-
-  if (dynamic_cast<DMG4Model*>(model_.get())) {
-    // DMG4 does not use atomic data
+  G4Material* materialWeAreIn = track.GetMaterial();
+  const G4ElementVector* theElementVector = materialWeAreIn->GetElementVector();
+  const G4double* NbOfAtomsPerVolume = materialWeAreIn->GetVecNbOfAtomsPerVolume();
+  
+  for (size_t i = 0; i < materialWeAreIn->GetNumberOfElements(); i++) {
+    G4double AtomicZ = (*theElementVector)[i]->GetZ();
+    G4double AtomicA = (*theElementVector)[i]->GetA() / (g / mole);
+  
+    G4double element_xsec;
+  
     if (cache_xsec_)
-      SIGMA = element_xsec_cache_.get(energy, 0, 0);
+      element_xsec = element_xsec_cache_.get(energy, AtomicA, AtomicZ);
     else
-      SIGMA = model_->ComputeCrossSectionPerAtom(energy, 0, 0);
-  } else {
-    G4Material* materialWeAreIn = track.GetMaterial();
-    const G4ElementVector* theElementVector = materialWeAreIn->GetElementVector();
-    const G4double* NbOfAtomsPerVolume = materialWeAreIn->GetVecNbOfAtomsPerVolume();
+      element_xsec =
+          model_->ComputeCrossSectionPerAtom(energy, AtomicA, AtomicZ);
   
-    for (size_t i = 0; i < materialWeAreIn->GetNumberOfElements(); i++) {
-      G4double AtomicZ = (*theElementVector)[i]->GetZ();
-      G4double AtomicA = (*theElementVector)[i]->GetA() / (g / mole);
-  
-      G4double element_xsec;
-  
-      if (cache_xsec_)
-        element_xsec = element_xsec_cache_.get(energy, AtomicA, AtomicZ);
-      else
-        element_xsec =
-            model_->ComputeCrossSectionPerAtom(energy, AtomicA, AtomicZ);
-  
-      SIGMA += NbOfAtomsPerVolume[i] * element_xsec;
-    }
+    SIGMA += NbOfAtomsPerVolume[i] * element_xsec;
   }
   SIGMA *= global_bias_;
   /*
