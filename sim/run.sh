@@ -5,19 +5,17 @@
 __usage__() {
   cat <<HELP
  USAGE:
-  ldmx run.sh [-o OUT_DIR]
+  ./sim/run.sh [-o OUT_DIR]
 
  OPTIONS:
   -o    : Base output directory for data files (default: 'data/<git describe --tags>')
 
- We do two simulations at once (MGS and DMG4) and then we loop over the combinations
- of thicknesses and incident particles.
+ We do two simulations at once (G4DB and DMG4) and then we loop over the combinations
+ of thicknesses and incident particles. The multiple jobs are written to a job listing
+ file in the output directory and then "submitted" to parallel via the ldmx_parallel.sh
+ script.
 
 HELP
-}
-
-__status__() {
-  printf "%5s %9s %s\n" "$1" "$2" "$(date)"
 }
 
 __main__() {
@@ -53,74 +51,57 @@ __main__() {
   local _elec_thick=18
   local _muon_thick=2000
   
-  __status__ thick targets
-
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thick} \
-    g4db \
-    ${LDMX_BASE}/dblib/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/ \
-    &>> ${_output_dir}/g4db_muon_thick.log &
+  echo "--out_dir ${_output_dir} --depth ${_elec_thick} g4db" \
+    "${LDMX_BASE}/dblib/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/" \
+    "&>> ${_output_dir}/g4db_electron_thick.log"
   
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thick} \
-    dmg4 -m brass --particle muon --primary_energy 100. --ap_mass 1000 1 \
-    &>> ${_output_dir}/dmg4_muon_thick.log &
+  echo "--out_dir ${_output_dir} --depth ${_elec_thick}" \
+    "dmg4 -m tungsten "--particle electron --primary_energy 4. --ap_mass 100 1" \
+    "&>> ${_output_dir}/dmg4_electron_thick.log"
 
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thick} \
-    g4db \
-    ${LDMX_BASE}/dblib/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/ \
-    &>> ${_output_dir}/g4db_electron_thick.log &
+  echo "--out_dir ${_output_dir} --depth ${_elec_thin} g4db" \
+    "${LDMX_BASE}/dblib/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/" \
+    "&>> ${_output_dir}/g4db_electron_thin.log"
   
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thick} \
-    dmg4 -m tungsten --particle electron --primary_energy 4. --ap_mass 100 1 \
-    &>> ${_output_dir}/dmg4_electron_thick.log &
+  echo "--out_dir ${_output_dir} --depth ${_elec_thin}" \
+    "dmg4 -m tungsten "--particle electron --primary_energy 4. --ap_mass 100 1" \
+    "&>> ${_output_dir}/dmg4_electron_thin.log"
 
-  wait
-  __status__ thin targets
-
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thin} \
-    g4db \
-    ${LDMX_BASE}/dblib/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/ \
-    &>> ${_output_dir}/g4db_muon_thin.log &
+  echo "--out_dir ${_output_dir} --depth ${_muon_thin} g4db" \
+    "${LDMX_BASE}/dblib/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/" \
+    "&>> ${_output_dir}/g4db_muon_thin.log"
   
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_muon_thin} \
-    dmg4 -m brass --particle muon --primary_energy 100. --ap_mass 1000 1 \
-    &>> ${_output_dir}/dmg4_muon_thin.log &
+  echo "--out_dir ${_output_dir} --depth ${_muon_thin}" \
+    "dmg4 -m brass "--particle muon --primary_energy 100. --ap_mass 1000 1" \
+    "&>> ${_output_dir}/dmg4_muon_thin.log"
 
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thin} \
-    g4db \
-    ${LDMX_BASE}/dblib/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/ \
-    &>> ${_output_dir}/g4db_electron_thin.log &
+  echo "--out_dir ${_output_dir} --depth ${_muon_thick} g4db" \
+    "${LDMX_BASE}/dblib/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/" \
+    "&>> ${_output_dir}/g4db_muon_thick.log"
   
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thin} \
-    dmg4 -m tungsten --particle electron --primary_energy 4. --ap_mass 100 1 \
-    &>> ${_output_dir}/dmg4_electron_thin.log &
-
-  wait
-  __status__ electron lead
+  echo "--out_dir ${_output_dir} --depth ${_muon_thick}" \
+    "dmg4 -m brass "--particle muon --primary_energy 100. --ap_mass 1000 1" \
+    "&>> ${_output_dir}/dmg4_muon_thick.log"
 
   _elec_thin=1.
 
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thin} \
-    g4db \
-    ${LDMX_BASE}/dblib/electron_lead_MaxE_100.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/ \
-    &>> ${_output_dir}/g4db_electron_100GeV_lead_thin.log &
+  echo "--out_dir ${_output_dir} --depth ${_elec_thin} g4db" \
+    "${LDMX_BASE}/dblib/electron_lead_MaxE_100.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/" \
+    "&>> ${_output_dir}/g4db_electron_100GeV_lead_thin.log"
   
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thin} \
-    dmg4 -m lead --particle electron --primary_energy 100. --ap_mass 100 1 \
-    &>> ${_output_dir}/dmg4_electron_100GeV_lead_thin.log &
+  echo "--out_dir ${_output_dir} --depth ${_elec_thin}" \
+    "dmg4 -m lead --particle electron --primary_energy 100. --ap_mass 100 1" \
+    "&>> ${_output_dir}/dmg4_electron_100GeV_lead_thin.log"
 
   _elec_thin=0.035
 
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thin} \
-    g4db \
-    ${LDMX_BASE}/dblib/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/ \
-    &>> ${_output_dir}/g4db_electron_extra_thin.log &
+  echo "--out_dir ${_output_dir} --depth ${_elec_thin} g4db" \
+    "${LDMX_BASE}/dblib/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/" \
+    "&>> ${_output_dir}/g4db_electron_extra_thin.log"
   
-  fire ${LDMX_BASE}/sim/config.py --out_dir ${_output_dir} --depth ${_elec_thin} \
-    dmg4 -m tungsten --particle electron --primary_energy 4. --ap_mass 100 1 \
-    &>> ${_output_dir}/dmg4_electron_extra_thin.log &
-
-  wait
-  __status__ done
+  echo "--out_dir ${_output_dir} --depth ${_elec_thin}" \
+    "dmg4 -m tungsten --particle electron --primary_energy 4. --ap_mass 100 1" \
+    "&>> ${_output_dir}/dmg4_electron_extra_thin.log"
 }
 
-__main__ $@
+__main__ $@ | ./sim/ldmx_parallel.sh
