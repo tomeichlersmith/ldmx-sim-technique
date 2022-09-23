@@ -137,6 +137,7 @@ int main(int argc, char* argv[]) try {
 
   int bar_width = 80;
   int pos = 0;
+  bool is_redirected = (isatty(STDOUT_FILENO) == 0);
   while (current_energy < max_energy + energy_step) {
     db_process.getCache().get(current_energy, target_A, target_Z);
     current_energy += energy_step;
@@ -149,7 +150,9 @@ int main(int argc, char* argv[]) try {
         else if (i == pos) std::cout << ">";
         else std::cout << " ";
       }
-      std::cout << "] " << int(current_energy / max_energy * 100.0) << " %\r";
+      std::cout << "] " << int(current_energy / max_energy * 100.0) << " %";
+      if (is_redirected) std::cout << "\n";
+      else std::cout << "\r";
       std::cout.flush();
     }
   }
