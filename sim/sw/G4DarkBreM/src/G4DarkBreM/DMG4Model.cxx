@@ -46,7 +46,7 @@ G4double DMG4Model::ComputeCrossSectionPerAtom(
   // DMG4 for some god-foresaken reason uses epsilBench instead of epsil in its
   // xsec calculations - epsilBench is hardcoded to a value of 0.0001 inside of
   // the DarkMatter constructor, here we convert epsilBench to the epsil we are using
-  return dm_model_->TotalCrossSectionCalc(electronKE) 
+  return dm_model_->GetSigmaTot(electronKE) 
     * pow(epsilon_/0.0001, 2) * picobarn;
 }
 

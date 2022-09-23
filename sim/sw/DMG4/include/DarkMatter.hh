@@ -100,12 +100,12 @@ class DarkMatter
     int ISampler; // if use a special sampler to simulate X, angle
 
     int nptable;
-    double ep[16];
-    double sigmap[16];
-    double sigmax[16];
-    double sigmaxa[16];
-    double sigmaxpsi[16];
-    double sigmaxtheta[16];
+    double ep[19];
+    double sigmap[19];
+    double sigmax[19];
+    double sigmaxa[19];
+    double sigmaxpsi[19];
+    double sigmaxtheta[19];
 
     double AccumulatedProbability;
 
