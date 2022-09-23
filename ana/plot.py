@@ -16,7 +16,9 @@ if shutil.which('dvipng') is not None :
 
 import uproot
 import numpy as np
+import pandas as pd
 import dark_brem_lhe
+import scipy
 
 mu_beam = 100105.658372 #MeV
 el_beam = 4000.510999 #MeV
@@ -240,6 +242,40 @@ def side_by_side_no_share(data_packet, kinematic_variable, xlabel, file_name,
     mu_ax.legend(title = '$m_{A\'}=1$ GeV', **legend_kwargs)
     
     plt.savefig(file_name)
+
+def xsec_plot(mg, others, title = None, ratio = True) :
+    fig, (raw, ratio) = plt.subplots(ncols=1,nrows=2,sharex='col', 
+                                     gridspec_kw = {'height_ratios' : [3,1]})
+    plt.subplots_adjust(hspace=0.)
+
+    raw.set_title(title)
+    raw.plot(mg['Energy [GeV]'], mg['Xsec [pb]'], label='MG')
+    ratio.plot(mg['Energy [GeV]'], [1. for i in range(len(mg['Energy [GeV]']))])
+    for name, data in others :
+        x = data['Energy [MeV]']/1000.
+        y = data['Xsec [pb]']
+        raw.plot(x, y, label=name)
+        data_interp = scipy.interpolate.interp1d(x, y)
+        data_at_mge = [data_interp(e) for e in mg['Energy [GeV]']]
+        ratio.plot(mg['Energy [GeV]'], data_at_mge/mg['Xsec [pb]'])
+
+    raw.set_ylabel('Total Cross Section [pb]')
+    raw.legend()
+
+    ratio.set_ylabel('Ratio to MG')
+    ratio.set_xlabel('Incident Lepton Energy [GeV]')
+    ratio.axhline((127/137)**3, color='gray')
+
+def average_mg(all_samples) :
+    """
+    average the samples at each energy taking care to drop samples with less than 2/3 of the max
+
+    this limit is just arbitrarily chosen to cut out outlier points that were seen 
+    when plotting all samples as a scatter plot
+    """
+
+    return pd.read_csv(all_samples).groupby('Energy [GeV]').apply(lambda s : s[s > s.max()/1.5].mean())
+
         
 def main() :
     import argparse
@@ -252,13 +288,29 @@ def main() :
     
     arg = parser.parse_args()
     
-    # load data into memory bundles
-    thin_tgt, thick_tgt, na64, extra_thin = bundle(arg.data_dir, arg.mg_dir)
-    
     # make sure output directory exists
     if arg.out_dir is None :
         arg.out_dir = arg.data_dir
     os.makedirs(arg.out_dir, exist_ok=True)
+
+    xsec_plot(average_mg('data/mg/mu_xsec.csv'), [
+            ('DMG4 WW', pd.read_csv(f'{arg.data_dir}/dmg4_mu_xsec.csv')),
+            ('G4DB WW', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec.csv'))
+          ],
+        title = 'Muons on Copper')
+    plt.savefig(f'{arg.out_dir}/mu_xsec')
+
+    xsec_plot(average_mg('data/mg/el_xsec.csv'), [
+            ('DMG4 IWW + Log Approx + K factors', 
+              pd.read_csv(f'{arg.data_dir}/dmg4_el_xsec.csv').sort_values('Energy [MeV]')),
+            #('G4DB WW', pd.read_csv('data/dev/el_xsec.csv')),
+            ('G4DB IWW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec.csv'))
+          ],
+        title = 'Electrons on Tungsten')
+    plt.savefig(f'{arg.out_dir}/el_xsec')
+
+    # load data into memory bundles
+    thin_tgt, thick_tgt, na64, extra_thin = bundle(arg.data_dir, arg.mg_dir)
     
     # get to plotting
     single(na64, 'recoil_angle', 'Lepton Recoil Angle [rad]',
