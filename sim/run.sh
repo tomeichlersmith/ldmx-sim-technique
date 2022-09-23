@@ -56,7 +56,7 @@ __main__() {
     "&>> ${_output_dir}/g4db_electron_thick.log"
   
   echo "--out_dir ${_output_dir} --depth ${_elec_thick}" \
-    "dmg4 -m tungsten "--particle electron --primary_energy 4. --ap_mass 100 1" \
+    "dmg4 -m tungsten --particle electron --primary_energy 4. --ap_mass 100 1" \
     "&>> ${_output_dir}/dmg4_electron_thick.log"
 
   echo "--out_dir ${_output_dir} --depth ${_elec_thin} g4db" \
@@ -64,7 +64,7 @@ __main__() {
     "&>> ${_output_dir}/g4db_electron_thin.log"
   
   echo "--out_dir ${_output_dir} --depth ${_elec_thin}" \
-    "dmg4 -m tungsten "--particle electron --primary_energy 4. --ap_mass 100 1" \
+    "dmg4 -m tungsten --particle electron --primary_energy 4. --ap_mass 100 1" \
     "&>> ${_output_dir}/dmg4_electron_thin.log"
 
   echo "--out_dir ${_output_dir} --depth ${_muon_thin} g4db" \
@@ -72,7 +72,7 @@ __main__() {
     "&>> ${_output_dir}/g4db_muon_thin.log"
   
   echo "--out_dir ${_output_dir} --depth ${_muon_thin}" \
-    "dmg4 -m brass "--particle muon --primary_energy 100. --ap_mass 1000 1" \
+    "dmg4 -m brass --particle muon --primary_energy 100. --ap_mass 1000 1" \
     "&>> ${_output_dir}/dmg4_muon_thin.log"
 
   echo "--out_dir ${_output_dir} --depth ${_muon_thick} g4db" \
@@ -80,7 +80,7 @@ __main__() {
     "&>> ${_output_dir}/g4db_muon_thick.log"
   
   echo "--out_dir ${_output_dir} --depth ${_muon_thick}" \
-    "dmg4 -m brass "--particle muon --primary_energy 100. --ap_mass 1000 1" \
+    "dmg4 -m brass --particle muon --primary_energy 100. --ap_mass 1000 1" \
     "&>> ${_output_dir}/dmg4_muon_thick.log"
 
   _elec_thin=1.

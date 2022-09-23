@@ -142,7 +142,7 @@ else :
         db_model.tungsten_target()
     elif material == 'lead' :
         db_model.lead_target()
-    elif materal == 'brass' :
+    elif material == 'brass' :
         db_model.copper_target()
 
 sim.dark_brem.activate( ap_mass , db_model , muons = (primary.particle == 'mu-'))
