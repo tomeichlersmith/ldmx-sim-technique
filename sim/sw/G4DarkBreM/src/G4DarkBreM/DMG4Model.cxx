@@ -25,6 +25,7 @@ DMG4Model::DMG4Model(framework::config::Parameters &params, bool muons)
          density{params.getParameter<double>("density")};
   if (muons) dm_model_ = std::make_unique<DarkZ>(apmass,2.*apmass,1.,A,Z,density,epsilon_);
   else dm_model_ = std::make_unique<DarkPhotons>(apmass,2.*apmass,1.,A,Z,density,epsilon_);
+  dm_model_->PrepareTable();
 }
 
 void DMG4Model::PrintInfo() const {
