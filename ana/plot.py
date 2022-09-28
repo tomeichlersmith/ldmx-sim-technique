@@ -237,47 +237,36 @@ def side_by_side_no_share(data_packet, kinematic_variable, xlabel, file_name,
     plt.savefig(file_name)
     plt.clf()
 
-def xsec_plot(mg, others, file_name, title = None, ratio = True) :
+def xsec_plot(mg_csv, others, file_name, 
+    xlabel = 'Incident Lepton Energy [GeV]', title = None) :
     (raw, ratio) = plt.gcf().subplots(ncols = 1, nrows = 2, 
         sharex = 'col', gridspec_kw=dict(height_ratios = [3,1]))
     plt.subplots_adjust(hspace=0)
 
+    mg = pd.read_csv(mg_csv).groupby('Energy [GeV]').apply(lambda samples : samples[samples > samples.median() - 2*samples.std()].mean()).drop(columns='Energy [GeV]').reset_index()
+
     mg_x = mg['Energy [GeV]']
     mg_y = mg['Xsec [pb]']*(127.9/137)**3
 
-    raw.plot(mg_x, mg_y,marker='.', linewidth=0, label='MG')
-    ratio.plot(mg_x, [1. for x in mg_x], marker='.', linewidth=0)
     for name, data in others :
         y = data['Xsec [pb]']
-        if 'All MG' in name :
-            x = data['Energy [GeV]']
-            raw.plot(x,y*(127.9/137)**3,label=name,marker='.', linewidth=0)
-        else :
-            x = data['Energy [MeV]']/1000.
-            raw.plot(x, y, label=name)
-            data_interp = scipy.interpolate.interp1d(x, y)
-            data_at_mge = [data_interp(e) for e in mg_x]
-            ratio.plot(mg_x, data_at_mge/mg_y, marker='.', linewidth=0)
+        x = data['Energy [MeV]']/1000.
+        raw.plot(x, y, label=name)
+        data_interp = scipy.interpolate.interp1d(x, y)
+        data_at_mge = [data_interp(e) for e in mg_x]
+        ratio.plot(mg_x, data_at_mge/mg_y, marker='.', linewidth=0)
 
-    raw.set_ylabel('Total Cross Section [pb]')
+    raw.plot(mg_x, mg_y,marker='.', linewidth=0, label='MG/ME')
+    ratio.plot(mg_x, [1. for x in mg_x], marker='.', markersize=0, linewidth=0)
+
+    raw.set_ylabel('Total Cross Section / $\epsilon^2$ [pb]')
     l = raw.legend(title=title)
     plt.setp(l.get_title(), multialignment='right')
 
-    ratio.set_ylabel('Ratio to MG')
-    ratio.set_xlabel('Incident Lepton Energy [GeV]')
+    ratio.set_ylabel('Ratio to MG/ME')
+    ratio.set_xlabel(xlabel)
     plt.savefig(file_name)
     plt.clf()
-
-def average_mg(all_samples) :
-    """
-    average the samples at each energy taking care to drop samples with less than 2/3 of the max
-
-    this limit is just arbitrarily chosen to cut out outlier points that were seen 
-    when plotting all samples as a scatter plot
-    """
-
-    return pd.read_csv(all_samples).groupby('Energy [GeV]').apply(lambda s : s[s > s.max()/1.5].mean())
-
         
 def main() :
     import argparse
@@ -296,22 +285,22 @@ def main() :
         arg.out_dir = arg.data_dir
     os.makedirs(arg.out_dir, exist_ok=True)
 
-    xsec_plot(average_mg('data/mg/mu_xsec.csv'), [
-            ('DMG4 WW', pd.read_csv(f'{arg.data_dir}/dmg4_mu_xsec.csv')),
-            ('G4DB WW', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec.csv')),
-            ('All MG', pd.read_csv('data/mg/mu_xsec.csv'))
+    xsec_plot('data/mg/mu_xsec.csv', [
+            ('G4DarkBreM', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec.csv')),
+            ('DMG4', pd.read_csv(f'{arg.data_dir}/dmg4_mu_xsec.csv')),
           ],
         f'{arg.out_dir}/mu_xsec.pdf',
+        xlabel = 'Incident Muon Energy [GeV]',
         title = 'Muons on Copper')
 
-    xsec_plot(average_mg('data/mg/el_xsec.csv'), [
+    xsec_plot('data/mg/el_xsec.csv', [
+            ('G4DarkBreM', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec.csv')),
             ('DMG4 IWW + Log Approx + K factors', 
               pd.read_csv(f'{arg.data_dir}/dmg4_el_xsec.csv').sort_values('Energy [MeV]')),
             #('G4DB WW', pd.read_csv('data/dev/el_xsec.csv')),
-            ('G4DB IWW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec.csv')),
-            ('All MG', pd.read_csv('data/mg/el_xsec.csv'))
           ],
          f'{arg.out_dir}/el_xsec.pdf',
+        xlabel = 'Incident Electron Energy [GeV]',
         title = 'Electrons on Tungsten')
 
     if arg.xsec_only :
