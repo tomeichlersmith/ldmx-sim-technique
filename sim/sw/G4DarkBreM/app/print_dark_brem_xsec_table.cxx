@@ -50,6 +50,9 @@ int main(int argc, char* argv[]) try {
     ("energy-step",
       boost::program_options::value<double>()->default_value(1000.),
       "difference between adjacent steps in energy [MeV]")
+    ("target-density",
+      boost::program_options::value<double>(),
+      "Density of target nucleus (defaults to 19.3 for electrons and 8.96 for muons)")
     ("target-Z",
       boost::program_options::value<int>(),
       "Z of target nucleus (defaults to 74 for electrons and 29 for muons)")
@@ -87,16 +90,18 @@ int main(int argc, char* argv[]) try {
   bool muons = vm.count("muons") > 0;
 
   G4double ap_mass, max_energy;
-  double target_A;
+  double target_A, density;
   int target_Z;
   if (muons) {
     ap_mass     = get(vm, "ap-mass"   , 200. ) * MeV;
     max_energy  = get(vm, "max-energy", 1000.) * GeV;
+    density     = get(vm, "density"   , 8.96 );
     target_Z    = get(vm, "target-Z"  , 29   );
     target_A    = get(vm, "target-A"  , 64.0 );
   } else {
     ap_mass     = get(vm, "ap-mass"   , 100.   ) * MeV;
     max_energy  = get(vm, "max-energy", 100.   ) * GeV;
+    density     = get(vm, "density"   , 19.30  );
     target_Z    = get(vm, "target-Z"  , 74     );
     target_A    = get(vm, "target-A"  , 183.84 );
   }
@@ -111,7 +116,7 @@ int main(int argc, char* argv[]) try {
     model.addParameter("load_library", false);
   } else {
     // DMG4 requires target-material at construction time
-    model.addParameter("density", 11.35);
+    model.addParameter("density", density);
     model.addParameter("targetA", target_A);
     model.addParameter<double>("targetZ", target_Z);
   }
