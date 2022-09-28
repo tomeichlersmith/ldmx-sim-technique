@@ -67,19 +67,26 @@ static double flux_factor_chi_numerical(G4double A, G4double Z, double tmin, dou
   const double ael = 111.0*pow(Z,-1./3.)/mel,
                del = 0.164*pow(A,-2./3.),
                ain = 773.0*pow(Z,-2./3.)/mel,
-               din = 0.71;
+               din = 0.71,
+               ael_inv2 = pow(ael, -2),
+               ain_inv2 = pow(ain, -2);
 
+  /**
+   * we've manually expanded the integrand to cancel out the 1/t^2 factor
+   * from the differential, this helps the numerical integration converge
+   * because we aren't teetering on the edge of division by zero
+   */
   auto integrand = [&](double t) {
-    double ael_factor = (ael*ael*t)/(1 + ael*ael*t),
+    double ael_factor = 1./(ael_inv2 + t),
            del_factor = 1./(1+t/del),
-           ain_factor = (ain*ain*t)/(1 + ain*ain*t),
+           ain_factor = 1./(ain_inv2 + t),
            din_factor = 1./(1+t/din),
            nucl = (1 + t*bin);
     
     return (pow(ael_factor*del_factor*Z, 2)
             +
             Z*pow(ain_factor*nucl*din*din*din*din, 2)
-           )*(t-tmin)/pow(t,2.);
+           )*(t-tmin);
   };
 
   return int_method::integrate(integrand,tmin,tmax,5,1e-9);
@@ -186,40 +193,54 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
     double utilde = -x*lepton_e_sq*theta_sq - MA2*(1.-x)/x - lepton_mass_sq*x;
     double utilde_sq = utilde*utilde;
 
-    if (muons_) {
-      /**
-       * WW
-       *
-       * Since muons are so much more massive than electrons, the
-       * keep form factor integration limits dependent on x and theta
-       */
-      // non-zero theta and non-zero m_l
-      double tmin = utilde_sq/(4.0*lepton_e_sq*(1.0-x)*(1.0-x));
-      // zero theta
-      //double tmin = pow((MA2*(1-x)/x-lepton_mass_sq*x),2)/(4*lepton_e_sq*(1-x)*(1-x));
-      // zero theta and zero lepton mass
-      //double tmin = MA2*MA2/(4*lepton_e_sq*x_sq);
+    /**
+     * WW
+     *
+     * Since muons are so much more massive than electrons, the
+     * keep form factor integration limits dependent on x and theta
+     */
+    // non-zero theta and non-zero m_l
+    double tmin = utilde_sq/(4.0*lepton_e_sq*(1.0-x)*(1.0-x));
+    // zero theta
+    //double tmin = pow((MA2*(1-x)/x-lepton_mass_sq*x),2)/(4*lepton_e_sq*(1-x)*(1-x));
+    // zero theta and zero lepton mass
+    //double tmin = MA2*MA2/(4*lepton_e_sq*x_sq);
   
-      // maximum t is the incident energy ?
-      double tmax = lepton_e_sq;
+    // maximum t is the incident energy ?
+    //double tmax = lepton_e_sq;
+    /**
+     * or is it as given by Eq 3.20 of
+     * https://journals.aps.org/prd/pdf/10.1103/PhysRevD.8.3109
+     * and Eq (3.6) of 
+     * https://journals.aps.org/rmp/pdf/10.1103/RevModPhys.46.815
+     * to be
+     *
+     * m^2(1+l)^2
+     *
+     * where
+     *
+     *  m is mass of dark photon (electron?)
+     *  l = E^2theta^2/m^2
+     *  E = E0(1-x)
+     */
+    double tmax = MA2*pow(1 + lepton_e_sq*theta_sq*(1-x)*(1-x)/MA2,2);
   
-      // require 0 < tmin < tmax to procede
-      if (tmin < 0) return 0.;
-      if (tmax < tmin) return 0.;
+    // require 0 < tmin < tmax to procede
+    if (tmin < 0) return 0.;
+    if (tmax < tmin) return 0.;
   
-      /**
-       * numerically integrate to calculate chi ourselves
-       * this _has not_ been well defined probably due to the extreme values of t
-       * that must be handled
-      double chi = flux_factor_chi_numerical(A,Z, tmin, tmax);
-       */
+    /**
+     * numerically integrate to calculate chi ourselves
+     * this _has not_ been well defined probably due to the extreme values of t
+     * that must be handled
+     */
+    double chi = flux_factor_chi_numerical(A,Z, tmin, tmax);
   
-      /**
-       * use analytic elastic-only chi derived for DMG4
-       */
-      chi = flux_factor_chi_analytic(A,Z,tmin,tmax);
-    }
-
+    /**
+     * use analytic elastic-only chi derived for DMG4
+    chi = flux_factor_chi_analytic(A,Z,tmin,tmax);
+     */
+    
     /**
      * Amplitude squared is taken from 
      * Equation (17) from Appendix A of https://arxiv.org/pdf/2101.12192.pdf
