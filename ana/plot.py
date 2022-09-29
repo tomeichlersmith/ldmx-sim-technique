@@ -202,7 +202,7 @@ def main() :
 
     xsec_plot('data/mg/el_xsec.csv', [
             ('G4DarkBreM', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec.csv')),
-            ('DMG4 IWW + Log Approx + K factors', 
+            ('DMG4', 
               pd.read_csv(f'{arg.data_dir}/dmg4_el_xsec.csv').sort_values('Energy [MeV]')),
             #('G4DB WW', pd.read_csv('data/dev/el_xsec.csv')),
           ],
