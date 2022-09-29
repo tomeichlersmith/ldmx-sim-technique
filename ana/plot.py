@@ -198,7 +198,7 @@ def main() :
           ],
         f'{arg.out_dir}/mu_xsec.pdf',
         xlabel = 'Incident Muon Energy [GeV]',
-        title = 'Muons on Copper')
+        title = '$m_{A\'} = 0.2$ GeV\nMuons on Copper')
 
     xsec_plot('data/mg/el_xsec.csv', [
             ('G4DarkBreM', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec.csv')),
@@ -208,7 +208,7 @@ def main() :
           ],
          f'{arg.out_dir}/el_xsec.pdf',
         xlabel = 'Incident Electron Energy [GeV]',
-        title = 'Electrons on Tungsten')
+        title = '$m_{A\'} = 0.1$ GeV\nElectrons on Tungsten')
 
     if arg.xsec_only :
         return
