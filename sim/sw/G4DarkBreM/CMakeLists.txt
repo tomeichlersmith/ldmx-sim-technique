@@ -22,3 +22,7 @@ find_package(Boost COMPONENTS program_options)
 add_executable(print-dark-brem-xsec-table app/print_dark_brem_xsec_table.cxx)
 target_link_libraries(print-dark-brem-xsec-table PRIVATE G4DarkBreM::G4DarkBreM Boost::program_options)
 install(TARGETS print-dark-brem-xsec-table DESTINATION bin)
+
+add_executable(simulate-dark-brem app/simulate_dark_brem.cxx)
+target_link_libraries(simulate-dark-brem PRIVATE G4DarkBreM::G4DarkBreM Boost::program_options)
+install(TARGETS simulate-dark-brem DESTINATION bin)
