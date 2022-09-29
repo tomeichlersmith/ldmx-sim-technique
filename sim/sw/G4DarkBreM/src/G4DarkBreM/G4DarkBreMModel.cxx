@@ -172,7 +172,7 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
   double lepton_e_sq = lepton_e*lepton_e;
 
   /**
-   * IWW
+   * "Hyper-Improved" WW
    *
    * assume theta = 0, and x = 1 for form factor integration
    * i.e. now chi is a constant pulled out of the integration
@@ -196,34 +196,44 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
     /**
      * WW
      *
-     * Since muons are so much more massive than electrons, the
+     * Since muons are so much more massive than electrons, they
      * keep form factor integration limits dependent on x and theta
      */
+
     // non-zero theta and non-zero m_l
     double tmin = utilde_sq/(4.0*lepton_e_sq*(1.0-x)*(1.0-x));
-    // zero theta
-    //double tmin = pow((MA2*(1-x)/x-lepton_mass_sq*x),2)/(4*lepton_e_sq*(1-x)*(1-x));
-    // zero theta and zero lepton mass
-    //double tmin = MA2*MA2/(4*lepton_e_sq*x_sq);
-  
-    // maximum t is the incident energy ?
-    //double tmax = lepton_e_sq;
+    // maximum t kinematically limited to the incident lepton energy
+    double tmax = lepton_e_sq;
+
     /**
-     * or is it as given by Eq 3.20 of
+     * The chi integrand limits given by
+     *
+     * Eqs (3.20) and (A6) of
      * https://journals.aps.org/prd/pdf/10.1103/PhysRevD.8.3109
-     * and Eq (3.6) of 
+     * OR
+     * Eqs (3.2) and (3.6) of 
      * https://journals.aps.org/rmp/pdf/10.1103/RevModPhys.46.815
+     *
      * to be
      *
-     * m^2(1+l)^2
+     * tmax = m^2(1+l)^2
+     * tmin = tmax / (2*E*x*(1-x))^2
      *
      * where
      *
-     *  m is mass of dark photon (electron?)
-     *  l = E^2theta^2/m^2
-     *  E = E0(1-x)
+     *  l = E^2x^2theta^2/m^2
+     *  m is mass of dark photon
+     *  E is the incident lepton energy
+     * 
+     * were investigated in an attempt to control the numerical integration
+     * of chi in the hopes that cutting the integral away from odd places
+     * would be able to avoid the funky business. This was not successful,
+     * but we are leaving them here in case a typo is found in the future
+     * or the search is chosen to resume.
+    double el = lepton_e_sq*x_sq*theta_sq/MA2;
+    double tmax = MA2*pow(1 + el,2);
+    double tmin = tmax / pow(2*lepton_e*x*(1-x),2);
      */
-    double tmax = MA2*pow(1 + lepton_e_sq*theta_sq*(1-x)*(1-x)/MA2,2);
   
     // require 0 < tmin < tmax to procede
     if (tmin < 0) return 0.;
@@ -231,15 +241,20 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
   
     /**
      * numerically integrate to calculate chi ourselves
-     * this _has not_ been well defined probably due to the extreme values of t
-     * that must be handled
-     */
+     * this _has not_ been well behaved due to the extreme values
+     * of t that must be handled
     double chi = flux_factor_chi_numerical(A,Z, tmin, tmax);
+     */
   
     /**
      * use analytic elastic-only chi derived for DMG4
-    chi = flux_factor_chi_analytic(A,Z,tmin,tmax);
+     * and double-checked with Mathematica
+     *
+     * The inelastic integral contains some 4000 terms
+     * according to Mathematica so it is expensive to
+     * compute and only an O(few) percent change.
      */
+    double chi = flux_factor_chi_analytic(A,Z,tmin,tmax);
     
     /**
      * Amplitude squared is taken from 
@@ -276,12 +291,16 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
   double theta_max{0.3};
 
   /**
-   * Numerical 2D integration
+   * Integrand for integral over x
    *
-   * Its pretty simple, we cast the 2D integration down to 2 1D integrations
-   * by defining the theta_integral function to numerically integrate
-   * the integrand at a fixed x and then we put that through the same integration
-   * procedure going through the possible x.
+   * For muons, we want to include the variation over theta from the chi
+   * integral, so we calculate the x-integrand by numerically integrating
+   * over theta in the differential cross section defined above.
+   *
+   * For electrons, we are using the Improved WW method where the theta
+   * integral has already been done analytically and we can use the
+   * numerical Chi (including both inelastic and elastic form factors)
+   * calculated above.  
    */
   auto theta_integral = [&](double x) {
     if (muons_) {
