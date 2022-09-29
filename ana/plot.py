@@ -59,48 +59,52 @@ def bundle(data_dir, mg_dir) :
     affect the output names are changed, we would need to propagate that here.
     """
     
-    thin_tgt = (
-        ('4 GeV Electrons\non 0.35 mm Tungsten',
+    thin_el = ('thin-electron',
+          '$m_{A\'} = 0.1$ GeV\n4 GeV Electrons\non 0.35 mm Tungsten',
          { # electrons
           'G4DarkBreM' : read(el_beam,1e8,f'{data_dir}/ntuple_g4db_electron_tungsten_depthmm_0.35_mAMeV_100_events_50000_run_3000.root'),
           'DMG4' : read(el_beam,1e12,f'{data_dir}/ntuple_dmg4_electron_tungsten_depthmm_0.35_mAMeV_100_events_50000_run_1.root'),
           'MG/ME' : read(el_beam/1000.,5e5,f'{mg_dir}/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000_IncidentEnergy_4.0_unweighted_events.lhe')
          }
-        ),
-        ('100 GeV Muons\non 100 mm Brass',
+        )
+
+    thin_mu = ('thin-muon',
+          '$m_{A\'} = 1$ GeV\n100 GeV Muons\non 100 mm Brass',
          { # muons
           'G4DarkBreM' : read(mu_beam,1e7,f'{data_dir}/ntuple_g4db_muon_brass_depthmm_100.0_mAMeV_1000_events_50000_run_3000.root'),
           'DMG4' : read(mu_beam,1e11,f'{data_dir}/ntuple_dmg4_muon_brass_depthmm_100.0_mAMeV_1000_events_50000_run_1.root'),
           'MG/ME' : read(mu_beam/1000.,5e5,f'{mg_dir}/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000_IncidentEnergy_100.0_unweighted_events.lhe')
          }
         )
-    )
     
-    thick_tgt = (
-        ('4 GeV Electrons\non 18mm Tungsten',
+    thick_el = ('thick-electron',
+          '$m_{A\'} = 0.1$ GeV\n4 GeV Electrons\non 18mm Tungsten',
          {
           'G4DarkBreM' : read(el_beam,1e8,f'{data_dir}/ntuple_g4db_electron_tungsten_depthmm_18.0_mAMeV_100_events_50000_run_3000.root'),
           'DMG4' : read(el_beam,1e12,f'{data_dir}/ntuple_dmg4_electron_tungsten_depthmm_18.0_mAMeV_100_events_50000_run_1.root'),
           'Monoenergetic 4GeV MG/ME' : read(el_beam/1000.,5e5,f'{mg_dir}/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000_IncidentEnergy_4.0_unweighted_events.lhe')
          }
-        ),
-        ('100 GeV Muons\non 2m Brass',
+        )
+
+    thick_mu = ('thick-muon',
+          '$m_{A\'} = 1$ GeV\n100 GeV Muons\non 2m Brass',
          {
           'G4DarkBreM' : read(mu_beam,1e7,f'{data_dir}/ntuple_g4db_muon_brass_depthmm_2000.0_mAMeV_1000_events_50000_run_3000.root'),
           'DMG4' : read(mu_beam,1e11,f'{data_dir}/ntuple_dmg4_muon_brass_depthmm_2000.0_mAMeV_1000_events_50000_run_1.root'),
           'Monoenergetic 100GeV MG/ME' : read(mu_beam/1000.,5e5,f'{mg_dir}/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000_IncidentEnergy_100.0_unweighted_events.lhe')
          }
         )
-    )
 
-    na64 = ('100 GeV Electrons\non 1mm Lead',
+    na64 = ('100GeV-electron-lead',
+        '$m_{A\'} = 0.1$ GeV\n100 GeV Electrons\non 1mm Lead',
         {
           'G4DarkBreM' : read(el_beam,1e8,f'{data_dir}/ntuple_g4db_electron_lead_depthmm_1.0_mAMeV_100_events_50000_run_3000.root'),
           'DMG4' : read(el_beam,1e12,f'{data_dir}/ntuple_dmg4_electron_lead_depthmm_1.0_mAMeV_100_events_50000_run_1.root')
         }
         )
 
-    extra_thin = ('4 GeV Electrons\non 0.035mm Tungsten',
+    extra_thin = ('4GeV-electron-extra-thin',
+        '$m_{A\'} = 0.1$ GeV\n4 GeV Electrons\non 0.035mm Tungsten',
         {
           'G4DarkBreM' : read(el_beam,1e8,f'{data_dir}/ntuple_g4db_electron_tungsten_depthmm_0.035_mAMeV_100_events_50000_run_3000.root'),
           'DMG4' : read(el_beam,1e12,f'{data_dir}/ntuple_dmg4_electron_tungsten_depthmm_0.035_mAMeV_100_events_50000_run_1.root'),
@@ -108,20 +112,22 @@ def bundle(data_dir, mg_dir) :
         }
         )
     
-    return thin_tgt, thick_tgt, na64, extra_thin
+    return thin_el, thin_mu, thick_el, thick_mu, na64, extra_thin
 
 def single(data_packet, kinematic_variable, xlabel, file_name,
            weight = True, ylabel = 'Weighted Event Fraction', yscale = 'log', 
-           drop_mg = False, 
+           drop_mg = False, ylim = None,
            hist_kwargs = {}, legend_kwargs = {}) :
     """Plot a single kinematic variable for the input data packet"""
-    (title, data) = data_packet
+    (_, title, data) = data_packet
     ((ax)) = plt.gcf().subplots()
     plt.gcf().set_size_inches(11,8)
 
     ax.set_xlabel(xlabel)
     ax.set_yscale(yscale)
     ax.set_ylabel(ylabel)
+    if ylim is not None :
+        ax.set_ylim(ylim)
     for name, df in data.items() :
         if drop_mg and 'MG/ME' in name :
             continue
@@ -137,105 +143,6 @@ def single(data_packet, kinematic_variable, xlabel, file_name,
     
     plt.savefig(file_name)
     plt.clf() 
-
-def side_by_side(data_packet, kinematic_variable, xlabel, file_name,
-                 weight = True, ylabel = 'Weighted Event Fraction', yscale = 'log', 
-                 drop_mg = False,
-                 el_kwargs = {}, mu_kwargs = {}, 
-                 hist_kwargs = {}, legend_kwargs = {}) :
-    """Plot same kinematic variable side-by-side with a shared y-axis"""
-    
-    ((el_title,el_data),(mu_title,mu_data)) = data_packet
-    ((el_ax, mu_ax)) = plt.gcf().subplots(ncols = 2, nrows = 1, sharey = 'row')
-    plt.gcf().set_size_inches(22,8)
-    plt.subplots_adjust(hspace=0.3, wspace=0.)
-    
-    for ax in (el_ax,mu_ax) :
-        ax.set_xlabel(xlabel)
-        ax.set_yscale(yscale)
-        
-    el_ax.set_ylabel(ylabel)
-    
-    for name, df in el_data.items() :
-        if drop_mg and 'MG/ME' in name :
-            continue
-        weights = None
-        if weight :
-            weights = df['weight']/df['weight'].sum()
-        el_ax.hist(df[kinematic_variable],
-                   weights = weights,
-                   label = name, linewidth = 2.,
-                   histtype = 'step', **el_kwargs, **hist_kwargs)
-    l = el_ax.legend(title=el_title+'\n$m_{A\'}=0.1$ GeV', **legend_kwargs)
-    plt.setp(l.get_title(), multialignment='right')
-    
-    
-    for name, df in mu_data.items() :
-        if drop_mg and 'MG/ME' in name :
-            continue
-        weights = None
-        if weight :
-            weights = df['weight']/df['weight'].sum()
-        mu_ax.hist(df[kinematic_variable],
-                   weights = weights,
-                   label = name, linewidth = 2.,
-                   histtype = 'step', **mu_kwargs, **hist_kwargs)
-    l = mu_ax.legend(title = mu_title+'\n$m_{A\'}=1$ GeV', **legend_kwargs)
-    plt.setp(l.get_title(), multialignment='right')
-    
-    plt.savefig(file_name)
-    plt.clf()
-
-def side_by_side_no_share(data_packet, kinematic_variable, xlabel, file_name,
-                 weight = True, ylabel = 'Weighted Event Fraction', yscale = 'log', 
-                 drop_mg = False, 
-                 el_ylim = None, mu_ylim = None,
-                 el_kwargs = {}, mu_kwargs = {}, 
-                 hist_kwargs = {}, legend_kwargs = {}) :
-    """Plot same kinematic variable side-by-side without a shared y-axis"""
-    
-    ((el_title,el_data),(mu_title,mu_data)) = data_packet
-    ((el_ax, mu_ax)) = plt.gcf().subplots(ncols = 2, nrows = 1)
-    plt.gcf().set_size_inches(22,8)
-    
-    for ax in (el_ax,mu_ax) :
-        ax.set_xlabel(xlabel)
-        ax.set_yscale(yscale)
-        
-    el_ax.set_ylabel(ylabel)
-    
-    for name, df in el_data.items() :
-        if drop_mg and 'MG/ME' in name :
-            continue
-        weights = None
-        if weight :
-            weights = df['weight']/df['weight'].sum()
-        el_ax.hist(df[kinematic_variable],
-                   weights = weights,
-                   label = name, linewidth = 2.,
-                   histtype = 'step', **el_kwargs, **hist_kwargs)
-    if el_ylim is not None :
-        el_ax.set_ylim(el_ylim)
-    l = el_ax.legend(title=el_title+'\n$m_{A\'}=0.1$ GeV', **legend_kwargs)
-    plt.setp(l.get_title(), multialignment='right')
-    
-    for name, df in mu_data.items() :
-        if drop_mg and 'MG/ME' in name :
-            continue
-        weights = None
-        if weight :
-            weights = df['weight']/df['weight'].sum()
-        mu_ax.hist(df[kinematic_variable],
-                   weights = weights,
-                   label = name, linewidth = 2.,
-                   histtype = 'step', **mu_kwargs, **hist_kwargs)
-    if mu_ylim is not None :
-        mu_ylim.set_ylim(mu_ylim)
-    l = mu_ax.legend(title = mu_title+'\n$m_{A\'}=1$ GeV', **legend_kwargs)
-    plt.setp(l.get_title(), multialignment='right')
-    
-    plt.savefig(file_name)
-    plt.clf()
 
 def xsec_plot(mg_csv, others, file_name, 
     xlabel = 'Incident Lepton Energy [GeV]', title = None) :
@@ -307,112 +214,158 @@ def main() :
         return
 
     # load data into memory bundles
-    thin_tgt, thick_tgt, na64, extra_thin = bundle(arg.data_dir, arg.mg_dir)
+    thin_el, thin_mu, thick_el, thick_mu, na64, extra_thin = bundle(arg.data_dir, arg.mg_dir)
+
+    def filename(prefix, tail) :
+        return f'{arg.out_dir}/{prefix}-{tail}.pdf'
     
     # get to plotting
-    single(na64, 'recoil_angle', 'Lepton Recoil Angle [rad]',
-           #el_ylim = (7e-4,2),
+    single(na64, 'recoil_angle', 'Electron Recoil Angle [rad]',
            hist_kwargs = {'range' : (0,2), 'bins' : 50},
-           file_name = arg.out_dir+'/100GeV-electron-lead-recoil-angle.pdf')
+           file_name = filename(na64[0],'recoil-angle'))
     single(na64, 'visible_energy_frac', 'Visible Energy Fraction of Beam',
            hist_kwargs = {'range' : (0,1), 'bins' : 50},
-           file_name = arg.out_dir+'/100GeV-electron-lead-visible-energy.pdf')
+           file_name = filename(na64[0],'visible-energy'))
     single(na64, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
            ylabel = 'Fraction Events Below Energy Cut',
            yscale = 'linear',
            hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
            legend_kwargs = {'loc':'lower center'},
-           file_name = arg.out_dir+'/100GeV-electron-lead-visible-energy-cumulative.pdf')
+           file_name = filename(na64[0],'visible-energy-cumulative'))
     single(na64, 'incident_kinetic_energy_GeV', 
-           'Lepton Kinetic Energy Prior to DB [GeV]',
+           'Electron Kinetic Energy Prior to DB [GeV]',
            hist_kwargs = {'range' : (0.,100.), 'bins' : 50 },
            legend_kwargs = {'loc' : 'upper left'},
            drop_mg = True,
-           file_name = arg.out_dir+'/100GeV-electron-lead-incident-energy.pdf')
+           file_name = filename(na64[0],'incident-energy'))
     single(na64, 'relative_weight', 'Event Weight',
            weight = False, 
            hist_kwargs = {'range':(1,1.2),'bins':50},
            drop_mg = True,
-           file_name = arg.out_dir+'/100GeV-electron-lead-event-weight.pdf')
+           file_name = filename(na64[0],'event-weight'))
 
     single(extra_thin, 'recoil_angle', 'Lepton Recoil Angle [rad]',
            #el_ylim = (7e-4,2),
            hist_kwargs = {'range' : (0,2), 'bins' : 50},
-           file_name = arg.out_dir+'/4GeV-electron-extra-thin-recoil-angle.pdf')
+           file_name = filename(extra_thin[0],'recoil-angle'))
     single(extra_thin, 'visible_energy_frac', 'Visible Energy Fraction of Beam',
            hist_kwargs = {'range' : (0,1), 'bins' : 50},
-           file_name = arg.out_dir+'/4GeV-electron-extra-thin-visible-energy.pdf')
+           file_name = filename(extra_thin[0], 'visible-energy'))
     single(extra_thin, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
            ylabel = 'Fraction Events Below Energy Cut',
            yscale = 'linear',
            hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
            legend_kwargs = {'loc':'lower right', 'framealpha': 0.8},
-           file_name = arg.out_dir+'/4GeV-electron-extra-thin-visible-energy-cumulative.pdf')
+           file_name = filename(extra_thin[0], 'visible-energy-cumulative'))
     single(extra_thin, 'incident_kinetic_energy_GeV', 
            'Lepton Kinetic Energy Prior to DB [GeV]',
-           hist_kwargs = {'range' : (0.,100.), 'bins' : 50 },
+           hist_kwargs = {'range' : (0.,4.), 'bins' : 50 },
            legend_kwargs = {'loc' : 'upper left'},
            drop_mg = True,
-           file_name = arg.out_dir+'/4GeV-electron-extra-thin-incident-energy.pdf')
+           file_name = filename(extra_thin[0], 'incident-energy'))
     single(extra_thin, 'relative_weight', 'Event Weight',
            weight = False, 
            hist_kwargs = {'range':(1,1.2),'bins':50},
            drop_mg = True,
-           file_name = arg.out_dir+'/4GeV-electron-extra-thin-event-weight.pdf')
+           file_name = filename(extra_thin[0], 'event-weight'))
 
-    side_by_side_no_share(thin_tgt, 'recoil_angle', 'Lepton Recoil Angle [rad]',
-                 el_ylim = (7e-4,2),
-                 hist_kwargs = {'range' : (0,2), 'bins' : 50},
-                 file_name = arg.out_dir+'/thin-recoil-angle.pdf')
-    side_by_side(thin_tgt, 'visible_energy_frac', 'Visible Energy Fraction of Beam',
-                 hist_kwargs = {'range' : (0,1), 'bins' : 50},
-                 file_name = arg.out_dir+'/thin-visible-energy.pdf')
-    side_by_side(thin_tgt, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
-                 ylabel = 'Fraction Events Below Energy Cut',
-                 yscale = 'linear',
-                 hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
-                 legend_kwargs = {'loc':'lower right', 'framealpha' : 0.8},
-                 file_name = arg.out_dir+'/thin-visible-energy-cumulative.pdf')
-    side_by_side(thin_tgt, 'incident_kinetic_energy_GeV', 
-                 'Lepton Kinetic Energy Prior to DB [GeV]',
-                 el_kwargs = {'range' : (0.,4.)},
-                 mu_kwargs = {'range' : (0.,100.) },
-                 legend_kwargs = {'loc' : 'upper left'},
-                 hist_kwargs = { 'bins' : 50 },
-                 drop_mg = True,
-                 file_name = arg.out_dir+'/thin-incident-energy.pdf')
-    side_by_side(thin_tgt, 'relative_weight', 'Event Weight',
-                 weight = False, 
-                 hist_kwargs = {'range':(1,1.2),'bins':50},
-                 drop_mg = True,
-                 file_name = arg.out_dir+'/thin-event-weight.pdf')
-    
-    side_by_side(thick_tgt, 'recoil_angle', 'Lepton Recoil Angle [rad]',
-                 hist_kwargs = {'range' : (0,2), 'bins' : 50},
-                 file_name = arg.out_dir+'/thick-recoil-angle.pdf')
-    side_by_side(thick_tgt, 'visible_energy_frac', 'Visible Energy Fraction of Beam',
-                 hist_kwargs = {'range' : (0,1), 'bins' : 50},
-                 file_name = arg.out_dir+'/thick-visible-energy.pdf')
-    side_by_side(thick_tgt, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
-                 ylabel = 'Fraction Events Below Energy Cut',
-                 yscale = 'linear',
-                 hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
-                 legend_kwargs = {'loc':'lower center'},
-                 file_name = arg.out_dir+'/thick-visible-energy-cumulative.pdf')
-    side_by_side(thick_tgt, 'incident_kinetic_energy_GeV', 
-                 'Lepton Kinetic Energy Prior to DB [GeV]',
-                 el_kwargs = {'range' : (0.,4.)},
-                 mu_kwargs = {'range' : (0.,100.) },
-                 legend_kwargs = {'loc' : 'upper left'},
-                 hist_kwargs = { 'bins' : 50 },
-                 drop_mg = True,
-                 file_name = arg.out_dir+'/thick-incident-energy.pdf')
-    side_by_side(thick_tgt, 'relative_weight', 'Event Weight',
-                 weight = False,
-                 el_kwargs = {'range':(1,10), 'bins':100},
-                 mu_kwargs = {'range':(1,1.2),'bins':50},
-                 drop_mg = True,
-                 file_name = arg.out_dir+'/thick-event-weight.pdf')
-    
+    single(thin_el, 'recoil_angle', 'Electron Recoil Angle [rad]',
+           ylim = (7e-4,2),
+           hist_kwargs = {'range' : (0,2), 'bins' : 50},
+           file_name = filename(thin_el[0],'recoil-angle'))
+    single(thin_el, 'visible_energy_frac', 'Visible Energy Fraction of Beam',
+           hist_kwargs = {'range' : (0,1), 'bins' : 50},
+           file_name = filename(thin_el[0], 'visible-energy'))
+    single(thin_el, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
+           ylabel = 'Fraction Events Below Energy Cut',
+           yscale = 'linear',
+           hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
+           legend_kwargs = {'loc':'lower right', 'framealpha': 0.8},
+           file_name = filename(thin_el[0], 'visible-energy-cumulative'))
+    single(thin_el, 'incident_kinetic_energy_GeV', 
+           'Electron Kinetic Energy Prior to DB [GeV]',
+           hist_kwargs = {'range' : (0.,4.), 'bins' : 50 },
+           legend_kwargs = {'loc' : 'upper left'},
+           drop_mg = True,
+           file_name = filename(thin_el[0], 'incident-energy'))
+    single(thin_el, 'relative_weight', 'Event Weight',
+           weight = False, 
+           hist_kwargs = {'range':(1,1.2),'bins':50},
+           drop_mg = True,
+           file_name = filename(thin_el[0], 'event-weight'))
+
+    single(thin_mu, 'recoil_angle', 'Muon Recoil Angle [rad]',
+           hist_kwargs = {'range' : (0,2), 'bins' : 50},
+           file_name = filename(thin_mu[0],'recoil-angle'))
+    single(thin_mu, 'visible_energy_frac', 'Visible Energy Fraction of Beam',
+           hist_kwargs = {'range' : (0,1), 'bins' : 50},
+           file_name = filename(thin_mu[0], 'visible-energy'))
+    single(thin_mu, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
+           ylabel = 'Fraction Events Below Energy Cut',
+           yscale = 'linear',
+           hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
+           legend_kwargs = {'loc':'lower right', 'framealpha': 0.8},
+           file_name = filename(thin_mu[0], 'visible-energy-cumulative'))
+    single(thin_mu, 'incident_kinetic_energy_GeV', 
+           'Muon Kinetic Energy Prior to DB [GeV]',
+           hist_kwargs = {'range' : (0.,100.), 'bins' : 50 },
+           legend_kwargs = {'loc' : 'upper left'},
+           drop_mg = True,
+           file_name = filename(thin_mu[0], 'incident-energy'))
+    single(thin_mu, 'relative_weight', 'Event Weight',
+           weight = False, 
+           hist_kwargs = {'range':(1,1.2),'bins':50},
+           drop_mg = True,
+           file_name = filename(thin_mu[0], 'event-weight'))
+
+    single(thick_el, 'recoil_angle', 'Electron Recoil Angle [rad]',
+           ylim = (7e-4,2),
+           hist_kwargs = {'range' : (0,2), 'bins' : 50},
+           file_name = filename(thick_el[0],'recoil-angle'))
+    single(thick_el, 'visible_energy_frac', 'Visible Energy Fraction of Beam',
+           hist_kwargs = {'range' : (0,1), 'bins' : 50},
+           file_name = filename(thick_el[0], 'visible-energy'))
+    single(thick_el, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
+           ylabel = 'Fraction Events Below Energy Cut',
+           yscale = 'linear',
+           hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
+           legend_kwargs = {'loc':'lower right', 'framealpha': 0.8},
+           file_name = filename(thick_el[0], 'visible-energy-cumulative'))
+    single(thick_el, 'incident_kinetic_energy_GeV', 
+           'Electron Kinetic Energy Prior to DB [GeV]',
+           hist_kwargs = {'range' : (0.,4.), 'bins' : 50 },
+           legend_kwargs = {'loc' : 'upper left'},
+           drop_mg = True,
+           file_name = filename(thick_el[0], 'incident-energy'))
+    single(thick_el, 'relative_weight', 'Event Weight',
+           weight = False, 
+           hist_kwargs = {'range':(1,10.),'bins':50},
+           drop_mg = True,
+           file_name = filename(thick_el[0], 'event-weight'))
+
+    single(thick_mu, 'recoil_angle', 'Muon Recoil Angle [rad]',
+           hist_kwargs = {'range' : (0,2), 'bins' : 50},
+           file_name = filename(thick_mu[0],'recoil-angle'))
+    single(thick_mu, 'visible_energy_frac', 'Visible Energy Fraction of Beam',
+           hist_kwargs = {'range' : (0,1), 'bins' : 50},
+           file_name = filename(thick_mu[0], 'visible-energy'))
+    single(thick_mu, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
+           ylabel = 'Fraction Events Below Energy Cut',
+           yscale = 'linear',
+           hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
+           legend_kwargs = {'loc':'lower right', 'framealpha': 0.8},
+           file_name = filename(thick_mu[0], 'visible-energy-cumulative'))
+    single(thick_mu, 'incident_kinetic_energy_GeV', 
+           'Muon Kinetic Energy Prior to DB [GeV]',
+           hist_kwargs = {'range' : (0.,100.), 'bins' : 50 },
+           legend_kwargs = {'loc' : 'upper left'},
+           drop_mg = True,
+           file_name = filename(thick_mu[0], 'incident-energy'))
+    single(thick_mu, 'relative_weight', 'Event Weight',
+           weight = False, 
+           hist_kwargs = {'range':(1,1.2),'bins':50},
+           drop_mg = True,
+           file_name = filename(thick_mu[0], 'event-weight'))
+
 if __name__ == '__main__' :
     main()
