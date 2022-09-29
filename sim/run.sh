@@ -5,10 +5,11 @@
 __usage__() {
   cat <<HELP
  USAGE:
-  ./sim/run.sh [-o OUT_DIR]
+  ./sim/run.sh [-o OUT_DIR] [--only-xsec]
 
  OPTIONS:
-  -o    : Base output directory for data files (default: 'data/<git describe --tags>')
+  -o          : Base output directory for data files (default: 'data/<git describe --tags>')
+  --only-xsec : only do xsec calculations
 
  We do two simulations at once (G4DB and DMG4) and then we loop over the combinations
  of thicknesses and incident particles. The multiple jobs are written to a job listing
@@ -21,6 +22,7 @@ HELP
 __main__() {
   local _tag=$(git describe --tags)
   local _output_dir=$(cd data && pwd -P)/${_tag}
+  local _only_xsec=false
   while [ $# -gt 0 ]; do
     case $1 in
       -o)
@@ -32,13 +34,20 @@ __main__() {
           -o) _output_dir=$2;;
         esac
         shift
-        shift
+        ;;
+      --only-xsec)
+        _only_xsec=true
         ;;
       -h|--help|-?)
         __usage__
         return 0
         ;;
+      *)
+        echo "ERROR: Unrecognized option '$1'."
+        return 1
+        ;;
     esac
+    shift
   done
   
   if ! mkdir -p ${_output_dir}; then
@@ -50,6 +59,10 @@ __main__() {
   echo "print-dark-brem-xsec-table --muons -o ${_output_dir}/g4db_mu_xsec.csv &>> ${_output_dir}/g4db_xsec.log"
   echo "print-dark-brem-xsec-table -m dmg4 -o ${_output_dir}/dmg4_el_xsec.csv &>> ${_output_dir}/dmg4_xsec.log"
   echo "print-dark-brem-xsec-table -m dmg4 --muons -o ${_output_dir}/dmg4_mu_xsec.csv &>> ${_output_dir}/dmg4_xsec.log"
+
+  if ${_only_xsec}; then
+    return
+  fi
 
   local _muon_thin=100
   local _elec_thin=0.35
