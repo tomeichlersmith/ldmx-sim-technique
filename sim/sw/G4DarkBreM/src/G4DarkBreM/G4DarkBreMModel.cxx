@@ -334,36 +334,27 @@ G4double G4DarkBreMModel::ComputeCrossSectionPerAtom(
   return cross;
 }
 
-void G4DarkBreMModel::GenerateChange(
-    G4ParticleChange &particleChange, const G4Track &track,
-    const G4Step &step) {
+G4ThreeVector G4DarkBreMModel::scample(double incident_energy, double lepton_mass) {
   // mass A' in GeV
   static const double MA = G4APrime::APrime()->GetPDGMass() / CLHEP::GeV;
-
-  // mass of incident lepton (usually electrons, muons experimental)
-  double Mel = track.GetDefinition()->GetPDGMass() / CLHEP::GeV;
-
-  // convert to energy units in LHE files [GeV]
-  G4double incidentEnergy = step.GetPostStepPoint()->GetTotalEnergy()/CLHEP::GeV;
-
-  OutgoingKinematics data = GetMadgraphData(incidentEnergy);
-  double EAcc = (data.electron.E() - Mel) *
-                    ((incidentEnergy - Mel - MA) / (data.E - Mel - MA)) +
-                Mel;
+  OutgoingKinematics data = GetMadgraphData(incident_energy);
+  double EAcc = (data.electron.E() - lepton_mass) *
+                    ((incident_energy - lepton_mass - MA) / (data.E - lepton_mass - MA)) +
+                lepton_mass;
   double Pt = data.electron.Pt();
-  double P = sqrt(EAcc * EAcc - Mel * Mel);
+  double P = sqrt(EAcc * EAcc - lepton_mass * lepton_mass);
   double PhiAcc = data.electron.Phi();
   if (method_ == DarkBremMethod::ForwardOnly) {
     unsigned int i = 0;
-    while (Pt * Pt + Mel * Mel > EAcc * EAcc) {
+    while (Pt * Pt + lepton_mass * lepton_mass > EAcc * EAcc) {
       // Skip events until the transverse energy is less than the total energy.
       i++;
-      data = GetMadgraphData(incidentEnergy);
-      EAcc = (data.electron.E() - Mel) *
-                 ((incidentEnergy - Mel - MA) / (data.E - Mel - MA)) +
-             Mel;
+      data = GetMadgraphData(incident_energy);
+      EAcc = (data.electron.E() - lepton_mass) *
+                 ((incident_energy - lepton_mass - MA) / (data.E - lepton_mass - MA)) +
+             lepton_mass;
       Pt = data.electron.Pt();
-      P = sqrt(EAcc * EAcc - Mel * Mel);
+      P = sqrt(EAcc * EAcc - lepton_mass * lepton_mass);
       PhiAcc = data.electron.Phi();
 
       if (i > maxIterations_) {
@@ -372,67 +363,72 @@ void G4DarkBreMModel::GenerateChange(
             << data.electron.E() << " GeV.\n"
             << "Consider expanding your libary of A' vertices to include a "
                "beam energy closer to "
-            << incidentEnergy << " GeV.";
+            << incident_energy << " GeV.";
         break;
       }
     }
   } else if (method_ == DarkBremMethod::CMScaling) {
     TLorentzVector el(data.electron.X(), data.electron.Y(), data.electron.Z(),
                       data.electron.E());
-    double ediff = data.E - incidentEnergy;
+    double ediff = data.E - incident_energy;
     TLorentzVector newcm(data.centerMomentum.X(), data.centerMomentum.Y(),
                          data.centerMomentum.Z() - ediff,
                          data.centerMomentum.E() - ediff);
     el.Boost(-1. * data.centerMomentum.BoostVector());
     el.Boost(newcm.BoostVector());
-    double newE = (data.electron.E() - Mel) *
-                      ((incidentEnergy - Mel - MA) / (data.E - Mel - MA)) +
-                  Mel;
+    double newE = (data.electron.E() - lepton_mass) *
+                      ((incident_energy - lepton_mass - MA) / (data.E - lepton_mass - MA)) +
+                  lepton_mass;
     el.SetE(newE);
     EAcc = el.E();
     Pt = el.Pt();
     P = el.P();
   } else if (method_ == DarkBremMethod::Undefined) {
     EAcc = data.electron.E();
-    P = sqrt(EAcc * EAcc - Mel * Mel);
+    P = sqrt(EAcc * EAcc - lepton_mass * lepton_mass);
     Pt = data.electron.Pt();
   }
 
-  // What we need:
-  //  - EAcc
-  //  - P and Pt for ThetaAcc
-  //  - PhiAcc
-  // Basically we need the 3-momentum of the recoil electron
-  
   // Change the energy back to MeV, the internal GEANT unit.
-  EAcc = EAcc * CLHEP::GeV;  
-  Mel  = Mel  * CLHEP::GeV;
+  EAcc *= CLHEP::GeV;  
+  lepton_mass *= GeV;
 
   // outgoing lepton momentum
-  G4double recoilElectronMomentumMag = sqrt(EAcc * EAcc - Mel*Mel);
-  G4ThreeVector recoilElectronMomentum;
+  G4double recoilMag = sqrt(EAcc * EAcc - lepton_mass*lepton_mass);
+  G4ThreeVector recoil;
   double ThetaAcc = std::asin(Pt / P);
-  recoilElectronMomentum.set(std::sin(ThetaAcc) * std::cos(PhiAcc),
+  recoil.set(std::sin(ThetaAcc) * std::cos(PhiAcc),
                              std::sin(ThetaAcc) * std::sin(PhiAcc),
                              std::cos(ThetaAcc));
-  recoilElectronMomentum.rotateUz(track.GetMomentumDirection());
-  recoilElectronMomentum.setMag(recoilElectronMomentumMag);
+  recoil.setMag(recoilMag);
+  return recoil;
+}
+
+void G4DarkBreMModel::GenerateChange(
+    G4ParticleChange &particleChange, const G4Track &track,
+    const G4Step &step) {
+  // mass of incident lepton (usually electrons, muons experimental)
+  double Mel = track.GetDefinition()->GetPDGMass() / CLHEP::GeV;
+
+  // convert to energy units in LHE files [GeV]
+  G4double incidentEnergy = step.GetPostStepPoint()->GetTotalEnergy()/CLHEP::GeV;
+
+  G4ThreeVector recoilMomentum = scample(incidentEnergy, Mel);
+  recoilMomentum.rotateUz(track.GetMomentumDirection());
 
   // create g4dynamicparticle object for the dark photon.
   // define its 3-momentum so we conserve 3-momentum with primary and recoil
   // electron NOTE: does _not_ take nucleus recoil into account
   G4ThreeVector darkPhotonMomentum =
-      track.GetMomentum() - recoilElectronMomentum;
+      track.GetMomentum() - recoilMomentum;
   G4DynamicParticle *dphoton =
       new G4DynamicParticle(G4APrime::APrime(), darkPhotonMomentum);
-  // energy of primary
-  G4double finalKE = EAcc - Mel;
 
   // stop tracking and create new secondary instead of primary
   if (alwaysCreateNewElectron_) {
     // TODO copy over all other particle information from track I am killing
     G4DynamicParticle *el = new G4DynamicParticle(
-        track.GetDefinition(), recoilElectronMomentum);
+        track.GetDefinition(), recoilMomentum);
     particleChange.SetNumberOfSecondaries(2);
     particleChange.AddSecondary(dphoton);
     particleChange.AddSecondary(el);
@@ -443,7 +439,10 @@ void G4DarkBreMModel::GenerateChange(
     // TODO untested this branch, not sure if it works as expected
     particleChange.SetNumberOfSecondaries(1);
     particleChange.AddSecondary(dphoton);
-    particleChange.ProposeMomentumDirection(recoilElectronMomentum.unit());
+    particleChange.ProposeMomentumDirection(recoilMomentum.unit());
+    double recoil_energy = sqrt(recoilMomentum.mag2()+Mel*Mel);
+    // energy of primary recoiling
+    G4double finalKE = recoil_energy - Mel;
     particleChange.ProposeEnergy(finalKE);
   }
 }

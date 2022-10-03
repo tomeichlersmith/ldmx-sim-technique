@@ -118,6 +118,22 @@ class G4DarkBreMModel : public G4DarkBremsstrahlungModel {
                                               G4double atomicZ);
 
   /**
+   * Perform the SCAling and saMPLE procedure to scale one of the MG events
+   * in our library to the input incident lepton energy (and mass).
+   *
+   * This is also helpful for testing the scaling procedure in its own
+   * executable separate from the Geant4 infrastructure.
+   *
+   * @note The vector returned is relative to the incident lepton as if
+   * it came in along the z-axis.
+   *
+   * @param[in] incident_energy incident total energy of the lepton [GeV] 
+   * @param[in] lepton_mass mass of incident lepton [GeV]
+   * @return G4ThreeVector representing the recoil lepton's outgoing momentum
+   */
+  G4ThreeVector scample(double incident_energy, double lepton_mass);
+
+  /**
    * Simulates the emission of a dark photon + electron.
    *
    * Gets an energy fraction and Pt from madgraph files.

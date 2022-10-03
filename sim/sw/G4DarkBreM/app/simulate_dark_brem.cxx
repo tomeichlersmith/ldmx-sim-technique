@@ -1,6 +1,9 @@
 
 #include <boost/program_options.hpp>
 
+#include "TFile.h"
+#include "TTree.h"
+
 #include "G4Electron.hh"
 #include "G4MuonMinus.hh"
 
@@ -46,15 +49,22 @@ int main(int argc, char* argv[]) try {
     return 0;
   }
 
+  if (vm.count("db-lib") == 0) {
+    std::cerr << "ERROR: DB event library not provided." << std::endl;
+    return 1;
+  }
+
   int n_events = vm["num-events"].as<int>();
   bool muons = vm.count("muons") > 0;
-  G4double ap_mass, beam_energy;
+  double ap_mass, beam_energy, lepton_mass;
   if (muons) {
-    ap_mass = get(vm, "ap-mass", 200. ) * MeV;
-    beam_energy = get(vm, "beam-energy", 100) * GeV;
+    ap_mass     = get(vm, "ap-mass"    , 200. ) * MeV;
+    beam_energy = get(vm, "beam-energy", 100. );
+    lepton_mass = G4MuonMinus::MuonMinus()->GetPDGMass() / GeV;
   } else {
-    ap_mass = get(vm, "ap-mass", 100. ) * MeV;
-    beam_energy = get(vm, "beam-energy", 4) * GeV;
+    ap_mass     = get(vm, "ap-mass"    , 100. ) * MeV;
+    beam_energy = get(vm, "beam-energy", 4.   );
+    lepton_mass = G4Electron::Electron()->GetPDGMass() / GeV;
   }
 
   framework::config::Parameters model;
@@ -64,43 +74,32 @@ int main(int argc, char* argv[]) try {
   model.addParameter<std::string>("method", "forward_only");
   model.addParameter("threshold", 0.0);
 
+  TFile f{vm["output"].as<std::string>().c_str(), "recreate"};
+  TTree t("dbint","dbint");
+  double recoil_energy, recoil_px, recoil_py, recoil_pz;
+  t.Branch("recoil_energy", &recoil_energy);
+  t.Branch("recoil_px", &recoil_px);
+  t.Branch("recoil_py", &recoil_py);
+  t.Branch("recoil_pz", &recoil_pz);
+
   // the process accesses the A' mass from the G4 particle
   simcore::darkbrem::G4APrime::APrime(ap_mass/MeV);
   // create the process to do proper initializations
   //    this calculates "common" cross sections as well
   simcore::darkbrem::G4DarkBreMModel db_model(model, muons);
 
-  G4ParticleDefinition* lepton_def = G4Electron::Electron();
-  if (muons) lepton_def = G4MuonMinus::MuonMinus();
-
-  // G4Track cleans up its dynamic particle
-  auto incident_lepton = new G4DynamicParticle(lepton_def, G4ThreeVector(0.,0.,1.), beam_energy);
-  G4Track track(incident_lepton, 0., G4ThreeVector(0.,0.,0.));
-  G4Step step;
-  step.InitializeStep(&track);
-  step.GetPostStepPoint()->SetKineticEnergy(beam_energy);
-
   int bar_width = 80;
   int pos = 0;
   bool is_redirected = (isatty(STDOUT_FILENO) == 0);
   for (int i_event{0}; i_event < n_events; ++i_event) {
+    G4ThreeVector recoil = db_model.scample(beam_energy, lepton_mass);
 
-    G4ParticleChange change;
-    change.Initialize(track);
+    recoil_energy = sqrt(recoil.mag2() + lepton_mass*lepton_mass);
+    recoil_px = recoil.x();
+    recoil_py = recoil.y();
+    recoil_pz = recoil.z();
 
-    db_model.GenerateChange(change, track, step);
-
-    // extract info from change
-    auto dphoton = change.GetSecondary(0);
-    auto recoil  = change.GetSecondary(1);
-
-    /*
-    trk->GetDynamicParticle()
-       ->GetMomentumDirection()
-       ->GetKineticEnergy()
-       */
-
-    // ~G4ParticleChange cleans up its list of secondaries (I think)
+    t.Fill();
 
     float prog = float(i_event) / n_events;
 
@@ -119,6 +118,9 @@ int main(int argc, char* argv[]) try {
       std::cout.flush();
     }
   }
+
+  t.Write();
+  f.Close();
 
   return 0;
 } catch (const std::exception& e) {
