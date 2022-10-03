@@ -94,7 +94,7 @@ if __name__=="__main__":
    if arg.outDir.split("/")[-1] == "": outDir = arg.outDir[:-1]
    
    if not os.path.isdir(outDir):
-      print "Output directory does not exist!"
+      print("Output directory does not exist!")
       quit()
 
    energy_comp_multi(arg.rescaledFiles,arg.madgraphFile)
