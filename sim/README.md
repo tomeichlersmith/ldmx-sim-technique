@@ -19,3 +19,7 @@ source env.sh
 ldmx help
 # printout of commands defined
 ```
+
+### MadGraph/MadEvent
+This technique heavily relies upon MG/ME to function.
+The "libraries" of events and other MG/ME samples were generated with v4.2 of [dark-brem-lib-gen]().

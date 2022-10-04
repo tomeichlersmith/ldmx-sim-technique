@@ -20,14 +20,14 @@ const T& get(boost::program_options::variables_map& vm, const std::string& name,
 int main(int argc, char* argv[]) try {
   boost::program_options::options_description desc(
       "\n"
-      "Run the scaling procedure for the input beam energy and madgraph file\n"
+      "Run the scaling procedure for the input incident energy and madgraph file\n"
       "\n"
       "This executable is a low-level way to directly test the scaling procedure implemented\n"
       "inside the G4DarkBreMModel without cluttering the results with the rest of the Geant4\n"
       "simulation machinery. This means a better understanding of how the model functions is\n"
       "necessary to be able to effectively use this program.\n"
-      " - The 'beam energy' input here is the energy of the lepton JUST BEFORE it dark brems.\n"
-      " - The scaling procedure should scale from a MG sample at an energy ABOVE the beam energy\n"
+      " - The 'incident energy' input here is the energy of the lepton JUST BEFORE it dark brems.\n"
+      " - The scaling procedure should scale from a MG sample at an energy ABOVE the incident energy\n"
       " - The scaling procedure generates the recoil lepton's kinematics assuming the incident\n"
       "   lepton is traveling along the z-axis. The user is expected to rotate to the actual incident\n"
       "   frame and calculate the outgoing dark photon kinematics assuming conservation of momentum.\n"
@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) try {
     ("output,o", boost::program_options::value<std::string>()->default_value("scaled.root"),
      "output file to write scaled outgoing kinematics to")
     ("incident-energy,E", boost::program_options::value<double>(),
-     "incident beam energy in GeV (defaults to 4 for electrons and 100 for muons)")
+     "incident energy in GeV (defaults to 4 for electrons and 100 for muons)")
     ("num-events,N", boost::program_options::value<int>()->default_value(100),
      "number of dark brems to simulate")
     ("db-lib,L", boost::program_options::value<std::string>(),
@@ -69,14 +69,14 @@ int main(int argc, char* argv[]) try {
 
   int n_events = vm["num-events"].as<int>();
   bool muons = vm.count("muons") > 0;
-  double ap_mass, beam_energy, lepton_mass;
+  double ap_mass, incident_energy, lepton_mass;
   if (muons) {
     ap_mass     = get(vm, "ap-mass"    , 200. ) * MeV;
-    beam_energy = get(vm, "beam-energy", 100. );
+    incident_energy = get(vm, "incident-energy", 100. );
     lepton_mass = G4MuonMinus::MuonMinus()->GetPDGMass() / GeV;
   } else {
     ap_mass     = get(vm, "ap-mass"    , 100. ) * MeV;
-    beam_energy = get(vm, "beam-energy", 4.   );
+    incident_energy = get(vm, "incident-energy", 4.   );
     lepton_mass = G4Electron::Electron()->GetPDGMass() / GeV;
   }
 
@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) try {
   int pos = 0;
   bool is_redirected = (isatty(STDOUT_FILENO) == 0);
   for (int i_event{0}; i_event < n_events; ++i_event) {
-    G4ThreeVector recoil = db_model.scample(beam_energy, lepton_mass);
+    G4ThreeVector recoil = db_model.scample(incident_energy, lepton_mass);
 
     recoil_energy = sqrt(recoil.mag2() + lepton_mass*lepton_mass);
     recoil_px = recoil.x();
