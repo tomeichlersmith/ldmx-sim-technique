@@ -19,7 +19,20 @@ const T& get(boost::program_options::variables_map& vm, const std::string& name,
 
 int main(int argc, char* argv[]) try {
   boost::program_options::options_description desc(
-      "Run the scaling procedure for the input beam energy and madgraph file"
+      "\n"
+      "Run the scaling procedure for the input beam energy and madgraph file\n"
+      "\n"
+      "This executable is a low-level way to directly test the scaling procedure implemented\n"
+      "inside the G4DarkBreMModel without cluttering the results with the rest of the Geant4\n"
+      "simulation machinery. This means a better understanding of how the model functions is\n"
+      "necessary to be able to effectively use this program.\n"
+      " - The 'beam energy' input here is the energy of the lepton JUST BEFORE it dark brems.\n"
+      " - The scaling procedure should scale from a MG sample at an energy ABOVE the beam energy\n"
+      " - The scaling procedure generates the recoil lepton's kinematics assuming the incident\n"
+      "   lepton is traveling along the z-axis. The user is expected to rotate to the actual incident\n"
+      "   frame and calculate the outgoing dark photon kinematics assuming conservation of momentum.\n"
+      "\n"
+      "OPTIONS"
       );
   desc.add_options()
     ("help,h", "produce this help and exit")
@@ -84,8 +97,8 @@ int main(int argc, char* argv[]) try {
 
   // the process accesses the A' mass from the G4 particle
   simcore::darkbrem::G4APrime::APrime(ap_mass/MeV);
-  // create the process to do proper initializations
-  //    this calculates "common" cross sections as well
+  // create the model, this is where the LHE file is parsed
+  //    into an in-memory library to sample and scale from
   simcore::darkbrem::G4DarkBreMModel db_model(model, muons);
 
   int bar_width = 80;
