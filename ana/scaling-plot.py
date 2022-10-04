@@ -8,7 +8,7 @@ plt.style.use(mplhep.style.ROOT)
 
 repository = '/local/cms/user/revering/dphoton/ldmx-sim-technique/michaelCode/plotting/repository/'
 
-def plt_hist(root_file, tree_name, e_beam,
+def plt_efrac_angle(root_file, tree_name, e_beam,
              angle_ax, kefrac_ax,
              angle_kw = {}, kefrac_kw = {}, lepton_mass = None) :
     """Pull out the energy and angle from the ROOT files
@@ -73,7 +73,7 @@ def scaling_validation(file_packet, lepton, title, e_beam,
     if ang_ratio_ylim is not None :
         ang_ratio.set_ylim(ang_ratio_ylim)
 
-    (ang_mg_vals, ang_mg_edges, ang_patches), (ke_mg_vals, ke_mg_edges, ke_patches) = plt_hist(mg, 'Events', e_beam, ang_raw, ke_raw,
+    (ang_mg_vals, ang_mg_edges, ang_patches), (ke_mg_vals, ke_mg_edges, ke_patches) = plt_efrac_angle(mg, 'Events', e_beam, ang_raw, ke_raw,
                              angle_kw = dict(bins=25,range=(0.,3.14),label=f'Unscaled MG/ME at {e_beam} GeV',histtype='step',linewidth=2,color='black'), 
                              kefrac_kw = dict(bins=50, range=(0.,1.), cumulative=True, label=f'Unscaled MG/ME at {e_beam} GeV',histtype='step',linewidth=2, color='black'))
 
@@ -81,7 +81,7 @@ def scaling_validation(file_packet, lepton, title, e_beam,
     ang_ratio.axhline(1.,color='black')
 
     for name, f in scaled :
-        (ang_vals, ang_edges, ang_patches), (ke_vals, ke_edges, ke_patches) = plt_hist(f, 'forward_only', e_beam, ang_raw, ke_raw,
+        (ang_vals, ang_edges, ang_patches), (ke_vals, ke_edges, ke_patches) = plt_efrac_angle(f, 'forward_only', e_beam, ang_raw, ke_raw,
                        angle_kw = dict(bins=25,range=(0.,3.14), label=name, histtype='step', linewidth=2), 
                        kefrac_kw = dict(bins=50, range=(0.,1.), cumulative=True, label=name, histtype='step',linewidth=2))
             
@@ -96,6 +96,64 @@ def scaling_validation(file_packet, lepton, title, e_beam,
             plt.figure(fn).savefig(f'{file_prefix}_{fn}.pdf')
             plt.figure(fn).clf()
 
+def plt_efrac_pt(root_file, tree_name, e_beam,
+                 pt_ax, efrac_ax,
+                 pt_kw = {}, efrac_kw = {}, lepton_mass = None) :
+    """Pull out the energy and angle from the ROOT files
+    Michael produced while studying the scaling technique
+
+    Then do the calculations and binning, returning the binned
+    data to save on memory space.
+    """
+
+    with uproot.open(f'{repository}{root_file}:{tree_name}') as t :
+        data_array = t.arrays('IncidentParticle', entry_stop=1000000, library='pd')
+        x = data_array['IncidentParticle']['fP']['fX']
+        y = data_array['IncidentParticle']['fP']['fY']
+        z = data_array['IncidentParticle']['fP']['fZ']
+        pt = np.sqrt(x*x + y*y)
+        
+        lepton_E = data_array['IncidentParticle']['fE']
+        if lepton_mass is None :
+            efrac = lepton_E/e_beam
+        else :
+            efrac = (lepton_E - lepton_mass)/e_beam
+        
+        weights = np.empty(len(efrac))
+        weights.fill(1./len(efrac))
+
+        efrac = efrac_ax.hist(efrac, weights=weights, **efrac_kw)
+        pt = pt_ax.hist(pt, weights=weights, **pt_kw)
+        return pt, efrac
+
+def efrac_pt_rates(data, title, e_beam, 
+                   efrac_legend_kw = dict(),
+                   pt_legend_kw = dict(),
+                   file_prefix = None) :
+    efrac_ax = plt.figure('efrac').subplots()
+    pt_ax    = plt.figure('pt').subplots()
+    
+    efrac_ax.set_yscale('log')
+    efrac_ax.set_ylabel('Normalized Rate')
+    efrac_ax.set_xlabel('Outgoing Electron Energy Fraction')
+    
+    pt_ax.set_yscale('log')
+    pt_ax.set_ylabel('Normalized Rate')
+    pt_ax.set_xlabel('Outgoing Electron Transverse Momentum [GeV]')
+    
+    for name, file in data :
+        plt_efrac_pt(file, 'Events', e_beam,
+                     pt_ax, efrac_ax,
+                     pt_kw = dict(histtype='step',linewidth=2,range=(0,1.1),bins=50,label=name),
+                     efrac_kw = dict(histtype='step',linewidth=2,range=(0,1),bins=50,label=name))
+    
+    efrac_ax.legend(title = title, **efrac_legend_kw)
+    pt_ax.legend(title = title, **pt_legend_kw)
+    
+    if file_prefix is not None :
+        for fn in ['efrac','pt'] :
+            plt.figure(fn).savefig(f'{file_prefix}_{fn}.pdf')
+            plt.figure(fn).clf()
     
 def main() :
     import sys
@@ -153,6 +211,14 @@ def main() :
                        ke_ratio_ylim=(0.8,1.05),
                        ke_legend_kw=dict(bbox_to_anchor=(0.95,0.),loc='lower right'),
                        file_prefix='mu_Pb')
-        
+    
+    efrac_pt_rates([
+        ('Si Target, Z = 14', el_Si[0]),
+        ('Cu Target, Z = 29', el_Cu[0]),
+        ('W Target, Z = 74', el_W[0])],
+        '2 GeV Electrons\n$m_{A\'} = 0.1$ GeV',
+        2.0,
+        file_prefix='el_2GeV')
+    
 if __name__ == '__main__' :
     main()
