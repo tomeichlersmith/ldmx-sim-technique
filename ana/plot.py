@@ -280,7 +280,7 @@ def main() :
            ylabel = 'Fraction Events Below Energy Cut',
            yscale = 'linear',
            hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
-           legend_kwargs = {'loc':'lower right', 'framealpha': 0.8},
+           legend_kwargs = {'loc':'lower right', 'bbox_to_anchor':(0.95,0.)},
            file_name = filename(thin_el[0], 'visible-energy-cumulative'))
     single(thin_el, 'incident_kinetic_energy_GeV', 
            'Electron Kinetic Energy Prior to DB [GeV]',
@@ -304,7 +304,7 @@ def main() :
            ylabel = 'Fraction Events Below Energy Cut',
            yscale = 'linear',
            hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
-           legend_kwargs = {'loc':'lower right', 'framealpha': 0.8},
+           legend_kwargs = {'loc':'lower right', 'bbox_to_anchor':(0.95,0)},
            file_name = filename(thin_mu[0], 'visible-energy-cumulative'))
     single(thin_mu, 'incident_kinetic_energy_GeV', 
            'Muon Kinetic Energy Prior to DB [GeV]',
@@ -329,7 +329,7 @@ def main() :
            ylabel = 'Fraction Events Below Energy Cut',
            yscale = 'linear',
            hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
-           legend_kwargs = {'loc':'lower right', 'framealpha': 0.8},
+           legend_kwargs = {'loc':'lower right', 'bbox_to_anchor':(0.95,0)},
            file_name = filename(thick_el[0], 'visible-energy-cumulative'))
     single(thick_el, 'incident_kinetic_energy_GeV', 
            'Electron Kinetic Energy Prior to DB [GeV]',
@@ -353,7 +353,7 @@ def main() :
            ylabel = 'Fraction Events Below Energy Cut',
            yscale = 'linear',
            hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
-           legend_kwargs = {'loc':'lower right', 'framealpha': 0.8},
+           legend_kwargs = {'loc':'lower right', 'bbox_to_anchor':(0.95,0)},
            file_name = filename(thick_mu[0], 'visible-energy-cumulative'))
     single(thick_mu, 'incident_kinetic_energy_GeV', 
            'Muon Kinetic Energy Prior to DB [GeV]',
