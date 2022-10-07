@@ -194,7 +194,6 @@ def main() :
 
     xsec_plot('data/mg/mu_xsec.csv', [
             ('G4DarkBreM', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec.csv')),
-            ('DMG4', pd.read_csv(f'{arg.data_dir}/dmg4_mu_xsec.csv')),
           ],
         f'{arg.out_dir}/mu_xsec.pdf',
         xlabel = 'Incident Muon Energy [GeV]',
@@ -202,9 +201,6 @@ def main() :
 
     xsec_plot('data/mg/el_xsec.csv', [
             ('G4DarkBreM', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec.csv')),
-            ('DMG4', 
-              pd.read_csv(f'{arg.data_dir}/dmg4_el_xsec.csv').sort_values('Energy [MeV]')),
-            #('G4DB WW', pd.read_csv('data/dev/el_xsec.csv')),
           ],
          f'{arg.out_dir}/el_xsec.pdf',
         xlabel = 'Incident Electron Energy [GeV]',
