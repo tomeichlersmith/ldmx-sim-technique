@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) try {
      "DB event library to load")
     ("ap-mass",
       boost::program_options::value<double>(),
-      "mass of A' in MeV (defaults to 100 for electrons and 200 for muons)")
+      "mass of A' in MeV (defaults to 100 for electrons and 1000 for muons)")
     ("muons",
       "use muons as incident lepton rather than electrons")
   ;
@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) try {
   bool muons = vm.count("muons") > 0;
   double ap_mass, incident_energy, lepton_mass;
   if (muons) {
-    ap_mass     = get(vm, "ap-mass"    , 200. ) * MeV;
+    ap_mass     = get(vm, "ap-mass"    , 1000. ) * MeV;
     incident_energy = get(vm, "incident-energy", 100. );
     lepton_mass = G4MuonMinus::MuonMinus()->GetPDGMass() / GeV;
   } else {
@@ -87,6 +87,15 @@ int main(int argc, char* argv[]) try {
   model.addParameter<std::string>("method", "forward_only");
   model.addParameter("threshold", 0.0);
 
+  // the process accesses the A' mass from the G4 particle
+  simcore::darkbrem::G4APrime::APrime(ap_mass/MeV);
+  // create the model, this is where the LHE file is parsed
+  //    into an in-memory library to sample and scale from
+  simcore::darkbrem::G4DarkBreMModel db_model(model, muons);
+  db_model.PrintInfo();
+  printf("   %-16s %f\n", "Lepton Mass [MeV]:", lepton_mass);
+  printf("   %-16s %f\n", "A' Mass [MeV]:", ap_mass/MeV);
+
   TFile f{vm["output"].as<std::string>().c_str(), "recreate"};
   TTree t("dbint","dbint");
   double recoil_energy, recoil_px, recoil_py, recoil_pz;
@@ -95,15 +104,6 @@ int main(int argc, char* argv[]) try {
   t.Branch("recoil_py", &recoil_py);
   t.Branch("recoil_pz", &recoil_pz);
 
-  // the process accesses the A' mass from the G4 particle
-  simcore::darkbrem::G4APrime::APrime(ap_mass/MeV);
-  // create the model, this is where the LHE file is parsed
-  //    into an in-memory library to sample and scale from
-  simcore::darkbrem::G4DarkBreMModel db_model(model, muons);
-
-  int bar_width = 80;
-  int pos = 0;
-  bool is_redirected = (isatty(STDOUT_FILENO) == 0);
   for (int i_event{0}; i_event < n_events; ++i_event) {
     G4ThreeVector recoil = db_model.scample(incident_energy, lepton_mass);
 
@@ -113,23 +113,6 @@ int main(int argc, char* argv[]) try {
     recoil_pz = recoil.z();
 
     t.Fill();
-
-    float prog = float(i_event) / n_events;
-
-    int old_pos{pos};
-    pos = bar_width * prog;
-    if (pos != old_pos) {
-      std::cout << "[";
-      for (int i{0}; i < bar_width; ++i) {
-        if (i < pos) std::cout << "=";
-        else if (i == pos) std::cout << ">";
-        else std::cout << " ";
-      }
-      std::cout << "] " << int(prog * 100.0) << " %";
-      if (is_redirected) std::cout << "\n";
-      else std::cout << "\r";
-      std::cout.flush();
-    }
   }
 
   t.Write();

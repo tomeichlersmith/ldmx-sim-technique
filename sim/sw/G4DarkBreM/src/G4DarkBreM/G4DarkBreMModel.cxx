@@ -339,8 +339,8 @@ G4ThreeVector G4DarkBreMModel::scample(double incident_energy, double lepton_mas
   static const double MA = G4APrime::APrime()->GetPDGMass() / CLHEP::GeV;
   OutgoingKinematics data = GetMadgraphData(incident_energy);
   double EAcc = (data.electron.E() - lepton_mass) *
-                    ((incident_energy - lepton_mass - MA) / (data.E - lepton_mass - MA)) +
-                lepton_mass;
+                    ((incident_energy - lepton_mass - MA) / (data.E - lepton_mass - MA))
+                + lepton_mass;
   double Pt = data.electron.Pt();
   double P = sqrt(EAcc * EAcc - lepton_mass * lepton_mass);
   double PhiAcc = data.electron.Phi();
@@ -351,8 +351,8 @@ G4ThreeVector G4DarkBreMModel::scample(double incident_energy, double lepton_mas
       i++;
       data = GetMadgraphData(incident_energy);
       EAcc = (data.electron.E() - lepton_mass) *
-                 ((incident_energy - lepton_mass - MA) / (data.E - lepton_mass - MA)) +
-             lepton_mass;
+                 ((incident_energy - lepton_mass - MA) / (data.E - lepton_mass - MA))
+             + lepton_mass;
       Pt = data.electron.Pt();
       P = sqrt(EAcc * EAcc - lepton_mass * lepton_mass);
       PhiAcc = data.electron.Phi();
@@ -389,12 +389,8 @@ G4ThreeVector G4DarkBreMModel::scample(double incident_energy, double lepton_mas
     Pt = data.electron.Pt();
   }
 
-  // Change the energy back to MeV, the internal GEANT unit.
-  EAcc *= CLHEP::GeV;  
-  lepton_mass *= GeV;
-
   // outgoing lepton momentum
-  G4double recoilMag = sqrt(EAcc * EAcc - lepton_mass*lepton_mass);
+  G4double recoilMag = sqrt(EAcc * EAcc - lepton_mass*lepton_mass)*GeV;
   G4ThreeVector recoil;
   double ThetaAcc = std::asin(Pt / P);
   recoil.set(std::sin(ThetaAcc) * std::cos(PhiAcc),
