@@ -15,6 +15,7 @@ build
 ldmx-sw/install
 # container images
 **.sif
+.singularity
 # generated images
 **.pdf
 **.png
