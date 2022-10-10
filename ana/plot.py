@@ -1,6 +1,7 @@
 """Analyze the dark brem events passed to us on the command line."""
 
 import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import mplhep
 plt.style.use(mplhep.style.ROOT)
