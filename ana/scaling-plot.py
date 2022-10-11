@@ -284,18 +284,18 @@ def main() :
         ke_legend_kw=dict(bbox_to_anchor=(0.95,0.),loc='lower right'),
         file_prefix='electron_copper')
 
-    e_beam, binned = efrac_cumulative_ratios([el_Cu, el_Pb, el_W])
+    e_beam, binned = efrac_cumulative_ratios([el_Cu, el_W, el_Pb])
     plt_cumulative_ratios(electron, e_beam, binned, 'electron',
                           ax_kwargs=[
                             {'ylim':(0.955,1.01)},
-                            {'ylim':(0.965,1.01)},
-                            {'ylim':(0.985,1.02)}
+                            {'ylim':(0.985,1.02)},
+                            {'ylim':(0.965,1.01)}
                             ])
 
     efrac_pt_rates(('4 GeV Electrons\n$m_{A\'} = 0.1$ GeV', 4.0,
         [
-        ('W Target, Z = 74', 'dblib/scaling/electron_tungsten_mA_0.1_E_4.0.h5'),
         ('Cu Target, Z = 29', 'dblib/scaling/electron_copper_mA_0.1_E_4.0.h5'),
+        ('W Target, Z = 74', 'dblib/scaling/electron_tungsten_mA_0.1_E_4.0.h5'),
         ('Pb Target, Z = 82', 'dblib/scaling/electron_lead_mA_0.1_E_4.0.h5'),
         ]),
         file_prefix='electron_material_comp')
@@ -336,7 +336,7 @@ def main() :
        ke_legend_kw=dict(bbox_to_anchor=(0.95,0), loc='lower right'),
        file_prefix='muon_copper')
 
-    e_beam, binned = efrac_cumulative_ratios([mu_Cu, mu_Pb, mu_W])
+    e_beam, binned = efrac_cumulative_ratios([mu_Cu, mu_W, mu_Pb])
     plt_cumulative_ratios(muon, e_beam, binned, 'muon', ap = 1.0,
                           material_label_y = 0.75,
                           ax_kwargs=[
@@ -347,8 +347,8 @@ def main() :
     
     efrac_pt_rates(('100 GeV Muons\n$m_{A\'} = 1.0$ GeV', 100.0,
         [
-        ('W Target, Z = 74', 'dblib/scaling/muon_tungsten_mA_1.0_E_100.h5'),
         ('Cu Target, Z = 29', 'dblib/scaling/muon_copper_mA_1.0_E_100.h5'),
+        ('W Target, Z = 74', 'dblib/scaling/muon_tungsten_mA_1.0_E_100.h5'),
         ('Pb Target, Z = 82', 'dblib/scaling/muon_lead_mA_1.0_E_100.h5'),
         ]),
         file_prefix='muon_material_comp')
