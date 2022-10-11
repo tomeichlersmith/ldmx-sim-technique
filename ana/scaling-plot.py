@@ -265,6 +265,8 @@ def main() :
          ('6.0 GeV', 'data/scaling/electron_lead_6.0_to_4.0.root'),
         ])
     scaling_validation(el_Pb, 0.1, electron,
+        ke_ratio_ylim=(0.965,1.015+0.003),
+        ang_ratio_ylim=(0.8,1.25), ang_raw_ylim=(4e-4,4.),
         ke_legend_kw=dict(bbox_to_anchor=(0.95,0.),loc='lower right'),
         file_prefix='electron_lead')
 
@@ -277,6 +279,8 @@ def main() :
          ('6.0 GeV', 'data/scaling/electron_copper_6.0_to_4.0.root'),
         ])
     scaling_validation(el_Cu, 0.1, electron,
+        ke_ratio_ylim=(0.955,1.015+0.003),
+        ang_ratio_ylim=(0.8,1.25), ang_raw_ylim=(4e-4,4.),
         ke_legend_kw=dict(bbox_to_anchor=(0.95,0.),loc='lower right'),
         file_prefix='electron_copper')
 
@@ -298,35 +302,37 @@ def main() :
 
     mu_W = ('Tungsten', 100.,
         'dblib/scaling/muon_tungsten_mA_1.0_E_100.h5',
-       [('Scaled from 111 GeV', 'data/scaling/muon_tungsten_111_to_100.root'),
-        ('Scaled from 125 GeV', 'data/scaling/muon_tungsten_125_to_100.root'),
-        ('Scaled from 150 GeV', 'data/scaling/muon_tungsten_150_to_100.root'),
-        ('Scaled from 200 GeV', 'data/scaling/muon_tungsten_200_to_100.root')
+       [('111 GeV', 'data/scaling/muon_tungsten_111_to_100.root'),
+        ('125 GeV', 'data/scaling/muon_tungsten_125_to_100.root'),
+        ('150 GeV', 'data/scaling/muon_tungsten_150_to_100.root'),
+        ('200 GeV', 'data/scaling/muon_tungsten_200_to_100.root')
        ])
     scaling_validation(mu_W, 1.0, muon,
+       ke_ratio_ylim=(0.95,1.25+0.003),
        ke_legend_kw=dict(bbox_to_anchor=(0.95,0.),loc='lower right'),
        file_prefix='muon_tungsten')
 
     mu_Pb = ('Lead', 100.,
         'dblib/scaling/muon_lead_mA_1.0_E_100.h5',
-       [('Scaled from 111 GeV', 'data/scaling/muon_lead_111_to_100.root'),
-        ('Scaled from 125 GeV', 'data/scaling/muon_lead_125_to_100.root'),
-        ('Scaled from 150 GeV', 'data/scaling/muon_lead_150_to_100.root'),
-        ('Scaled from 200 GeV', 'data/scaling/muon_lead_200_to_100.root')
+       [('111 GeV', 'data/scaling/muon_lead_111_to_100.root'),
+        ('125 GeV', 'data/scaling/muon_lead_125_to_100.root'),
+        ('150 GeV', 'data/scaling/muon_lead_150_to_100.root'),
+        ('200 GeV', 'data/scaling/muon_lead_200_to_100.root')
        ])
     scaling_validation(mu_Pb, 1.0, muon,
-       ke_ratio_ylim=(0.8,1.25),
+       ke_ratio_ylim=(0.95,1.25+0.003),
        ke_legend_kw=dict(bbox_to_anchor=(0.95,0), loc='lower right'),
        file_prefix='muon_lead')
 
     mu_Cu = ('Copper', 100.,
         'dblib/scaling/muon_copper_mA_1.0_E_100.h5',
-       [('Scaled from 111 GeV', 'data/scaling/muon_copper_111_to_100.root'),
-        ('Scaled from 125 GeV', 'data/scaling/muon_copper_125_to_100.root'),
-        ('Scaled from 150 GeV', 'data/scaling/muon_copper_150_to_100.root'),
-        ('Scaled from 200 GeV', 'data/scaling/muon_copper_200_to_100.root')
+       [('111 GeV', 'data/scaling/muon_copper_111_to_100.root'),
+        ('125 GeV', 'data/scaling/muon_copper_125_to_100.root'),
+        ('150 GeV', 'data/scaling/muon_copper_150_to_100.root'),
+        ('200 GeV', 'data/scaling/muon_copper_200_to_100.root')
        ])
     scaling_validation(mu_Cu, 1.0, muon,
+       ke_ratio_ylim=(0.95,1.25+0.003),
        ke_legend_kw=dict(bbox_to_anchor=(0.95,0), loc='lower right'),
        file_prefix='muon_copper')
 
