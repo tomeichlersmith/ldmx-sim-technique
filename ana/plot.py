@@ -142,7 +142,7 @@ def single(data_packet, kinematic_variable, xlabel, file_name,
     l = ax.legend(title=title, **legend_kwargs)
     plt.setp(l.get_title(), multialignment='right')
     
-    plt.savefig(file_name)
+    plt.savefig(file_name, bbox_inches='tight')
     plt.clf() 
 
 def xsec_plot(mg_csv, others, file_name, 
@@ -173,7 +173,7 @@ def xsec_plot(mg_csv, others, file_name,
 
     ratio.set_ylabel('Ratio to MG/ME')
     ratio.set_xlabel(xlabel)
-    plt.savefig(file_name)
+    plt.savefig(file_name, bbox_inches='tight')
     plt.clf()
         
 def main() :
@@ -224,7 +224,7 @@ def main() :
            hist_kwargs = {'range' : (0,1), 'bins' : 50},
            file_name = filename(na64[0],'visible-energy'))
     single(na64, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
-           ylabel = 'Fraction Events Below Energy Cut',
+           ylabel = 'Fraction of Events Below Energy Cut',
            yscale = 'linear',
            hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
            legend_kwargs = {'loc':'lower center'},
@@ -249,7 +249,7 @@ def main() :
            hist_kwargs = {'range' : (0,1), 'bins' : 50},
            file_name = filename(extra_thin[0], 'visible-energy'))
     single(extra_thin, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
-           ylabel = 'Fraction Events Below Energy Cut',
+           ylabel = 'Fraction of Events Below Energy Cut',
            yscale = 'linear',
            hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
            legend_kwargs = {'loc':'lower right', 'framealpha': 0.8},
@@ -274,7 +274,7 @@ def main() :
            hist_kwargs = {'range' : (0,1), 'bins' : 50},
            file_name = filename(thin_el[0], 'visible-energy'))
     single(thin_el, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
-           ylabel = 'Fraction Events Below Energy Cut',
+           ylabel = 'Fraction of Events Below Energy Cut',
            yscale = 'linear',
            hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
            legend_kwargs = {'loc':'lower right', 'bbox_to_anchor':(0.95,0.)},
@@ -298,7 +298,7 @@ def main() :
            hist_kwargs = {'range' : (0,1), 'bins' : 50},
            file_name = filename(thin_mu[0], 'visible-energy'))
     single(thin_mu, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
-           ylabel = 'Fraction Events Below Energy Cut',
+           ylabel = 'Fraction of Events Below Energy Cut',
            yscale = 'linear',
            hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
            legend_kwargs = {'loc':'lower right', 'bbox_to_anchor':(0.95,0)},
@@ -323,7 +323,7 @@ def main() :
            hist_kwargs = {'range' : (0,1), 'bins' : 50},
            file_name = filename(thick_el[0], 'visible-energy'))
     single(thick_el, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
-           ylabel = 'Fraction Events Below Energy Cut',
+           ylabel = 'Fraction of Events Below Energy Cut',
            yscale = 'linear',
            hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
            legend_kwargs = {'loc':'lower right', 'bbox_to_anchor':(0.95,0)},
@@ -347,7 +347,7 @@ def main() :
            hist_kwargs = {'range' : (0,1), 'bins' : 50},
            file_name = filename(thick_mu[0], 'visible-energy'))
     single(thick_mu, 'visible_energy_frac', 'Visible Energy Fraction of Beam', 
-           ylabel = 'Fraction Events Below Energy Cut',
+           ylabel = 'Fraction of Events Below Energy Cut',
            yscale = 'linear',
            hist_kwargs = {'range' : (0,1), 'bins': 50, 'cumulative' : True},
            legend_kwargs = {'loc':'lower right', 'bbox_to_anchor':(0.95,0)},
