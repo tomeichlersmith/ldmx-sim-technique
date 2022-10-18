@@ -211,7 +211,7 @@ def efrac_pt_rates(data_packet,
                    efrac_legend_kw = dict(),
                    pt_legend_kw = dict(),
                    file_prefix = None) :
-    (title, e_beam, data) = data_packet
+    (title, data) = data_packet
     efrac_ax = plt.figure('efrac').subplots()
     pt_ax    = plt.figure('pt').subplots()
     
@@ -223,7 +223,7 @@ def efrac_pt_rates(data_packet,
     pt_ax.set_ylabel('Normalized Rate')
     pt_ax.set_xlabel('Outgoing Electron Transverse Momentum [GeV]')
     
-    for name, f in data :
+    for name, e_beam, f in data :
         plt_efrac_pt(f, e_beam,
                      pt_ax, efrac_ax,
                      pt_kw = dict(histtype='step',linewidth=2,range=(0,1.1),bins=50,label=name),
@@ -291,13 +291,22 @@ def main() :
                             {'ylim':(0.965,1.01)}
                             ])
 
-    efrac_pt_rates(('4 GeV Electrons\n$m_{A\'} = 0.1$ GeV', 4.0,
+    efrac_pt_rates(('4 GeV Electrons\n$m_{A\'} = 0.1$ GeV',
         [
-        ('Cu Target, Z = 29', 'dblib/scaling/electron_copper_mA_0.1_E_4.0.h5'),
-        ('W Target, Z = 74', 'dblib/scaling/electron_tungsten_mA_0.1_E_4.0.h5'),
-        ('Pb Target, Z = 82', 'dblib/scaling/electron_lead_mA_0.1_E_4.0.h5'),
+        ('Cu Target, Z = 29', 4.0, 'dblib/scaling/electron_copper_mA_0.1_E_4.0.h5'),
+        ('W Target, Z = 74', 4.0, 'dblib/scaling/electron_tungsten_mA_0.1_E_4.0.h5'),
+        ('Pb Target, Z = 82', 4.0, 'dblib/scaling/electron_lead_mA_0.1_E_4.0.h5'),
         ]),
         file_prefix='electron_material_comp')
+
+    efrac_pt_rates(('Electrons on Tungsten\n$m_{A\'} = 0.1$ GeV',
+      [
+        ('4.0 GeV', 4.0, 'dblib/scaling/electron_tungsten_mA_0.1_E_4.0.h5'),
+        ('4.4 GeV', 4.4, 'dblib/scaling/electron_tungsten_mA_0.1_E_4.4.h5'),
+        ('6.0 GeV', 6.0, 'dblib/scaling/electron_tungsten_mA_0.1_E_6.0.h5'),
+        ('8.0 GeV', 8.0, 'dblib/scaling/electron_tungsten_mA_0.1_E_8.0.h5'),
+      ]),
+      file_prefix='electron_energy_comp')
 
     mu_W = ('Tungsten', 100.,
         'dblib/scaling/muon_tungsten_mA_1.0_E_100.h5',
@@ -344,13 +353,23 @@ def main() :
                             {'ylim':(0.950,1.25)}
                             ])
     
-    efrac_pt_rates(('100 GeV Muons\n$m_{A\'} = 1.0$ GeV', 100.0,
+    efrac_pt_rates(('100 GeV Muons\n$m_{A\'} = 1.0$ GeV',
         [
-        ('Cu Target, Z = 29', 'dblib/scaling/muon_copper_mA_1.0_E_100.h5'),
-        ('W Target, Z = 74', 'dblib/scaling/muon_tungsten_mA_1.0_E_100.h5'),
-        ('Pb Target, Z = 82', 'dblib/scaling/muon_lead_mA_1.0_E_100.h5'),
+        ('Cu Target, Z = 29', 100, 'dblib/scaling/muon_copper_mA_1.0_E_100.h5'),
+        ('W Target, Z = 74', 100, 'dblib/scaling/muon_tungsten_mA_1.0_E_100.h5'),
+        ('Pb Target, Z = 82', 100, 'dblib/scaling/muon_lead_mA_1.0_E_100.h5'),
         ]),
         file_prefix='muon_material_comp')
+
+    efrac_pt_rates(('Muons on Copper\n$m_{A\'} = 1.0$ GeV',
+      [
+        ('100 GeV', 100, 'dblib/scaling/muon_copper_mA_1.0_E_100.h5'),
+        ('111 GeV', 111, 'dblib/scaling/muon_copper_mA_1.0_E_111.h5'),
+        ('125 GeV', 125, 'dblib/scaling/muon_copper_mA_1.0_E_125.h5'),
+        ('150 GeV', 150, 'dblib/scaling/muon_copper_mA_1.0_E_150.h5'),
+        ('200 GeV', 200, 'dblib/scaling/muon_copper_mA_1.0_E_200.h5'),
+      ]),
+      file_prefix='muon_energy_comp')
     
 if __name__ == '__main__' :
     main()
