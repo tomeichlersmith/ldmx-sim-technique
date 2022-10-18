@@ -74,8 +74,7 @@ def efrac_cumulative_ratios(material_packs) :
 
 def plt_cumulative_ratios(lepton, e_beam, binned, file_prefix, 
                           ax_kwargs = None, ap = 0.1,
-                          material_label_y = 0.25,
-                          ylabel='Scaled / Unscaled Event Fraction Below Outgoing Energy') :
+                          material_label_y = 0.25) :
     fig = plt.figure(figsize=(8,11))
     axes = fig.subplots(ncols = 1, nrows = len(binned), sharex = 'col')
     if ax_kwargs is None :
@@ -90,10 +89,10 @@ def plt_cumulative_ratios(lepton, e_beam, binned, file_prefix,
                      label=name if i == 0 else '_nolegend_')
         
         if i == 0 :
-            ax.set_ylabel(ylabel)
+            ax.set_ylabel('Ratio Scaled / Unscaled Predicted')
         
         if i == len(binned)-1 :
-            ax.set_xlabel(f'Outgoing {lepton[0]} Energy Fraction')
+            ax.set_xlabel(f'Maximum Outgoing {lepton[0]} Energy Fraction')
             
     fig.legend(
         title='$m_{A\'} = '+str(ap)+'$ GeV\n'+f'Scaled to\n{e_beam} GeV from',
