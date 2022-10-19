@@ -159,12 +159,12 @@ def xsec_plot(mg_csv, others, file_name,
     for name, data in others :
         y = data['Xsec [pb]']
         x = data['Energy [MeV]']/1000.
-        raw.plot(x, y, label=name)
+        raw.plot(x, y, label=name, linewidth=2)
         data_interp = scipy.interpolate.interp1d(x, y)
         data_at_mge = [data_interp(e) for e in mg_x]
-        ratio.plot(mg_x, data_at_mge/mg_y, marker='.', linewidth=0)
+        ratio.plot(mg_x, data_at_mge/mg_y, marker='.', markersize=15, linewidth=0)
 
-    raw.plot(mg_x, mg_y,marker='.', linewidth=0, label='MG/ME')
+    raw.plot(mg_x, mg_y,marker='.', markersize=15, linewidth=0, label='MG/ME')
     ratio.plot(mg_x, [1. for x in mg_x], marker='.', markersize=0, linewidth=0)
 
     raw.set_ylabel('Total Cross Section / $\epsilon^2$ [pb]')
