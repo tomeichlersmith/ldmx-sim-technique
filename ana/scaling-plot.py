@@ -212,8 +212,8 @@ def efrac_pt_rates(data_packet,
                    pt_legend_kw = dict(),
                    file_prefix = None) :
     (title, data) = data_packet
-    efrac_ax = plt.figure('efrac').subplots()
-    pt_ax    = plt.figure('pt').subplots()
+    efrac_ax = plt.figure('efrac', figsize=(11,8)).subplots()
+    pt_ax    = plt.figure('pt', figsize=(11,8)).subplots()
     
     efrac_ax.set_yscale('log')
     efrac_ax.set_ylabel('Normalized Rate')
@@ -306,6 +306,7 @@ def main() :
         ('6.0 GeV', 6.0, 'dblib/scaling/electron_tungsten_mA_0.1_E_6.0.h5'),
         ('8.0 GeV', 8.0, 'dblib/scaling/electron_tungsten_mA_0.1_E_8.0.h5'),
       ]),
+      efrac_legend_kw = dict(loc='lower left', bbox_to_anchor=(0.05,0.)),
       file_prefix='electron_energy_comp')
 
     mu_W = ('Tungsten', 100.,
