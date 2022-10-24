@@ -2,7 +2,7 @@
 #define SIMCORE_DARKBREM_DMG4MODEL_H_
 
 #include "Framework/Configure/Parameters.h"
-#include "G4DarkBreM/G4DarkBremsstrahlung.h"
+#include "G4DarkBreM/PrototypeModel.h"
 
 // DMG4 DarkMatter Model
 #include "DarkMatter.hh"
@@ -16,7 +16,7 @@ namespace darkbrem {
  * A model where we use NA64's DMG4 module to compare our
  * dark brem simulation to theirs.
  */
-class DMG4Model : public G4DarkBremsstrahlungModel {
+class DMG4Model : public g4db::PrototypeModel {
  public:
   /**
    * Constructor
@@ -35,11 +35,6 @@ class DMG4Model : public G4DarkBremsstrahlungModel {
    * Print the configuration of this model
    */
   virtual void PrintInfo() const;
-
-  /**
-   * Record the configuration of this model into the RunHeader
-   */
-  virtual void RecordConfig(ldmx::RunHeader& h) const;
 
   /**
    * Calculates the cross section per atom in GEANT4 internal units.

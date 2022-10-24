@@ -32,7 +32,7 @@ void TargetDarkBremFilter::stepping(const G4Step* step) {
   // Leave if track is not an electron
   auto particle_def{track->GetParticleDefinition()};
   if (particle_def != G4Electron::Electron()) {
-    if (particle_def == simcore::darkbrem::G4APrime::APrime() and
+    if (particle_def == G4APrime::APrime() and
         track->GetCurrentStepNumber() == 1) {
       /** check on first step of A' to see if it originated in correct volume
        * this needs to be here because sometimes the
@@ -72,7 +72,7 @@ void TargetDarkBremFilter::stepping(const G4Step* step) {
       // check secondaries to see if we made a dark brem
       for (auto& secondary_track : *secondaries) {
         if (secondary_track->GetParticleDefinition() ==
-            simcore::darkbrem::G4APrime::APrime()) {
+            G4APrime::APrime()) {
           // we found an A', woo-hoo!
 
           if (secondary_track->GetTotalEnergy() < threshold_) {

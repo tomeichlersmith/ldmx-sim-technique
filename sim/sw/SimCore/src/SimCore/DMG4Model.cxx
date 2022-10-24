@@ -1,9 +1,8 @@
 
-#include "G4DarkBreM/DMG4Model.h"
+#include "SimCore/DMG4Model.h"
 // these must come after DarkMatter.hh include because they don't include it themselves
 #include "DarkPhotons.hh"
 #include "DarkZ.hh"
-
 
 #include "Framework/Exception/Exception.h"
 #include "Framework/Logger.h"
@@ -13,7 +12,7 @@ namespace simcore {
 namespace darkbrem {
 
 DMG4Model::DMG4Model(framework::config::Parameters &params, bool muons)
-    : G4DarkBremsstrahlungModel(params, muons) {
+    : g4db::PrototypeModel(muons) {
   double apmass = G4APrime::APrime()->GetPDGMass()/CLHEP::GeV;
   epsilon_ = params.getParameter<double>("epsilon");
   // A' mass [GeV], min threshold [GeV], sigma norm, A nucl, Z nucl, density, epsilon
@@ -32,11 +31,6 @@ void DMG4Model::PrintInfo() const {
   G4cout << " DMG4 DarkPhotons Model" << G4endl;
   G4cout << "   Threshold [GeV]: " << dm_model_->GetEThresh() << G4endl;
   G4cout << "   Epsilon:         " << dm_model_->Getepsil() << G4endl;
-}
-
-void DMG4Model::RecordConfig(ldmx::RunHeader &h) const {
-  h.setFloatParameter("Minimum Threshold to DB [GeV]", dm_model_->GetEThresh());
-  h.setFloatParameter("DB Xsec Epsilon", dm_model_->Getepsil());
 }
 
 G4double DMG4Model::ComputeCrossSectionPerAtom(

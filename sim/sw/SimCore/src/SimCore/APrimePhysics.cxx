@@ -5,8 +5,12 @@
  * @author Tom Eichlersmith, University of Minnesota
  */
 
-#include "G4DarkBreM/APrimePhysics.h"
 #include "G4DarkBreM/G4APrime.h"
+
+#include "SimCore/APrimePhysics.h"
+#include "SimCore/DMG4Model.h"
+#include "G4DarkBreM/G4DarkBreMModel.h"
+#include "G4DarkBreM/G4DarkBremsstrahlung.h"
 
 // Geant4
 #include "G4Electron.hh"
@@ -39,45 +43,25 @@ void APrimePhysics::ConstructParticle() {
 void APrimePhysics::ConstructProcess() {
   // add process to electron if LHE file has been provided
   if (enable_) {
-    /*
-     * In G4 speak, a "discrete" process is one that only happens at the end of
-     * steps. we want the DB to be discrete because it is not a "slow braking"
-     * like ionization, the electron suddenly has the interaction and loses a
-     * lot of its energy.
-     *
-     * The first argument to this function is the process we are adding.
-     *      The process manager handles cleaning up the processes,
-     *      so we just give it a new pointer.
-     * The second argument is the "ordering" index.
-     *      This index determines when the process is called w.r.t. the other
-     * processes that could be called at the end of the step. Not providing the
-     * second argument means that the ordering index is given a default value of
-     * 1000 which seems to be safely above all the internal/default processes.
-     */
-    G4ParticleDefinition* particle_def{G4Electron::ElectronDefinition()};
-    if (muons_) {
-      particle_def = G4MuonMinus::Definition();
-    }
-    std::cout << "[ APrimePhysics ] : Connecting dark brem to " 
-      << particle_def->GetParticleName() << " "
-      << particle_def->GetPDGEncoding() << std::endl;
-    auto proc = new G4DarkBremsstrahlung(parameters_);
-    G4int ret = particle_def->GetProcessManager()->AddDiscreteProcess(proc);
-    //G4int ret = particle_def->GetProcessManager()->AddProcess(proc,-1,1,1);
-    if (ret < 0) {
-      EXCEPTION_RAISE("DarkBremReg","Particle process manager returned non-zero status "
-          +std::to_string(ret)
-          + " when attempting to register dark brem to it.");
+    G4DarkBremsstrahlung proc(muons_,
+        parameters_.getParameter<bool>("only_one_per_event"),
+        parameters_.getParameter<double>("global_bias"),
+        parameters_.getParameter<bool>("cache_xsec", true));
+    auto model{parameters_.getParameter<framework::config::Parameters>("model")};
+    auto model_name{model.getParameter<std::string>("name")};
+    if (model_name == "vertex_library" or model_name == "g4db") {
+      proc.SetModel(std::make_shared<g4db::G4DarkBreMModel>(
+            model.getParameter<std::string>("method"),
+            model.getParameter<double>("threshold"),
+            model.getParameter<double>("epsilon"),
+            model.getParameter<std::string>("library_path"),
+            muons_));
+    } else if (model_name == "dmg4") {
+      proc.SetModel(std::make_shared<DMG4Model>(model, muons_));
     } else {
-      std::cout << "[ APrimePhysics ] : successfully put dark brem in index " 
-        << ret << " of process table." << std::endl;
+      EXCEPTION_RAISE("BadConf",
+          "Unrecognized model name '"+model_name+"'.");
     }
-    /**
-     * have our custom dark brem process go first in any process ordering
-     */
-    particle_def->GetProcessManager()->SetProcessOrderingToFirst(proc,
-        G4ProcessVectorDoItIndex::idxAll);
-    std::cout << "[ APrimePhysics ] : set dark brem process ordering to first" << std::endl;
   }
 }
 

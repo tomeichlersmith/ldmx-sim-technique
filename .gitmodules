@@ -4,3 +4,6 @@
 [submodule "sim/sw/cmake"]
 	path = sim/sw/cmake
 	url = git@github.com:LDMX-Software/cmake.git
+[submodule "sim/sw/G4DarkBreM"]
+	path = sim/sw/G4DarkBreM
+	url = git@github.com:tomeichlersmith/G4DarkBreM

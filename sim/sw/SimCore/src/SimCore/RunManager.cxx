@@ -9,8 +9,8 @@
 //-------------//
 //   ldmx-sw   //
 //-------------//
-#include "G4DarkBreM/APrimePhysics.h"
 #include "G4DarkBreM/G4DarkBremsstrahlung.h"  //for process name
+#include "SimCore/APrimePhysics.h"
 #include "SimCore/DetectorConstruction.h"
 #include "SimCore/GammaPhysics.h"
 #include "SimCore/PluginFactory.h"
@@ -170,7 +170,7 @@ void RunManager::TerminateOneEvent() {
   auto reactivate_dark_brem = [](G4ProcessManager* pman) {
     for (std::size_t i_proc{0}; i_proc < pman->GetProcessList()->size(); i_proc++) {
       G4VProcess* p{(*(pman->GetProcessList()))[i_proc]};
-      if (p->GetProcessName().contains(darkbrem::G4DarkBremsstrahlung::PROCESS_NAME)) {
+      if (p->GetProcessName().contains(G4DarkBremsstrahlung::PROCESS_NAME)) {
         pman->SetProcessActivation(p, true);
         break;
       }

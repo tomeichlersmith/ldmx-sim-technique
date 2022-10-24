@@ -47,7 +47,7 @@ setup_library(module SimCore
                            ROOT::Physics
                            Framework::Configure
                            Framework::Framework
-                           G4DarkBreM::G4DarkBreM
+                           G4DarkBreM
                            Boost::log
                            "${registered_targets}"
               sources ${SRC_FILES})

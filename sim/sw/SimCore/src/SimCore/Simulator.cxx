@@ -10,7 +10,6 @@
 /*~~~~~~~~~~~~~*/
 /*   SimCore   */
 /*~~~~~~~~~~~~~*/
-#include "G4DarkBreM/G4DarkBremsstrahlung.h"
 #include "SimCore/DetectorConstruction.h"
 #include "SimCore/G4Session.h"
 #include "SimCore/Persist/RootPersistencyManager.h"
@@ -145,10 +144,6 @@ void Simulator::beforeNewRun(ldmx::RunHeader& header) {
   auto bops{PluginFactory::getInstance().getBiasingOperators()};
   for (const XsecBiasingOperator* bop : bops) {
     bop->RecordConfig(header);
-  }
-
-  if (darkbrem::G4DarkBremsstrahlung::Get()) {
-    darkbrem::G4DarkBremsstrahlung::Get()->RecordConfig(header);
   }
 
   auto generators{

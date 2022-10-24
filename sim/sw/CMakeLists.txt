@@ -56,9 +56,9 @@ set(BUILD_EVENT_ONLY OFF CACHE BOOL "Build the SimCore library." FORCE)
 
 add_subdirectory(Framework)
 add_subdirectory(DMG4)
+add_subdirectory(G4DarkBreM)
 # need to globally include DMG4 headers
 include_directories(DMG4/include/ DMG4/include/DMG4)
-add_subdirectory(G4DarkBreM)
 add_subdirectory(SimCore)
 add_subdirectory(Biasing)
 
