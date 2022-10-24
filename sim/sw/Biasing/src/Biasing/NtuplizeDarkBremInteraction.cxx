@@ -47,7 +47,7 @@ void NtuplizeDarkBremInteraction::analyze(const framework::Event& e) {
   const ldmx::SimParticle *recoil{nullptr}, *aprime{nullptr}, *beam{nullptr}, *incident{nullptr};
   for (const auto& [track_id, particle] : particle_map) {
     if (track_id == 1) beam = &particle;
-    if (particle.getProcessType() == ldmx::SimParticle::ProcessType::eDarkBrem) {
+    if (particle.getProcessType() == ldmx::SimParticle::ProcessType::DarkBrem) {
       if (particle.getPdgID() == 622) {
         if (aprime != nullptr) {
           EXCEPTION_RAISE("BadEvent", "Found multiple A' in event.");
