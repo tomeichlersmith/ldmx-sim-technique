@@ -48,6 +48,7 @@ setup_library(module SimCore
                            Framework::Configure
                            Framework::Framework
                            G4DarkBreM
+                           DMG4 UtilsDM DarkMatter
                            Boost::log
                            "${registered_targets}"
               sources ${SRC_FILES})
