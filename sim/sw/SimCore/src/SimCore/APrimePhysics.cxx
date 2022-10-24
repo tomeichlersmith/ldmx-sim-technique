@@ -43,25 +43,27 @@ void APrimePhysics::ConstructParticle() {
 void APrimePhysics::ConstructProcess() {
   // add process to electron if LHE file has been provided
   if (enable_) {
-    G4DarkBremsstrahlung proc(muons_,
+    std::cout << "[ APrimePhysics ] : Enabling dark brem" << std::endl;
+    auto proc = new G4DarkBremsstrahlung(muons_,
         parameters_.getParameter<bool>("only_one_per_event"),
         parameters_.getParameter<double>("global_bias"),
         parameters_.getParameter<bool>("cache_xsec", true));
     auto model{parameters_.getParameter<framework::config::Parameters>("model")};
     auto model_name{model.getParameter<std::string>("name")};
     if (model_name == "vertex_library" or model_name == "g4db") {
-      proc.SetModel(std::make_shared<g4db::G4DarkBreMModel>(
+      proc->SetModel(std::make_shared<g4db::G4DarkBreMModel>(
             model.getParameter<std::string>("method"),
             model.getParameter<double>("threshold"),
             model.getParameter<double>("epsilon"),
             model.getParameter<std::string>("library_path"),
             muons_));
     } else if (model_name == "dmg4") {
-      proc.SetModel(std::make_shared<DMG4Model>(model, muons_));
+      proc->SetModel(std::make_shared<DMG4Model>(model, muons_));
     } else {
       EXCEPTION_RAISE("BadConf",
           "Unrecognized model name '"+model_name+"'.");
     }
+    std::cout << "[ APrimePhysics ] : Initialization complete" << std::endl;
   }
 }
 

@@ -130,7 +130,7 @@ sim.detector = write(p.histogramFile.replace("root","gdml").replace('ntuple','ge
     material,arg.depth,hunk_transverse)
 
 #Activiate dark bremming with a certain A' mass and LHE library
-from LDMX.G4DarkBreM import dark_brem
+from LDMX.SimCore import dark_brem
 if arg.method == 'g4db' :
     db_model = dark_brem.G4DarkBreM(db_event_lib_path)
     db_model.threshold = 2*min_e/1000. #GeV - minimum energy electron needs to have to dark brem
