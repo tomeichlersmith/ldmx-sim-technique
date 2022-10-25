@@ -55,10 +55,10 @@ __main__() {
     return $?
   fi
 
-  echo "print-dark-brem-xsec-table -o ${_output_dir}/g4db_el_xsec.csv &>> ${_output_dir}/g4db_xsec.log"
-  echo "print-dark-brem-xsec-table --muons -o ${_output_dir}/g4db_mu_xsec.csv &>> ${_output_dir}/g4db_xsec.log"
-  echo "print-dark-brem-xsec-table -m dmg4 -o ${_output_dir}/dmg4_el_xsec.csv &>> ${_output_dir}/dmg4_xsec.log"
-  echo "print-dark-brem-xsec-table -m dmg4 --muons -o ${_output_dir}/dmg4_mu_xsec.csv &>> ${_output_dir}/dmg4_xsec.log"
+  #echo "print-dark-brem-xsec-table -o ${_output_dir}/g4db_el_xsec.csv &>> ${_output_dir}/g4db_xsec.log"
+  #echo "print-dark-brem-xsec-table --muons -o ${_output_dir}/g4db_mu_xsec.csv &>> ${_output_dir}/g4db_xsec.log"
+  #echo "print-dark-brem-xsec-table -m dmg4 -o ${_output_dir}/dmg4_el_xsec.csv &>> ${_output_dir}/dmg4_xsec.log"
+  #echo "print-dark-brem-xsec-table -m dmg4 --muons -o ${_output_dir}/dmg4_mu_xsec.csv &>> ${_output_dir}/dmg4_xsec.log"
 
   if ${_only_xsec}; then
     return
