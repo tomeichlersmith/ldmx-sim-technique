@@ -37,28 +37,32 @@ void APrimePhysics::ConstructParticle() {
    * Geant4 registers all instances derived from G4ParticleDefinition and
    * deletes them at the end of the run.
    */
-  G4APrime::APrime(ap_mass_);
+  G4APrime::Initialize(ap_mass_);
 }
 
 void APrimePhysics::ConstructProcess() {
   // add process to electron if LHE file has been provided
   if (enable_) {
     std::cout << "[ APrimePhysics ] : Enabling dark brem" << std::endl;
-    auto proc = new G4DarkBremsstrahlung(muons_,
-        parameters_.getParameter<bool>("only_one_per_event"),
-        parameters_.getParameter<double>("global_bias"),
-        parameters_.getParameter<bool>("cache_xsec", true));
     auto model{parameters_.getParameter<framework::config::Parameters>("model")};
     auto model_name{model.getParameter<std::string>("name")};
     if (model_name == "vertex_library" or model_name == "g4db") {
-      proc->SetModel(std::make_shared<g4db::G4DarkBreMModel>(
-            model.getParameter<std::string>("method"),
-            model.getParameter<double>("threshold"),
-            model.getParameter<double>("epsilon"),
-            model.getParameter<std::string>("library_path"),
-            muons_));
+      auto proc = new G4DarkBremsstrahlung(
+        std::make_shared<g4db::G4DarkBreMModel>(
+              model.getParameter<std::string>("method"),
+              model.getParameter<double>("threshold"),
+              model.getParameter<double>("epsilon"),
+              model.getParameter<std::string>("library_path"),
+              muons_),
+          parameters_.getParameter<bool>("only_one_per_event"),
+          parameters_.getParameter<double>("global_bias"),
+          parameters_.getParameter<bool>("cache_xsec", true));
     } else if (model_name == "dmg4") {
-      proc->SetModel(std::make_shared<DMG4Model>(model, muons_));
+      auto proc = new G4DarkBremsstrahlung(
+        std::make_shared<DMG4Model>(model,muons_),
+          parameters_.getParameter<bool>("only_one_per_event"),
+          parameters_.getParameter<double>("global_bias"),
+          parameters_.getParameter<bool>("cache_xsec", true));
     } else {
       EXCEPTION_RAISE("BadConf",
           "Unrecognized model name '"+model_name+"'.");
