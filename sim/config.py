@@ -149,11 +149,18 @@ sim.dark_brem.activate( ap_mass , db_model , muons = (primary.particle == 'mu-')
 sim.dark_brem.only_one_per_event = True
 sim.dark_brem.calc_common = False
 
+# need a lower bias factor for muons so
+# the lower xsec for muon bremsstrahlung can still happen
+if particle == 'electron' :
+    bias = sim.dark_brem.ap_mass**2
+else :
+    bias = (sim.dark_brem.ap_mass/5)**2
+
 #Biasing dark brem up inside of the ecal volumes
 from LDMX.SimCore import bias_operators
 sim.biasing_operators = [ 
         bias_operators.DarkBrem('hunk',True,
-          sim.dark_brem.ap_mass**2 / db_model.epsilon**2,
+          bias / db_model.epsilon**2,
           particle = primary.particle)
         ]
 
