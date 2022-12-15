@@ -5,6 +5,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <unistd.h>
 
 #include "SimCore/DMG4Model.h"
 #include "G4DarkBreM/ElementXsecCache.h"
@@ -45,7 +46,7 @@ int main(int argc, char* argv[]) try {
   double energy_step{0.1};
   double target_Z{74.};
   double target_A{183.84};
-  double target_density{};
+  double target_density{19.3};
   bool muons{false};
   for (int i_arg{1}; i_arg < argc; ++i_arg) {
     std::string arg{argv[i_arg]};
@@ -123,6 +124,18 @@ int main(int argc, char* argv[]) try {
   model_cfg.addParameter("targetZ", target_Z);
   model_cfg.addParameter("density", target_density);
 
+  std::cout 
+    << "Parameter         : Value\n"
+    << "Mass A' [MeV]     : " << ap_mass*GeV << "\n"
+    << "Min Energy [MeV]  : " << current_energy << "\n"
+    << "Max Energy [MeV]  : " << max_energy     << "\n"
+    << "Energy Step [MeV] : " << energy_step    << "\n"
+    << "Lepton            : " << (muons ? "Muons" : "Electrons") << "\n"
+    << "Target A [amu]    : " << target_A << "\n"
+    << "Target Z [amu]    : " << target_Z << "\n"
+    << "Target Density [g cm^-3] : " << target_density << "\n"
+    << std::flush;
+
   // the process accesses the A' mass from the G4 particle
   G4APrime::Initialize(ap_mass*GeV);
   auto model = std::make_shared<simcore::darkbrem::DMG4Model>(model_cfg, muons);
@@ -132,22 +145,25 @@ int main(int argc, char* argv[]) try {
 
   int bar_width = 80;
   int pos = 0;
+  bool is_redirected = (isatty(STDOUT_FILENO) == 0);
   while (current_energy < max_energy + energy_step) {
     cache.get(current_energy, target_A, target_Z);
     current_energy += energy_step;
-    int old_pos{pos};
-    pos = bar_width * current_energy / max_energy;
-    if (pos != old_pos) {
-      std::cout << "[";
-      for (int i{0}; i < bar_width; ++i) {
-        if (i < pos) std::cout << "=";
-        else if (i == pos) std::cout << ">";
-        else std::cout << " ";
+    if (not is_redirected) {
+      int old_pos{pos};
+      pos = bar_width * current_energy / max_energy;
+      if (pos != old_pos) {
+        std::cout << "[";
+        for (int i{0}; i < bar_width; ++i) {
+          if (i < pos) std::cout << "=";
+          else if (i == pos) std::cout << ">";
+          else std::cout << " ";
+        }
+        std::cout << "] " << int(current_energy / max_energy * 100.0) << " %" << std::endl;
       }
-      std::cout << "] " << int(current_energy / max_energy * 100.0) << " %" << std::endl;
     }
   }
-  std::cout << std::endl;
+  if (not is_redirected) std::cout << std::endl;
 
   table_file << cache;
 
