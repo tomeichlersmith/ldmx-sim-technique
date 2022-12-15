@@ -14,6 +14,9 @@ def read(f, tree_name = None) :
     unit = 1.
     if f.endswith('.h5') :
         df = pd.read_hdf(f, key = tree_name)
+    elif f.endswith('.csv') :
+        unit = 1000.
+        df = pd.read_csv(f)
     elif 'dblib' in f :
         if f.endswith('.lhe') :
             df = dark_brem_lhe.DarkBremEventFile(f).events
@@ -32,6 +35,7 @@ def read(f, tree_name = None) :
     df['recoil_energy'] /= unit
     df['recoil_pt'] = np.sqrt(df['recoil_px']**2 + df['recoil_py']**2)
     df['recoil_angle'] = np.arctan2(df['recoil_pt'],df['recoil_pz'])
+    df.drop(df[df.recoil_energy <= 0.0].index, inplace=True)
     return df
     
 def plt_bins(ax, np_hist, **kwargs) :
@@ -101,7 +105,7 @@ def plt_cumulative_ratios(lepton, e_beam, binned, file_prefix,
     fig.clf()
 
 def plt_efrac_angle(f, e_beam,
-             angle_ax, kefrac_ax,
+             angle_ax, kefrac_cumu_ax, kefrac_diff_ax,
              angle_kw = {}, kefrac_kw = {}, 
              lepton_mass = None, tree_name = None) :
     """Pull out the energy and angle from the ROOT files
@@ -116,29 +120,42 @@ def plt_efrac_angle(f, e_beam,
     weights = np.empty(len(df))
     weights.fill(1./len(df))
 
-    ke = kefrac_ax.hist(df['recoil_energy']/e_beam, weights=weights, **kefrac_kw)
+    ke = kefrac_diff_ax.hist(df['recoil_energy']/e_beam, weights=weights, **kefrac_kw)
+    ke_cumu = kefrac_cumu_ax.hist(df['recoil_energy']/e_beam, weights=weights, **kefrac_kw, cumulative=True)
     ang = angle_ax.hist(df['recoil_angle'], weights=weights, **angle_kw)
-    return ang, ke
-    
+    return ang, ke, ke_cumu
+
 def scaling_validation(file_packet, apmass, lepton_packet,
                        ang_raw_ylim = None, ang_ratio_ylim = None, 
-                       ke_raw_ylim = None, ke_ratio_ylim = None,
+                       ke_ratio_ylim = None,
                        ke_legend_kw = dict(loc='lower right'), ang_legend_kw = dict(),
                        file_prefix = None) :
+    kefrac_bins = np.concatenate((np.arange(0,10,1),np.arange(10,100,10),np.arange(100,4000,100)))/4000.
     (material, e_beam, mg, scaled) = file_packet
     (lepton, lepton_mass) = lepton_packet
 
-    (ke_raw, ke_ratio) = plt.figure('ke').subplots(ncols = 1, nrows = 2, 
+    (ke_cumu_raw, ke_cumu_ratio) = plt.figure('ke_cumu').subplots(ncols = 1, nrows = 2, 
                                                    sharex = 'col', 
                                                    gridspec_kw = dict(height_ratios = [3,1]))
     plt.subplots_adjust(hspace = 0)
-    ke_raw.set_ylabel('Fraction Below Outgoing Energy')
-    if ke_raw_ylim is not None :
-        ke_raw.set_ylim(ke_raw_ylim)
-    ke_ratio.set_ylabel('Scaled / Unscaled')
-    ke_ratio.set_xlabel(f'Outgoing {lepton} Energy Fraction')
+    ke_cumu_raw.set_ylabel('Fraction Below Outgoing Energy')
+    ke_cumu_ratio.set_ylabel('Scaled / Unscaled')
+    ke_cumu_ratio.set_xlabel(f'Outgoing {lepton} Energy Fraction')
+    ke_cumu_raw.set_xscale('log')
     if ke_ratio_ylim is not None :
-        ke_ratio.set_ylim(ke_ratio_ylim)
+        ke_cumu_ratio.set_ylim(ke_ratio_ylim)
+
+
+    (ke_diff_raw, ke_diff_ratio) = plt.figure('ke_diff').subplots(ncols = 1, nrows = 2, 
+                                                   sharex = 'col', 
+                                                   gridspec_kw = dict(height_ratios = [3,1]))
+    plt.subplots_adjust(hspace = 0)
+    ke_diff_raw.set_ylabel('Normalized Rate')
+    ke_diff_ratio.set_ylabel('Scaled / Unscaled')
+    ke_diff_ratio.set_xlabel(f'Outgoing {lepton} Energy Fraction')
+    ke_diff_raw.set_xscale('log')
+    if ke_ratio_ylim is not None :
+        ke_diff_ratio.set_ylim(ke_ratio_ylim)
 
     (ang_raw, ang_ratio) = plt.figure('ang').subplots(ncols = 1, nrows = 2, 
                                                       sharex = 'col', 
@@ -153,37 +170,43 @@ def scaling_validation(file_packet, apmass, lepton_packet,
     if ang_ratio_ylim is not None :
         ang_ratio.set_ylim(ang_ratio_ylim)
 
-    (ang_mg_vals, ang_mg_edges, ang_patches), (ke_mg_vals, ke_mg_edges, ke_patches) = plt_efrac_angle(mg,
-        e_beam, ang_raw, ke_raw, lepton_mass = lepton_mass,
+    (ang_mg_vals, ang_mg_edges, ang_patches), (ke_mg_vals, ke_mg_edges, ke_patches), (ke_mg_cumu_vals, ke_mg_cumu_edges, ke_mg_cumu_patches) = plt_efrac_angle(mg,
+        e_beam, ang_raw, ke_cumu_raw, ke_diff_raw,
+        lepton_mass = lepton_mass,
         angle_kw = dict(bins=25,range=(0.,3.14),
           label=f'Unscaled MG/ME at {e_beam} GeV',
           histtype='step',linewidth=2,color='black'), 
-        kefrac_kw = dict(bins=50, range=(0.,1.), cumulative=True, 
+        kefrac_kw = dict(bins=kefrac_bins, density=True,
           label=f'Unscaled MG/ME at {e_beam} GeV',
           histtype='step',linewidth=2, color='black'))
 
-    ke_ratio.axhline(1.,color='black')
+    ke_cumu_ratio.axhline(1.,color='black')
+    ke_diff_ratio.axhline(1.,color='black')
     ang_ratio.axhline(1.,color='black')
 
     for name, f in scaled :
-        (ang_vals, ang_edges, ang_patches), (ke_vals, ke_edges, ke_patches) = plt_efrac_angle(f, 
-            e_beam, ang_raw, ke_raw, tree_name = 'dbint',
+        (ang_vals, ang_edges, ang_patches), (ke_vals, ke_edges, ke_patches), (ke_cumu_vals, ke_cumu_edges, ke_cumu_patches) = plt_efrac_angle(f,
+            e_beam, ang_raw, ke_cumu_raw, ke_diff_raw,
+            tree_name = 'dbint',
             angle_kw = dict(bins=25,range=(0.,3.14), 
               label=f'Scaled from {name}', histtype='step', linewidth=2), 
-            kefrac_kw = dict(bins=50, range=(0.,1.), cumulative=True, 
+            kefrac_kw = dict(bins=kefrac_bins, density=True,
               label=f'Scaled from {name}', histtype='step',linewidth=2))
             
-        plt_bins(ke_ratio, (np.divide(ke_vals,ke_mg_vals), ke_edges), 
+        plt_bins(ke_diff_ratio, (np.divide(ke_vals,ke_mg_vals), ke_edges), 
+            histtype='step', linewidth=2, label=name)
+        plt_bins(ke_cumu_ratio, (np.divide(ke_cumu_vals,ke_mg_cumu_vals), ke_cumu_edges), 
             histtype='step', linewidth=2, label=name)
         plt_bins(ang_ratio, (np.divide(ang_vals,ang_mg_vals), ang_edges), 
             histtype='step', linewidth=2, label=name)
 
     title = f'{lepton}s on {material}'+'\n$m_{A\'} = '+str(apmass)+'$ GeV'
-    ke_raw.legend(title=title, **ke_legend_kw)
+    ke_cumu_raw.legend(title=title, **ke_legend_kw)
+    ke_diff_raw.legend(title=title, **ke_legend_kw)
     ang_raw.legend(title=title, **ang_legend_kw)
 
     if file_prefix is not None :
-        for fn in ['ke','ang'] :
+        for fn in ['ke_cumu','ke_diff','ang'] :
             plt.figure(fn).savefig(f'{file_prefix}_{fn}.pdf', bbox_inches='tight')
             plt.figure(fn).clf()
 
@@ -247,7 +270,7 @@ def main() :
          ('4.2 GeV', 'data/scaling/electron_tungsten_4.2_to_4.0.root'),
          ('4.4 GeV', 'data/scaling/electron_tungsten_4.4_to_4.0.root'),
          ('4.8 GeV', 'data/scaling/electron_tungsten_4.8_to_4.0.root'),
-         ('6.0 GeV', 'data/scaling/electron_tungsten_6.0_to_4.0.root'),
+         ('6.0 GeV', 'data/scaling/electron_tungsten_6.0_to_4.0.csv'),
         ])
     scaling_validation(el_W, 0.1, electron,
         ke_ratio_ylim=(0.975,1.025+0.003), 
@@ -297,7 +320,8 @@ def main() :
         ('W Target, Z = 74', 4.0, 'dblib/scaling/electron_tungsten_mA_0.1_E_4.0.h5'),
         ('Pb Target, Z = 82', 4.0, 'dblib/scaling/electron_lead_mA_0.1_E_4.0.h5'),
         ]),
-        file_prefix='electron_material_comp')
+        file_prefix='electron_material_comp',
+        efrac_legend_kw = dict(bbox_to_anchor=(0.05,0),loc='lower left'))
 
     efrac_pt_rates(('Electrons on Tungsten\n$m_{A\'} = 0.1$ GeV',
       [
@@ -360,7 +384,8 @@ def main() :
         ('W Target, Z = 74', 100, 'dblib/scaling/muon_tungsten_mA_1.0_E_100.h5'),
         ('Pb Target, Z = 82', 100, 'dblib/scaling/muon_lead_mA_1.0_E_100.h5'),
         ]),
-        file_prefix='muon_material_comp')
+        file_prefix='muon_material_comp',
+        efrac_legend_kw=dict(bbox_to_anchor=(0.05,0),loc='lower left'))
 
     efrac_pt_rates(('Muons on Copper\n$m_{A\'} = 1.0$ GeV',
       [
