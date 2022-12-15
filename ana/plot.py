@@ -41,10 +41,10 @@ def read(beam_E, bias, fp) :
         with uproot.open(fp) as f :
             df = f['dbint/dbint'].arrays(library='pd')
         df['incident_kinetic_energy_GeV'] = (df['incident_energy']-df['incident_mass'])/1000.
-    # some events in thin-target muon case have all kinematics in row set to DBL_MIN,
-    #  this is due to when the framework "completes" an event without a successful simulation
-    #  and therefore those rows can be dropped
-    df.drop(df[df.weight < 1e-100].index, inplace=True)
+        # some events in thin-target muon case have all kinematics in row set to DBL_MIN,
+        #  this is due to when the framework "completes" an event without a successful simulation
+        #  and therefore those rows can be dropped
+        df.drop(df[(df.weight < 1e-100)|(bias*df.weight > 10)].index, inplace=True)
     df['recoil_pt'] = (df['recoil_px']**2 + df['recoil_py']**2)**(1/2)
     df['energy_frac'] = (df['recoil_energy'] - df['incident_mass'])/(df['incident_energy']-df['incident_mass'])
     df['recoil_angle'] = np.arctan2(df['recoil_pt'],df['recoil_pz'])
@@ -61,8 +61,7 @@ def bundle(data_dir, mg_dir) :
     """
     
     thin_el = ('thin-electron',
-          '$m_{A\'} = 0.1$ GeV\n4 GeV Electrons\non 0.35 mm Tungsten',
-         { # electrons
+          '$m_{A\'} = 0.1$ GeV\n4 GeV Electrons\non 0.35 mm Tungsten', {
           'G4DarkBreM' : read(el_beam,1e8,f'{data_dir}/ntuple_g4db_electron_tungsten_depthmm_0.35_mAMeV_100_events_50000_run_3000.root'),
           'DMG4' : read(el_beam,1e12,f'{data_dir}/ntuple_dmg4_electron_tungsten_depthmm_0.35_mAMeV_100_events_50000_run_1.root'),
           'MG/ME' : read(el_beam/1000.,5e5,f'{mg_dir}/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000/electron_tungsten_MaxE_4.0_MinE_0.2_RelEStep_0.1_UndecayedAP_mA_0.1_run_3000_IncidentEnergy_4.0_unweighted_events.lhe')
@@ -90,8 +89,8 @@ def bundle(data_dir, mg_dir) :
     thick_mu = ('thick-muon',
           '$m_{A\'} = 1$ GeV\n100 GeV Muons\non 2m Brass',
          {
-          'G4DarkBreM' : read(mu_beam,1e7,f'{data_dir}/ntuple_g4db_muon_brass_depthmm_2000.0_mAMeV_1000_events_50000_run_3000.root'),
-          'DMG4' : read(mu_beam,1e11,f'{data_dir}/ntuple_dmg4_muon_brass_depthmm_2000.0_mAMeV_1000_events_50000_run_1.root'),
+          'G4DarkBreM' : read(mu_beam,4e8,f'{data_dir}/ntuple_g4db_muon_brass_depthmm_2000.0_mAMeV_1000_events_50000_run_3000.root'),
+          'DMG4' : read(mu_beam,4e12,f'{data_dir}/ntuple_dmg4_muon_brass_depthmm_2000.0_mAMeV_1000_events_50000_run_1.root'),
           'Monoenergetic 100GeV MG/ME' : read(mu_beam/1000.,5e5,f'{mg_dir}/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000/muon_copper_MaxE_100.0_MinE_2.0_RelEStep_0.1_UndecayedAP_mA_1.0_run_3000_IncidentEnergy_100.0_unweighted_events.lhe')
          }
         )
@@ -145,37 +144,6 @@ def single(data_packet, kinematic_variable, xlabel, file_name,
     plt.savefig(file_name, bbox_inches='tight')
     plt.clf() 
 
-def xsec_plot(mg_csv, others, file_name, 
-    xlabel = 'Incident Lepton Energy [GeV]', title = None) :
-    (raw, ratio) = plt.gcf().subplots(ncols = 1, nrows = 2, 
-        sharex = 'col', gridspec_kw=dict(height_ratios = [3,1]))
-    plt.subplots_adjust(hspace=0)
-
-    mg = pd.read_csv(mg_csv).groupby('Energy [GeV]').apply(lambda samples : samples[samples > samples.median() - 2*samples.std()].mean()).drop(columns='Energy [GeV]').reset_index()
-
-    mg_x = mg['Energy [GeV]']
-    mg_y = mg['Xsec [pb]']*(127.9/137)**3
-
-    for name, data in others :
-        y = data['Xsec [pb]']
-        x = data['Energy [MeV]']/1000.
-        raw.plot(x, y, label=name, linewidth=2)
-        data_interp = scipy.interpolate.interp1d(x, y)
-        data_at_mge = [data_interp(e) for e in mg_x]
-        ratio.plot(mg_x, data_at_mge/mg_y, marker='.', markersize=15, linewidth=0)
-
-    raw.plot(mg_x, mg_y,marker='.', markersize=15, linewidth=0, label='MG/ME')
-    ratio.plot(mg_x, [1. for x in mg_x], marker='.', markersize=0, linewidth=0)
-
-    raw.set_ylabel('Total Cross Section / $\epsilon^2$ [pb]')
-    l = raw.legend(title=title)
-    plt.setp(l.get_title(), multialignment='right')
-
-    ratio.set_ylabel('Ratio to MG/ME')
-    ratio.set_xlabel(xlabel)
-    plt.savefig(file_name, bbox_inches='tight')
-    plt.clf()
-        
 def main() :
     import argparse
     import os
@@ -184,7 +152,6 @@ def main() :
     parser.add_argument('data_dir',help='Directory data is in')
     parser.add_argument('--out_dir',help='Directory to put plots (Default: data_dir)')
     parser.add_argument('--mg_dir',help='Directory MG libraries are in',default='dblib')
-    parser.add_argument('--xsec-only', help='Only print xsec plots',action='store_true')
     
     arg = parser.parse_args()
     
@@ -192,23 +159,6 @@ def main() :
     if arg.out_dir is None :
         arg.out_dir = arg.data_dir
     os.makedirs(arg.out_dir, exist_ok=True)
-
-    xsec_plot('data/mg/mu_xsec.csv', [
-            ('G4DarkBreM', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec.csv')),
-          ],
-        f'{arg.out_dir}/mu_xsec.pdf',
-        xlabel = 'Incident Muon Energy [GeV]',
-        title = '$m_{A\'} = 0.2$ GeV\nMuons on Copper')
-
-    xsec_plot('data/mg/el_xsec.csv', [
-            ('G4DarkBreM', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec.csv')),
-          ],
-         f'{arg.out_dir}/el_xsec.pdf',
-        xlabel = 'Incident Electron Energy [GeV]',
-        title = '$m_{A\'} = 0.1$ GeV\nElectrons on Tungsten')
-
-    if arg.xsec_only :
-        return
 
     # load data into memory bundles
     thin_el, thin_mu, thick_el, thick_mu, na64, extra_thin = bundle(arg.data_dir, arg.mg_dir)
@@ -237,7 +187,7 @@ def main() :
            file_name = filename(na64[0],'incident-energy'))
     single(na64, 'relative_weight', 'Event Weight',
            weight = False, 
-           hist_kwargs = {'range':(1,1.2),'bins':50},
+           hist_kwargs = {'bins':50},
            drop_mg = True,
            file_name = filename(na64[0],'event-weight'))
 
@@ -262,7 +212,7 @@ def main() :
            file_name = filename(extra_thin[0], 'incident-energy'))
     single(extra_thin, 'relative_weight', 'Event Weight',
            weight = False, 
-           hist_kwargs = {'range':(1,1.2),'bins':50},
+           hist_kwargs = {'bins':50},
            drop_mg = True,
            file_name = filename(extra_thin[0], 'event-weight'))
 
@@ -287,7 +237,7 @@ def main() :
            file_name = filename(thin_el[0], 'incident-energy'))
     single(thin_el, 'relative_weight', 'Event Weight',
            weight = False, 
-           hist_kwargs = {'range':(1,1.2),'bins':50},
+           hist_kwargs = {'bins':50},
            drop_mg = True,
            file_name = filename(thin_el[0], 'event-weight'))
 
@@ -311,7 +261,7 @@ def main() :
            file_name = filename(thin_mu[0], 'incident-energy'))
     single(thin_mu, 'relative_weight', 'Event Weight',
            weight = False, 
-           hist_kwargs = {'range':(1,1.2),'bins':50},
+           hist_kwargs = {'bins':50},
            drop_mg = True,
            file_name = filename(thin_mu[0], 'event-weight'))
 
@@ -360,7 +310,7 @@ def main() :
            file_name = filename(thick_mu[0], 'incident-energy'))
     single(thick_mu, 'relative_weight', 'Event Weight',
            weight = False, 
-           hist_kwargs = {'range':(1,1.2),'bins':50},
+           hist_kwargs = {'bins':50},
            drop_mg = True,
            file_name = filename(thick_mu[0], 'event-weight'))
 
