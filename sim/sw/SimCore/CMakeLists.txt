@@ -58,6 +58,10 @@ setup_library(module SimCore
               name BiasOperators
               dependencies SimCore::SimCore)
 
+setup_library(module SimCore
+              name Actions
+              dependencies SimCore::SimCore)
+
 # Set some target properties
 set_target_properties(SimCore
                       PROPERTIES CXX_STANDARD 17

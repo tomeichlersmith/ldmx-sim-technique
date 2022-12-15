@@ -1,5 +1,5 @@
 
-#include "Biasing/Utility/PartialEnergySorter.h"
+#include "SimCore/Actions/PartialEnergySorter.h"
 
 /*~~~~~~~~~~~~*/
 /*   Geant4   */

@@ -7,7 +7,7 @@
  * @author Tom Eichlersmith, University of Minnesota
  */
 
-#include "Biasing/EcalDarkBremFilter.h"
+#include "SimCore/Actions/EcalDarkBremFilter.h"
 
 #include "G4LogicalVolumeStore.hh"      //for the store
 #include "G4DarkBreM/G4APrime.h"  //checking if particles match A'

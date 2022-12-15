@@ -164,17 +164,16 @@ sim.biasing_operators = [
           particle = primary.particle)
         ]
 
-from LDMX.Biasing import filters
-from LDMX.Biasing import util
+from LDMX.SimCore import actions
 sim.actions = [ 
-    util.PartialEnergySorter(min_e), 
-    filters.EcalDarkBremFilter(0.), 
-#    util.StepPrinter(1) 
+    actions.PartialEnergySorter(min_e), 
+    actions.EcalDarkBremFilter(0.), 
+#    actions.StepPrinter(1) 
     ]
 
 p.sequence = [
     sim,
-    ldmxcfg.Analyzer('dbint','dqm::NtuplizeDarkBremInteraction','Biasing')
+    ldmxcfg.Analyzer('dbint','dqm::NtuplizeDarkBremInteraction','SimCore')
     ]
 
 if arg.pause :

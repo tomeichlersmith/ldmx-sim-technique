@@ -60,7 +60,6 @@ add_subdirectory(G4DarkBreM)
 # need to globally include DMG4 headers
 include_directories(DMG4/include/ DMG4/include/DMG4)
 add_subdirectory(SimCore)
-add_subdirectory(Biasing)
 
 add_executable(dmg4-xsec-calc app/dmg4-xsec-calc.cxx)
 target_link_libraries(dmg4-xsec-calc PRIVATE SimCore)
