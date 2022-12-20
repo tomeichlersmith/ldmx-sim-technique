@@ -4,12 +4,12 @@ default: build
 clean:
 	rm -f xsec-dbg
 
-xsec-dbg:
+xsec-dbg: xsec_calc.cxx
 	g++ -o xsec-dbg xsec_calc.cxx
 
 build: xsec-dbg
 
-run:
+run: xsec-dbg
 	mkdir $(label)
 	./xsec-dbg --energy 800 \
 		--2d $(label)/dsdxtheta.csv \
