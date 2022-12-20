@@ -9,7 +9,9 @@
 #include <stdlib.h>
 
 /*
-*/
+ * Gauss-Kronrod
+ *  - has been working for a range of incident lepton energies
+ */
 #include <boost/math/quadrature/gauss_kronrod.hpp>
 template<typename Integrand>
 double integrate(Integrand f, double low, double high) {
@@ -18,6 +20,12 @@ double integrate(Integrand f, double low, double high) {
 }
 
 /*
+ * tanh-sinh
+ *  - promoted as a method to handle pesky integrals with divergences at
+ *    or near limits
+ *  - produces same results as GK for higher energies,
+ *    takes a /really long/ time to converge for lower energies
+ *    (probably due to failure to match criteria of integration method)
 #include <boost/math/quadrature/tanh_sinh.hpp>
 template<typename Integrand>
 double integrate(Integrand f, double low, double high) {
@@ -289,9 +297,9 @@ int main(int argc, char* argv[]) try {
        */
   
       // non-zero theta and non-zero m_l
-      double tmin = utilde_sq/(4.0*lepton_e_sq*(1.0-x)*(1.0-x));
+      //double tmin = utilde_sq/(4.0*lepton_e_sq*(1.0-x)*(1.0-x));
       // maximum t kinematically limited to the incident lepton energy
-      double tmax = lepton_e_sq;
+      //double tmax = lepton_e_sq;
   
       /*
        * The chi integrand limits given by
@@ -318,10 +326,10 @@ int main(int argc, char* argv[]) try {
        * would be able to avoid the funky business. This was not successful,
        * but we are leaving them here in case a typo is found in the future
        * or the search is chosen to resume.
+       */
       double el = lepton_e_sq*x_sq*theta_sq/MA2;
       double tmax = MA2*pow(1 + el,2);
-      double tmin = tmax / pow(2*lepton_e*x*(1-x),2);
-       */
+      double tmin = MA2*tmax / pow(2*lepton_e*x*(1-x),2);
     
       // require 0 < tmin < tmax to procede
       if (tmin < 0) return 0.;

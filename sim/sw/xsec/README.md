@@ -5,7 +5,7 @@ executable which was manually copied out of G4DarkBreM.
 This executable only depends on Boost, so we can investigate
 the xsec without worrying about confusion from Geant4.
 
-### Compile
+### Compile and Run
 ```
-g++ -o xsec-dbg ./xsec_calc.cxx
+make run label=my-label
 ```
