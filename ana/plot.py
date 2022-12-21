@@ -116,7 +116,7 @@ def bundle(data_dir, mg_dir) :
 
 def single(data_packet, kinematic_variable, xlabel, file_name,
            weight = True, ylabel = 'Weighted Event Fraction', yscale = 'log', 
-           drop_mg = False, ylim = None,
+           drop = None, ylim = None,
            hist_kwargs = {}, legend_kwargs = {}) :
     """Plot a single kinematic variable for the input data packet"""
     (_, title, data) = data_packet
@@ -129,14 +129,14 @@ def single(data_packet, kinematic_variable, xlabel, file_name,
     if ylim is not None :
         ax.set_ylim(ylim)
     for name, df in data.items() :
-        if drop_mg and 'MG/ME' in name :
-            continue
+        draw = (drop is None or drop not in name);
         weights = None
         if weight :
             weights = df['weight']/df['weight'].sum()
         ax.hist(df[kinematic_variable],
                 weights = weights,
-                label = name, linewidth = 2.,
+                label = name if draw else '_nolegend_', 
+                linewidth = 2. if draw else 0.,
                 histtype = 'step', **hist_kwargs)
     l = ax.legend(title=title, **legend_kwargs)
     plt.setp(l.get_title(), multialignment='right')
@@ -183,12 +183,12 @@ def main() :
            'Electron Kinetic Energy Prior to DB [GeV]',
            hist_kwargs = {'range' : (0.,100.), 'bins' : 50 },
            legend_kwargs = {'loc' : 'upper left'},
-           drop_mg = True,
+           drop = 'MG/ME',
            file_name = filename(na64[0],'incident-energy'))
     single(na64, 'relative_weight', 'Event Weight',
            weight = False, 
            hist_kwargs = {'bins':50},
-           drop_mg = True,
+           drop = 'MG/ME',
            file_name = filename(na64[0],'event-weight'))
 
     single(extra_thin, 'recoil_angle', 'Lepton Recoil Angle [rad]',
@@ -208,16 +208,17 @@ def main() :
            'Lepton Kinetic Energy Prior to DB [GeV]',
            hist_kwargs = {'range' : (0.,4.), 'bins' : 50 },
            legend_kwargs = {'loc' : 'upper left'},
-           drop_mg = True,
+           drop = 'MG/ME',
            file_name = filename(extra_thin[0], 'incident-energy'))
     single(extra_thin, 'relative_weight', 'Event Weight',
            weight = False, 
            hist_kwargs = {'bins':50},
-           drop_mg = True,
+           drop = 'MG/ME',
            file_name = filename(extra_thin[0], 'event-weight'))
 
     single(thin_el, 'recoil_angle', 'Electron Recoil Angle [rad]',
-           ylim = (7e-4,2),
+           ylim = (7e-4,5e-1),
+           drop = 'DMG4',
            hist_kwargs = {'range' : (0,2), 'bins' : 50},
            file_name = filename(thin_el[0],'recoil-angle'))
     single(thin_el, 'visible_energy_frac', 'Visible Energy Fraction of Beam',
@@ -233,12 +234,12 @@ def main() :
            'Electron Kinetic Energy Prior to DB [GeV]',
            hist_kwargs = {'range' : (0.,4.), 'bins' : 50 },
            legend_kwargs = {'loc' : 'upper left'},
-           drop_mg = True,
+           drop = 'MG/ME',
            file_name = filename(thin_el[0], 'incident-energy'))
     single(thin_el, 'relative_weight', 'Event Weight',
            weight = False, 
            hist_kwargs = {'bins':50},
-           drop_mg = True,
+           drop = 'MG/ME',
            file_name = filename(thin_el[0], 'event-weight'))
 
     single(thin_mu, 'recoil_angle', 'Muon Recoil Angle [rad]',
@@ -257,16 +258,17 @@ def main() :
            'Muon Kinetic Energy Prior to DB [GeV]',
            hist_kwargs = {'range' : (0.,100.), 'bins' : 50 },
            legend_kwargs = {'loc' : 'upper left'},
-           drop_mg = True,
+           drop = 'MG/ME',
            file_name = filename(thin_mu[0], 'incident-energy'))
     single(thin_mu, 'relative_weight', 'Event Weight',
            weight = False, 
            hist_kwargs = {'bins':50},
-           drop_mg = True,
+           drop = 'MG/ME',
            file_name = filename(thin_mu[0], 'event-weight'))
 
     single(thick_el, 'recoil_angle', 'Electron Recoil Angle [rad]',
-           ylim = (7e-4,2),
+           ylim = (7e-4,5e-1),
+           drop = 'DMG4',
            hist_kwargs = {'range' : (0,2), 'bins' : 50},
            file_name = filename(thick_el[0],'recoil-angle'))
     single(thick_el, 'visible_energy_frac', 'Visible Energy Fraction of Beam',
@@ -282,12 +284,12 @@ def main() :
            'Electron Kinetic Energy Prior to DB [GeV]',
            hist_kwargs = {'range' : (0.,4.), 'bins' : 50 },
            legend_kwargs = {'loc' : 'upper left'},
-           drop_mg = True,
+           drop = 'MG/ME',
            file_name = filename(thick_el[0], 'incident-energy'))
     single(thick_el, 'relative_weight', 'Event Weight',
            weight = False, 
            hist_kwargs = {'range':(1,10.),'bins':50},
-           drop_mg = True,
+           drop = 'MG/ME',
            file_name = filename(thick_el[0], 'event-weight'))
 
     single(thick_mu, 'recoil_angle', 'Muon Recoil Angle [rad]',
@@ -306,12 +308,12 @@ def main() :
            'Muon Kinetic Energy Prior to DB [GeV]',
            hist_kwargs = {'range' : (0.,100.), 'bins' : 50 },
            legend_kwargs = {'loc' : 'upper left'},
-           drop_mg = True,
+           drop = 'MG/ME',
            file_name = filename(thick_mu[0], 'incident-energy'))
     single(thick_mu, 'relative_weight', 'Event Weight',
            weight = False, 
            hist_kwargs = {'bins':50},
-           drop_mg = True,
+           drop = 'MG/ME',
            file_name = filename(thick_mu[0], 'event-weight'))
 
 if __name__ == '__main__' :
