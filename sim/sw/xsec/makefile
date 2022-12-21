@@ -14,4 +14,6 @@ run: xsec-dbg
 	./xsec-dbg --energy 800 \
 		--2d $(label)/dsdxtheta.csv \
 		--1d $(label)/dsdx.csv \
+		--chi $(label)/chi.csv \
 		--total $(label)/total.csv	
+

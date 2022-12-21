@@ -11,6 +11,7 @@
 /*
  * Gauss-Kronrod
  *  - has been working for a range of incident lepton energies
+ *  - larger depth of 15 gave same results as depth 5
  */
 #include <boost/math/quadrature/gauss_kronrod.hpp>
 template<typename Integrand>
@@ -147,6 +148,7 @@ int main(int argc, char* argv[]) try {
   std::string total_xsec{"total_xsec.csv"};
   std::string dsdxdtheta_fn{"/dev/null"};
   std::string dsdx_fn{"/dev/null"};
+  std::string chi_fn{"/dev/null"};
   for (int i_arg{1}; i_arg < argc; ++i_arg) {
     std::string arg{argv[i_arg]};
     if (arg == "-h" or arg == "--help") {
@@ -170,6 +172,12 @@ int main(int argc, char* argv[]) try {
         return 1;
       }
       dsdxdtheta_fn = argv[++i_arg];
+    } else if (arg == "--chi") {
+      if (i_arg+1 >= argc) {
+        std::cerr << arg << " requires an argument after it" << std::endl;
+        return 1;
+      }
+      chi_fn = argv[++i_arg];
     } else if (arg == "-M" or arg == "--ap-mass") {
       if (i_arg+1 >= argc) {
         std::cerr << arg << " requires an argument after it" << std::endl;
@@ -230,9 +238,16 @@ int main(int argc, char* argv[]) try {
     return 2;
   }
 
+  std::ofstream chi_f(chi_fn);
+  if (!chi_f.is_open()) {
+    std::cerr << "File '" << chi_fn << "' was not able to be opened." << std::endl;
+    return 2;
+  }
+
   total_file << "energy,xsec\n";
   dsdxdtheta_f << "x,theta,dsdxdtheta\n";
   dsdx_f << "x,dsdx\n";
+  chi_f << "x,theta,tmin,tmax,chi\n";
 
   const double epsilon_ = 1.0;
   const double MA = ap_mass;
@@ -330,10 +345,15 @@ int main(int argc, char* argv[]) try {
       double el = lepton_e_sq*x_sq*theta_sq/MA2;
       double tmax = MA2*pow(1 + el,2);
       double tmin = MA2*tmax / pow(2*lepton_e*x*(1-x),2);
+      tmax = lepton_e_sq;
+
+      chi_f << x << "," << theta << "," << tmin << "," << tmax << ",";
     
       // require 0 < tmin < tmax to procede
-      if (tmin < 0) return 0.;
-      if (tmax < tmin) return 0.;
+      if (tmin < 0 or tmax < tmin) {
+        chi_f << 0. << "\n";
+        return 0.;
+      }
     
       /*
        * numerically integrate to calculate chi ourselves
@@ -351,6 +371,7 @@ int main(int argc, char* argv[]) try {
        * compute and only an O(few) percent change.
        */
       double chi_analytic_elastic_only = flux_factor_chi_analytic(target_A,target_Z,tmin,tmax);
+      chi_f << chi_analytic_elastic_only << "\n";
       
       /*
        * Amplitude squared is taken from 
@@ -428,7 +449,9 @@ int main(int argc, char* argv[]) try {
       }
        */
     };
-  
+
+    theta_integral(1 - 1e-4);
+
     double error;
     double integrated_xsec = integrate(theta_integral, xmin, xmax);
   
