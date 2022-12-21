@@ -40,20 +40,25 @@ def read(f, tree_name = None) :
     
 def plt_bins(ax, np_hist, **kwargs) :
     vals, edges = np_hist
-    ax.hist((edges[1:]+edges[:-1])/2, bins=edges, weights=vals, **kwargs)
+    return ax.hist((edges[1:]+edges[:-1])/2, bins=edges, weights=vals, **kwargs)
     
 def binit(data, **kwargs) :
-    if 'weights' not in kwargs :
-        w = np.empty(len(data))
-        w.fill(1./len(data))
-        kwargs['weights'] = w
     cumulative = kwargs.get('cumulative',False)
     if cumulative :
         del kwargs['cumulative']
     v, b = np.histogram(data, **kwargs)
     if cumulative :
         v = np.cumsum(v)
-    return v, b
+    # total number of entries
+    total = v[-1]
+    # error in cumulative bins is error
+    #   in count above that bin
+    e = np.sqrt(total-v)/v
+    # normalize
+    v = v / total
+    print(v)
+    print(e)
+    return v, b, e
 
 def efrac_cumulative_ratios(material_packs) :
     binned = {}
@@ -65,14 +70,18 @@ def efrac_cumulative_ratios(material_packs) :
             raise KeyError('Material pack with different beam energies.')
             
         mgdf = read(mg)
-        mg_vals, mg_bins = binit(mgdf['recoil_energy']/e_beam,
-                                 range=(0,1), bins=50, cumulative=True)
+        mg_vals, mg_bins, mg_errs = binit(mgdf['recoil_energy']/e_beam,
+                                          range=(0,1), bins=50, cumulative=True)
         ratios = []
         for name, f in scaled :
             df = read(f, 'dbint')
-            vals, bins = binit(df['recoil_energy']/e_beam,
-                               range=(0,1), bins=50, cumulative=True)
-            ratios.append((name, vals/mg_vals))
+            vals, bins, errs = binit(df['recoil_energy']/e_beam,
+                                     range=(0,1), bins=50, cumulative=True)
+            ratio = vals/mg_vals
+            #error = ratio*np.sqrt(errs**2 + mg_errs**2)
+            #error = np.sqrt(errs**2 + mg_errs**2)
+            error = mg_errs
+            ratios.append((name, ratio, error))
         binned[material] = (mg_bins, ratios)
     return e_beam, binned
 
@@ -88,9 +97,18 @@ def plt_cumulative_ratios(lepton, e_beam, binned, file_prefix,
         material, (bins, vals) = hists
         ax.text(0.9, material_label_y, material, ha='right', va='top', transform=ax.transAxes)
         ax.axhline(1,color='black')
-        for name, v in vals :
-            plt_bins(ax, (v, bins), histtype='step', linewidth=2,
-                     label=name if i == 0 else '_nolegend_')
+        for name, v, er in vals :
+            lines = ax.plot((bins[:-1]+bins[1:])/2, v, 
+                            linewidth=2, drawstyle='steps-mid',
+                            label=name if i == 0 else '_nolegend_')
+            len(lines)
+            print(er)
+            ax.bar(bins[:-1], er, align='edge', 
+                   width = (bins[1:]-bins[:-1]), 
+                   bottom = 1, color='lightgray')
+            ax.bar(bins[:-1], -1*er, align='edge', 
+                   width = (bins[1:]-bins[:-1]), 
+                   bottom = 1, color='lightgray')
         
         if i == 0 :
             ax.set_ylabel('Ratio Scaled / Unscaled Predicted')
@@ -117,12 +135,11 @@ def plt_efrac_angle(f, e_beam,
 
     df = read(f, tree_name)
 
-    weights = np.empty(len(df))
-    weights.fill(1./len(df))
+    weights = np.ones(len(df))/len(df)
 
-    ke = kefrac_diff_ax.hist(df['recoil_energy']/e_beam, weights=weights, **kefrac_kw)
-    ke_cumu = kefrac_cumu_ax.hist(df['recoil_energy']/e_beam, weights=weights, **kefrac_kw, cumulative=True)
-    ang = angle_ax.hist(df['recoil_angle'], weights=weights, **angle_kw)
+    ke = kefrac_diff_ax.hist(df['recoil_energy']/e_beam, weights = weights, **kefrac_kw)
+    ke_cumu = kefrac_cumu_ax.hist(df['recoil_energy']/e_beam, weights = weights, **kefrac_kw, cumulative=True)
+    ang = angle_ax.hist(df['recoil_angle'], weights = weights, **angle_kw)
     return ang, ke, ke_cumu
 
 def scaling_validation(file_packet, apmass, lepton_packet,
@@ -130,7 +147,8 @@ def scaling_validation(file_packet, apmass, lepton_packet,
                        ke_ratio_ylim = None,
                        ke_legend_kw = dict(loc='lower right'), ang_legend_kw = dict(),
                        file_prefix = None) :
-    kefrac_bins = np.concatenate((np.arange(0,10,1),np.arange(10,100,10),np.arange(100,4000,100)))/4000.
+  
+    kefrac_bins = np.arange(0,1,1/50) #np.concatenate((np.arange(0,10,1),np.arange(10,100,10),np.arange(100,4000,100)))/4000.
     (material, e_beam, mg, scaled) = file_packet
     (lepton, lepton_mass) = lepton_packet
 
@@ -141,7 +159,7 @@ def scaling_validation(file_packet, apmass, lepton_packet,
     ke_cumu_raw.set_ylabel('Fraction Below Outgoing Energy')
     ke_cumu_ratio.set_ylabel('Scaled / Unscaled')
     ke_cumu_ratio.set_xlabel(f'Outgoing {lepton} Energy Fraction')
-    ke_cumu_raw.set_xscale('log')
+    #ke_cumu_raw.set_xscale('log')
     if ke_ratio_ylim is not None :
         ke_cumu_ratio.set_ylim(ke_ratio_ylim)
 
@@ -153,7 +171,7 @@ def scaling_validation(file_packet, apmass, lepton_packet,
     ke_diff_raw.set_ylabel('Normalized Rate')
     ke_diff_ratio.set_ylabel('Scaled / Unscaled')
     ke_diff_ratio.set_xlabel(f'Outgoing {lepton} Energy Fraction')
-    ke_diff_raw.set_xscale('log')
+    #ke_diff_raw.set_xscale('log')
     if ke_ratio_ylim is not None :
         ke_diff_ratio.set_ylim(ke_ratio_ylim)
 
@@ -264,53 +282,56 @@ def main() :
     electron = ('Electron', 0.000511)
     muon     = ('Muon'    , 0.105   )
 
+    import os
+    os.makedirs('data/scaling/plots/', exist_ok=True)
+
     el_W = ('Tungsten', 4.,
         'dblib/scaling/electron_tungsten_mA_0.1_E_4.0.h5',
         [
-         ('4.2 GeV', 'data/scaling/electron_tungsten_4.2_to_4.0.root'),
-         ('4.4 GeV', 'data/scaling/electron_tungsten_4.4_to_4.0.root'),
-         ('4.8 GeV', 'data/scaling/electron_tungsten_4.8_to_4.0.root'),
+         ('4.2 GeV', 'data/scaling/electron_tungsten_4.2_to_4.0.csv'),
+         ('4.4 GeV', 'data/scaling/electron_tungsten_4.4_to_4.0.csv'),
+         ('4.8 GeV', 'data/scaling/electron_tungsten_4.8_to_4.0.csv'),
          ('6.0 GeV', 'data/scaling/electron_tungsten_6.0_to_4.0.csv'),
         ])
     scaling_validation(el_W, 0.1, electron,
         ke_ratio_ylim=(0.975,1.025+0.003), 
         ang_ratio_ylim=(0.8,1.25), ang_raw_ylim=(4e-4,4.),
         ke_legend_kw=dict(bbox_to_anchor=(0.95,0.),loc='lower right'),
-        file_prefix='electron_tungsten')
+        file_prefix='data/scaling/plots/electron_tungsten')
 
     el_Pb = ('Lead', 4.,
         'dblib/scaling/electron_lead_mA_0.1_E_4.0.h5',
         [
-         ('4.2 GeV', 'data/scaling/electron_lead_4.2_to_4.0.root'),
-         ('4.4 GeV', 'data/scaling/electron_lead_4.4_to_4.0.root'),
-         ('4.8 GeV', 'data/scaling/electron_lead_4.8_to_4.0.root'),
-         ('6.0 GeV', 'data/scaling/electron_lead_6.0_to_4.0.root'),
+         ('4.2 GeV', 'data/scaling/electron_lead_4.2_to_4.0.csv'),
+         ('4.4 GeV', 'data/scaling/electron_lead_4.4_to_4.0.csv'),
+         ('4.8 GeV', 'data/scaling/electron_lead_4.8_to_4.0.csv'),
+         ('6.0 GeV', 'data/scaling/electron_lead_6.0_to_4.0.csv'),
         ])
     scaling_validation(el_Pb, 0.1, electron,
         ke_ratio_ylim=(0.965,1.015+0.003),
         ang_ratio_ylim=(0.8,1.25), ang_raw_ylim=(4e-4,4.),
         ke_legend_kw=dict(bbox_to_anchor=(0.95,0.),loc='lower right'),
-        file_prefix='electron_lead')
+        file_prefix='data/scaling/plots/electron_lead')
 
     el_Cu = ('Copper', 4.,
         'dblib/scaling/electron_copper_mA_0.1_E_4.0.h5',
         [
-         ('4.2 GeV', 'data/scaling/electron_copper_4.2_to_4.0.root'),
-         ('4.4 GeV', 'data/scaling/electron_copper_4.4_to_4.0.root'),
-         ('4.8 GeV', 'data/scaling/electron_copper_4.8_to_4.0.root'),
-         ('6.0 GeV', 'data/scaling/electron_copper_6.0_to_4.0.root'),
+         ('4.2 GeV', 'data/scaling/electron_copper_4.2_to_4.0.csv'),
+         ('4.4 GeV', 'data/scaling/electron_copper_4.4_to_4.0.csv'),
+         ('4.8 GeV', 'data/scaling/electron_copper_4.8_to_4.0.csv'),
+         ('6.0 GeV', 'data/scaling/electron_copper_6.0_to_4.0.csv'),
         ])
     scaling_validation(el_Cu, 0.1, electron,
         ke_ratio_ylim=(0.955,1.015+0.003),
         ang_ratio_ylim=(0.8,1.25), ang_raw_ylim=(4e-4,4.),
         ke_legend_kw=dict(bbox_to_anchor=(0.95,0.),loc='lower right'),
-        file_prefix='electron_copper')
+        file_prefix='data/scaling/plots/electron_copper')
 
     e_beam, binned = efrac_cumulative_ratios([el_Cu, el_W, el_Pb])
     plt_cumulative_ratios(electron, e_beam, binned, 'electron',
                           ax_kwargs=[
                             {'ylim':(0.955,1.01)},
-                            {'ylim':(0.985,1.02)},
+                            {'ylim':(0.965,1.01)},
                             {'ylim':(0.965,1.01)}
                             ])
 
@@ -320,7 +341,7 @@ def main() :
         ('W Target, Z = 74', 4.0, 'dblib/scaling/electron_tungsten_mA_0.1_E_4.0.h5'),
         ('Pb Target, Z = 82', 4.0, 'dblib/scaling/electron_lead_mA_0.1_E_4.0.h5'),
         ]),
-        file_prefix='electron_material_comp',
+        file_prefix='data/scaling/plots/electron_material_comp',
         efrac_legend_kw = dict(bbox_to_anchor=(0.05,0),loc='lower left'))
 
     efrac_pt_rates(('Electrons on Tungsten\n$m_{A\'} = 0.1$ GeV',
@@ -331,7 +352,7 @@ def main() :
         ('8.0 GeV', 8.0, 'dblib/scaling/electron_tungsten_mA_0.1_E_8.0.h5'),
       ]),
       efrac_legend_kw = dict(loc='lower left', bbox_to_anchor=(0.05,0.)),
-      file_prefix='electron_energy_comp')
+      file_prefix='data/scaling/plots/electron_energy_comp')
 
     mu_W = ('Tungsten', 100.,
         'dblib/scaling/muon_tungsten_mA_1.0_E_100.h5',
@@ -343,7 +364,7 @@ def main() :
     scaling_validation(mu_W, 1.0, muon,
        ke_ratio_ylim=(0.95,1.25+0.003),
        ke_legend_kw=dict(bbox_to_anchor=(0.95,0.),loc='lower right'),
-       file_prefix='muon_tungsten')
+       file_prefix='data/scaling/plots/muon_tungsten')
 
     mu_Pb = ('Lead', 100.,
         'dblib/scaling/muon_lead_mA_1.0_E_100.h5',
@@ -355,7 +376,7 @@ def main() :
     scaling_validation(mu_Pb, 1.0, muon,
        ke_ratio_ylim=(0.95,1.25+0.003),
        ke_legend_kw=dict(bbox_to_anchor=(0.95,0), loc='lower right'),
-       file_prefix='muon_lead')
+       file_prefix='data/scaling/plots/muon_lead')
 
     mu_Cu = ('Copper', 100.,
         'dblib/scaling/muon_copper_mA_1.0_E_100.h5',
@@ -367,7 +388,7 @@ def main() :
     scaling_validation(mu_Cu, 1.0, muon,
        ke_ratio_ylim=(0.95,1.25+0.003),
        ke_legend_kw=dict(bbox_to_anchor=(0.95,0), loc='lower right'),
-       file_prefix='muon_copper')
+       file_prefix='data/scaling/plots/muon_copper')
 
     e_beam, binned = efrac_cumulative_ratios([mu_Cu, mu_W, mu_Pb])
     plt_cumulative_ratios(muon, e_beam, binned, 'muon', ap = 1.0,
@@ -384,7 +405,7 @@ def main() :
         ('W Target, Z = 74', 100, 'dblib/scaling/muon_tungsten_mA_1.0_E_100.h5'),
         ('Pb Target, Z = 82', 100, 'dblib/scaling/muon_lead_mA_1.0_E_100.h5'),
         ]),
-        file_prefix='muon_material_comp',
+        file_prefix='data/scaling/plots/muon_material_comp',
         efrac_legend_kw=dict(bbox_to_anchor=(0.05,0),loc='lower left'))
 
     efrac_pt_rates(('Muons on Copper\n$m_{A\'} = 1.0$ GeV',
@@ -395,7 +416,7 @@ def main() :
         ('150 GeV', 150, 'dblib/scaling/muon_copper_mA_1.0_E_150.h5'),
         ('200 GeV', 200, 'dblib/scaling/muon_copper_mA_1.0_E_200.h5'),
       ]),
-      file_prefix='muon_energy_comp')
+      file_prefix='data/scaling/plots/muon_energy_comp')
     
 if __name__ == '__main__' :
     main()
