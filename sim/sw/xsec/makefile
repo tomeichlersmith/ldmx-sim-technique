@@ -11,7 +11,7 @@ build: xsec-dbg
 
 run: xsec-dbg
 	mkdir $(label)
-	./xsec-dbg --energy 800 \
+	./xsec-dbg --energy 1000 \
 		--2d $(label)/dsdxtheta.csv \
 		--1d $(label)/dsdx.csv \
 		--chi $(label)/chi.csv \
