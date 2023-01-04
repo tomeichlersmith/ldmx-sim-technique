@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import dark_brem_lhe
 import scipy
+import pickle as pkl
 
 def xsec_plot(mg_csv, others, file_name, 
     xlabel = 'Incident Lepton Energy [GeV]', title = None) :
@@ -18,14 +19,14 @@ def xsec_plot(mg_csv, others, file_name,
         sharex = 'col', gridspec_kw=dict(height_ratios = [3,1]))
     plt.subplots_adjust(hspace=0)
 
-    mg = pd.read_csv(mg_csv)
-    if 'el' in mg_csv :
-        # clean out "bad" MG runs from estimate
-        mg = mg.groupby('Energy [GeV]').apply(
-            lambda samples : samples[samples >= samples.median() - 2*samples.std()].mean()).drop(columns='Energy [GeV]').reset_index()
+    mg = pd.read_csv(mg_csv) \
+        .groupby('Energy [GeV]') \
+        .apply(lambda samples : samples[samples >= samples.median() - 2*samples.std()].mean()) \
+        .drop(columns='Energy [GeV]') \
+        .reset_index()
 
     mg_x = mg['Energy [GeV]']
-    mg_y = mg['Xsec [pb]']*(127.9/137)**3
+    mg_y = mg['Xsec [pb]'] * (127.9/137)**3
 
     for name, data in others :
         y = data['Xsec [pb]']
@@ -46,6 +47,8 @@ def xsec_plot(mg_csv, others, file_name,
     ratio.set_ylabel('Ratio to MG/ME')
     ratio.set_xlabel(xlabel)
     plt.savefig(file_name, bbox_inches='tight')
+    with open(file_name.replace('pdf','pkl'),'wb') as f :
+        pkl.dump(plt.gcf(), f)
     plt.clf()
 
 def main() :
@@ -53,7 +56,7 @@ def main() :
     import os
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('data_dir',help='Directory data is in')
+    parser.add_argument('--data_dir',help='Directory data is in', default='data/dev')
     parser.add_argument('--out_dir',help='Directory to put plots (Default: data_dir)')
     
     arg = parser.parse_args()
@@ -63,25 +66,43 @@ def main() :
         arg.out_dir = arg.data_dir
     os.makedirs(arg.out_dir, exist_ok=True)
 
+    df = pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_0.2GeV.csv')
+
+    df_ = df.copy()
+    df_['Xsec [pb]'] = df_['Xsec [pb]']/(1+df_['Energy [MeV]']*0.2**2/(4*1000*1000))
+
     xsec_plot('data/mg/mu_xsec_0.2GeV.csv', [
-            ('G4DarkBreM', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_0.2GeV.csv')),
+            ('G4DarkBreM', df),
+            (r'G4DarkBreM $/(1+(m_A/GeV)^2\frac{E/GeV}{4000})$', df_),
             ('DMG4', pd.read_csv(f'data/dev/dmg4_mu_xsec_0.2GeV.csv')),
           ],
         f'{arg.out_dir}/mu_xsec_0.2GeV.pdf',
         xlabel = 'Incident Muon Energy [GeV]',
         title = '$m_{A\'} = 0.2$ GeV\nMuons on Copper')
 
+    df = pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_Cu.csv')
+
+    df_ = df.copy()
+    df_['Xsec [pb]'] = df_['Xsec [pb]']*(1 - 2*(1/137)/(3*3.14)*np.log(df_['Energy [MeV]']/1000))**3
+
     xsec_plot('data/mg/mu_xsec_1GeV.csv', [
-            ('G4DarkBreM', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec.csv')),
+            #('G4DarkBreM on W', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_W.csv')),
+            ('G4DarkBreM', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_newxmax.csv')),
+            ('G4DB running alpha', df_),
             ('DMG4', pd.read_csv(f'{arg.data_dir}/dmg4_mu_xsec_1.0GeV.csv')),
           ],
         f'{arg.out_dir}/mu_xsec_1GeV.pdf',
         xlabel = 'Incident Muon Energy [GeV]',
         title = '$m_{A\'} = 1.0$ GeV\nMuons on Copper')
 
+    df = pd.read_csv(f'{arg.data_dir}/g4db_el_xsec.csv')
+
+    df_ = df.copy()
+    df_['Xsec [pb]'] = df_['Xsec [pb]']/(1 + df_['Energy [MeV]']*0.1**2/(4*100*1000))
 
     xsec_plot('data/mg/el_xsec.csv', [
-            ('G4DarkBreM', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec.csv')),
+            ('G4DarkBreM', df),
+            (r'G4DarkBreM $/(1+(m_A/GeV)^2\frac{E/GeV}{400})$', df_),
           ],
          f'{arg.out_dir}/el_xsec.pdf',
         xlabel = 'Incident Electron Energy [GeV]',
