@@ -253,6 +253,7 @@ int main(int argc, char* argv[]) try {
   const double MA = ap_mass;
   const double MA2 = MA*MA;
   const double alphaEW = 1.0 / 137.0;
+  const bool muons = true;
   const double lepton_mass{0.10566};
   const double lepton_mass_sq = lepton_mass*lepton_mass;
   const double threshold_ = 2*MA;
@@ -312,9 +313,9 @@ int main(int argc, char* argv[]) try {
        */
   
       // non-zero theta and non-zero m_l
-      //double tmin = utilde_sq/(4.0*lepton_e_sq*(1.0-x)*(1.0-x));
+      double tmin = utilde_sq/(4.0*lepton_e_sq*(1.0-x)*(1.0-x));
       // maximum t kinematically limited to the incident lepton energy
-      //double tmax = lepton_e_sq;
+      double tmax = lepton_e_sq;
   
       /*
        * The chi integrand limits given by
@@ -341,11 +342,11 @@ int main(int argc, char* argv[]) try {
        * would be able to avoid the funky business. This was not successful,
        * but we are leaving them here in case a typo is found in the future
        * or the search is chosen to resume.
-       */
       double el = lepton_e_sq*x_sq*theta_sq/MA2;
       double tmax = MA2*pow(1 + el,2);
       double tmin = MA2*tmax / pow(2*lepton_e*x*(1-x),2);
       tmax = lepton_e_sq;
+       */
 
       chi_f << x << "," << theta << "," << tmin << "," << tmax << ",";
     
@@ -423,31 +424,29 @@ int main(int argc, char* argv[]) try {
      * and it returns a double.
      */
     auto theta_integral = [&](double x) {
-      auto theta_integrand = [&](double theta) {
-        double dsdxdtheta = diff_cross(x, theta);
-        dsdxdtheta_f << x << "," << theta << "," << dsdxdtheta << "\n";
-        return dsdxdtheta;
-      };
-      //theta_max = 3*(1-x)/lepton_e;
-      // integrand, min, max, max_depth, tolerance, error, pL1
-      double dsdx = integrate(theta_integrand, 0., theta_max);
-      dsdx_f << x << "," << dsdx << "\n";
-      return dsdx;
-      /*
-       * electron fork which we are ignoring while debugging muon
       if (muons) {
+        auto theta_integrand = [&](double theta) {
+          double dsdxdtheta = diff_cross(x, theta);
+          dsdxdtheta_f << x << "," << theta << "," << dsdxdtheta << "\n";
+          return dsdxdtheta;
+        };
+        //theta_max = 3*(1-x)/lepton_e;
+        // integrand, min, max, max_depth, tolerance, error, pL1
+        double dsdx = integrate(theta_integrand, 0., theta_max);
+        dsdx_f << x << "," << dsdx << "\n";
+        return dsdx;
       } else {
         if (x*lepton_e < threshold_) {
-          diff_file << x << "," << 0. << "\n";
+          dsdx_f << x << "," << 0. << "\n";
           return 0.;
         }
         double beta = sqrt(1 - MA2/lepton_e_sq),
                nume = 1. - x + x*x/3.,
                deno = MA2*(1-x)/x + lepton_mass_sq;
         double dsdx = 4*pow(epsilon_,2)*pow(alphaEW,3)*chi_hiww*beta*nume/deno;
+        dsdx_f << x << "," << dsdx << "\n";
         return dsdx;
       }
-       */
     };
 
     theta_integral(1 - 1e-4);
