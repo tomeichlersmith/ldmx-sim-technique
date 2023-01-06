@@ -4,6 +4,7 @@ dblib
 data
 # data files
 **.root
+**.h5
 # sim log files
 *.log
 # jupyter notebook
