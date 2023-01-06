@@ -66,43 +66,26 @@ def main() :
         arg.out_dir = arg.data_dir
     os.makedirs(arg.out_dir, exist_ok=True)
 
-    df = pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_0.2GeV.csv')
-
-    df_ = df.copy()
-    df_['Xsec [pb]'] = df_['Xsec [pb]']/(1+df_['Energy [MeV]']*0.2**2/(4*1000*1000))
 
     xsec_plot('data/mg/mu_xsec_0.2GeV.csv', [
-            ('G4DarkBreM', df),
-            (r'G4DarkBreM $/(1+(m_A/GeV)^2\frac{E/GeV}{4000})$', df_),
-            ('DMG4', pd.read_csv(f'data/dev/dmg4_mu_xsec_0.2GeV.csv')),
+            ('G4DarkBreM', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_0.2GeV.csv'))
+            #('DMG4', pd.read_csv(f'data/dev/dmg4_mu_xsec_0.2GeV.csv')),
           ],
         f'{arg.out_dir}/mu_xsec_0.2GeV.pdf',
         xlabel = 'Incident Muon Energy [GeV]',
         title = '$m_{A\'} = 0.2$ GeV\nMuons on Copper')
 
-    df = pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_Cu.csv')
-
-    df_ = df.copy()
-    df_['Xsec [pb]'] = df_['Xsec [pb]']*(1 - 2*(1/137)/(3*3.14)*np.log(df_['Energy [MeV]']/1000))**3
-
     xsec_plot('data/mg/mu_xsec_1GeV.csv', [
-            #('G4DarkBreM on W', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_W.csv')),
-            ('G4DarkBreM', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_newxmax.csv')),
-            ('G4DB running alpha', df_),
-            ('DMG4', pd.read_csv(f'{arg.data_dir}/dmg4_mu_xsec_1.0GeV.csv')),
+            ('G4DarkBreM', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec.csv')),
+            #('DMG4', pd.read_csv(f'{arg.data_dir}/dmg4_mu_xsec_1.0GeV.csv')),
           ],
-        f'{arg.out_dir}/mu_xsec_1GeV.pdf',
+        f'{arg.out_dir}/mu_xsec.pdf',
         xlabel = 'Incident Muon Energy [GeV]',
         title = '$m_{A\'} = 1.0$ GeV\nMuons on Copper')
 
-    df = pd.read_csv(f'{arg.data_dir}/g4db_el_xsec.csv')
-
-    df_ = df.copy()
-    df_['Xsec [pb]'] = df_['Xsec [pb]']/(1 + df_['Energy [MeV]']*0.1**2/(4*100*1000))
 
     xsec_plot('data/mg/el_xsec.csv', [
-            ('G4DarkBreM', df),
-            (r'G4DarkBreM $/(1+(m_A/GeV)^2\frac{E/GeV}{400})$', df_),
+            ('G4DarkBreM', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec.csv')),
           ],
          f'{arg.out_dir}/el_xsec.pdf',
         xlabel = 'Incident Electron Energy [GeV]',
