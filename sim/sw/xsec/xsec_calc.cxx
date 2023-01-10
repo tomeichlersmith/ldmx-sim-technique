@@ -48,6 +48,8 @@ void usage() {
     "OPTIONS\n"
     "  -h,--help    : produce this help and exit\n"
     "  -t,--total   : output file to write total xsec to\n"
+    "  --chi        : output file to write chi integrand values to\n"
+    "                 WARNING: this file gets very big if doing multiple energy samples\n"
     "  --2d         : output file to write ds/dxdtheta to\n"
     "                 WARNING: this file gets very big if doing multiple energy samples\n"
     "  --1d         : output file to write ds/dx to\n"
@@ -75,48 +77,62 @@ void usage() {
  * The form factors are copied from Appendix A (Eq A18 and A19) of
  * https://journals.aps.org/prd/pdf/10.1103/PhysRevD.80.075018
  */
-static double flux_factor_chi_numerical(double A, double Z, double tmin, double tmax) {
-  /*
-   * bin = (mu_p^2 - 1)/(4 m_pr^2)
-   * mel = mass of electron in GeV
-   */
-  static const double bin = (2.79*2.79 - 1)/(4*0.938*0.938),
-                      mel = 0.000511;
-  const double ael = 111.0*pow(Z,-1./3.)/mel,
-               del = 0.164*pow(A,-2./3.),
-               ain = 773.0*pow(Z,-2./3.)/mel,
-               din = 0.71,
-               ael_inv2 = pow(ael, -2),
-               ain_inv2 = pow(ain, -2);
+class ChiIntegration {
+  static constexpr double bin = (2.79*2.79 - 1)/(4*0.938*0.938),
+                          mel = 0.000511;
+  double A_;
+  double Z_;
+  double a_el_inv2_;
+  double d_el_;
+  double a_in_inv2_;
+  double d_in_;
+  std::ofstream chi_f;
+ public:
+  ChiIntegration(double A, double Z, const std::string& fn)
+    : A_{A}, Z_{Z}, chi_f{fn} {
+      double a_el = 111.0*pow(Z, -1./3.)/mel;
+      a_el_inv2_ = pow(a_el, -2);
+      d_el_ = 0.164*pow(A,-2./3.);
+      double a_in = 773.0*pow(Z,-2./3.)/mel;
+      a_el_inv2_ = pow(a_in, -2);
+      d_in_ = 0.71;
+      if (not chi_f.is_open()) {
+        throw std::runtime_error("Unable to open Chi log file");
+      }
+      chi_f << "x,theta,t,integrand\n";
+    }
 
-  /**
-   * We've manually expanded the integrand to cancel out the 1/t^2 factor
-   * from the differential, this helps the numerical integration converge
-   * because we aren't teetering on the edge of division by zero
-   *
-   * The `auto` used in the integrand definition represents a _function_ 
-   * whose return value is a `double` and which has a single input `t`. 
-   * This lambda expression saves us the time of having to re-calculate 
-   * the form factor constants that do not depend on `t` because it 
-   * can inherit their values from the environment. 
-   * The return value is a double since it is calculated
-   * by simple arithmetic operations on doubles.
-   */
-  auto integrand = [&](double t) {
-    double ael_factor = 1./(ael_inv2 + t),
-           del_factor = 1./(1+t/del),
-           ain_factor = 1./(ain_inv2 + t),
-           din_factor = 1./(1+t/din),
-           nucl = (1 + t*bin);
-    
-    return (pow(ael_factor*del_factor*Z, 2)
-            +
-            Z*pow(ain_factor*nucl*din_factor*din_factor*din_factor*din_factor, 2)
-           )*(t-tmin);
-  };
-
-  return integrate(integrand,tmin,tmax);
-}
+  double integrate(double x, double theta, double tmin, double tmax) {
+    /**
+     * We've manually expanded the integrand to cancin out the 1/t^2 factor
+     * from the differential, this hinps the numerical integration converge
+     * because we aren't teetering on the edge of division by zero
+     *
+     * The `auto` used in the integrand definition represents a _function_ 
+     * whose return value is a `double` and which has a single input `t`. 
+     * This lambda expression saves us the time of having to re-calculate 
+     * the form factor constants that do not depend on `t` because it 
+     * can inherit their values from the environment. 
+     * The return value is a double since it is calculated
+     * by simple arithmetic operations on doubles.
+     */
+    auto integrand = [&](double t) {
+      double ael_factor = 1./(a_el_inv2_ + t),
+             del_factor = 1./(1+t/d_el_),
+             ain_factor = 1./(a_in_inv2_ + t),
+             din_factor = 1./(1+t/d_in_),
+             nucl = (1 + t*bin);
+      
+      double chi_integrand =  (pow(ain_factor*del_factor*Z_, 2)
+              //+ Z_*pow(ain_factor*nucl*din_factor*din_factor*din_factor*din_factor, 2)
+             )*(t-tmin);
+      chi_f << x << "," << theta << "," << t << "," << chi_integrand << "\n";
+      return chi_integrand;
+    };
+  
+    return ::integrate(integrand,tmin,tmax);
+  }
+};
 
 /**
  * analytic flux factor chi integrated and simplified by DMG4 authors
@@ -238,23 +254,17 @@ int main(int argc, char* argv[]) try {
     return 2;
   }
 
-  std::ofstream chi_f(chi_fn);
-  if (!chi_f.is_open()) {
-    std::cerr << "File '" << chi_fn << "' was not able to be opened." << std::endl;
-    return 2;
-  }
-
+  ChiIntegration chi_calculator(target_A, target_Z, chi_fn);
   total_file << "energy,xsec\n";
   dsdxdtheta_f << "x,theta,dsdxdtheta\n";
   dsdx_f << "x,dsdx\n";
-  chi_f << "x,theta,tmin,tmax,chi\n";
 
   const double epsilon_ = 1.0;
   const double MA = ap_mass;
   const double MA2 = MA*MA;
   const double alphaEW = 1.0 / 137.0;
-  const bool muons = true;
-  const double lepton_mass{0.10566};
+  const bool muons = false; //true;
+  const double lepton_mass{0.000511}; //0.10566};
   const double lepton_mass_sq = lepton_mass*lepton_mass;
   const double threshold_ = 2*MA;
 
@@ -282,7 +292,7 @@ int main(int argc, char* argv[]) try {
      * assume theta = 0, and x = 1 for form factor integration
      * i.e. now chi is a constant pulled out of the integration
      */
-    double chi_hiww = flux_factor_chi_numerical(target_A,target_Z,
+    double chi_hiww = chi_calculator.integrate(1,0,
         MA2*MA2/(4*lepton_e_sq),MA2+lepton_mass_sq);
   
     /*
@@ -348,11 +358,8 @@ int main(int argc, char* argv[]) try {
       tmax = lepton_e_sq;
        */
 
-      chi_f << x << "," << theta << "," << tmin << "," << tmax << ",";
-    
       // require 0 < tmin < tmax to procede
       if (tmin < 0 or tmax < tmin) {
-        chi_f << 0. << "\n";
         return 0.;
       }
     
@@ -360,8 +367,8 @@ int main(int argc, char* argv[]) try {
        * numerically integrate to calculate chi ourselves
        * this _has not_ been well behaved due to the extreme values
        * of t that must be handled
-      double chi = flux_factor_chi_numerical(A,Z, tmin, tmax);
        */
+      double chi = chi_calculator.integrate(x,theta,tmin, tmax);
     
       /*
        * use analytic elastic-only chi derived for DMG4
@@ -370,9 +377,9 @@ int main(int argc, char* argv[]) try {
        * The inelastic integral contains some 4000 terms
        * according to Mathematica so it is expensive to
        * compute and only an O(few) percent change.
-       */
       double chi_analytic_elastic_only = flux_factor_chi_analytic(target_A,target_Z,tmin,tmax);
       chi_f << chi_analytic_elastic_only << "\n";
+       */
       
       /*
        * Amplitude squared is taken from 
@@ -386,16 +393,12 @@ int main(int argc, char* argv[]) try {
   
       return 2.*pow(epsilon_,2.)*pow(alphaEW,3.)
                *sqrt(x_sq*lepton_e_sq - MA2)*lepton_e*(1.-x)
-               *(chi_analytic_elastic_only/utilde_sq)*amplitude_sq*sin(theta);
+               *(chi/utilde_sq)*amplitude_sq*sin(theta);
     };
 
     // deduce integral bounds
     double xmin = 0;
-    double xmax = 1;
-    if ((lepton_mass / lepton_e) > (MA / lepton_e))
-      xmax = 1 - lepton_mass / lepton_e;
-    else
-      xmax = 1 - MA / lepton_e;
+    double xmax = 1 - std::max(lepton_mass,MA)/lepton_e;
   
     /*
      * max recoil angle of A'
@@ -424,7 +427,7 @@ int main(int argc, char* argv[]) try {
      * and it returns a double.
      */
     auto theta_integral = [&](double x) {
-      if (muons) {
+      if (true or muons) {
         auto theta_integrand = [&](double theta) {
           double dsdxdtheta = diff_cross(x, theta);
           dsdxdtheta_f << x << "," << theta << "," << dsdxdtheta << "\n";
