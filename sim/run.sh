@@ -55,15 +55,14 @@ __main__() {
     return $?
   fi
 
-  echo "g4db-xsec-calc -o ${_output_dir}/g4db_el_xsec.csv " \
-    "--energy 0.2 100 --ap-mass 0.1" \
-    "&>> ${_output_dir}/g4db_xsec.log"
-  echo "g4db-xsec-calc -o ${_output_dir}/g4db_mu_xsec.csv " \
-    "--muons --energy 2 1000 1 --ap-mass 1 --target 29 63.55" \
-    "&>> ${_output_dir}/g4db_xsec.log"
-  echo "g4db-xsec-calc -o ${_output_dir}/g4db_mu_xsec_0.2GeV.csv " \
-    "--muons --energy 2 1000 1 --ap-mass 0.2 --target 29 63.55" \
-    "&>> ${_output_dir}/g4db_xsec_0.2GeV.log"
+  for method in "fullww" "iww" "hiww"; do
+    echo "g4db-xsec-calc -o ${_output_dir}/g4db_el_xsec_${method}.csv" \
+      "--energy 0.2 100 --ap-mass 0.1 --method ${method}" \
+      "&>> ${_output_dir}/g4db_el_xsec_${method}.log"
+    echo "g4db-xsec-calc -o ${_output_dir}/g4db_mu_xsec_${method}.csv" \
+      "--muons --energy 2 1000 1 --ap-mass 1 --target 29 63.55 --method ${method}" \
+      "&>> ${_output_dir}/g4db_xsec_${method}.log"
+  done
 
   if ${_only_xsec}; then
     return
