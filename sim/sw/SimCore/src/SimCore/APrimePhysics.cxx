@@ -22,6 +22,12 @@ namespace darkbrem {
 
 const std::string APrimePhysics::NAME = "APrime";
 
+static const std::map<std::string, g4db::G4DarkBreMModel::ScalingMethod> scaling_methods = {
+  {"forward_only", g4db::G4DarkBreMModel::ScalingMethod::ForwardOnly},
+  {"cm_scaling"  , g4db::G4DarkBreMModel::ScalingMethod::CMScaling  },
+  {"undefined"   , g4db::G4DarkBreMModel::ScalingMethod::Undefined  }
+};
+
 APrimePhysics::APrimePhysics(const framework::config::Parameters &params)
     : G4VPhysicsConstructor(APrimePhysics::NAME), parameters_{params} {
   ap_mass_ = parameters_.getParameter<double>("ap_mass", 0.) * MeV;
@@ -49,7 +55,9 @@ void APrimePhysics::ConstructProcess() {
     if (model_name == "vertex_library" or model_name == "g4db") {
       auto proc = new G4DarkBremsstrahlung(
         std::make_shared<g4db::G4DarkBreMModel>(
-              model.getParameter<std::string>("method"),
+              scaling_methods.at(model.getParameter<std::string>("method")),
+              muons_ ? g4db::G4DarkBreMModel::XsecMethod::Full 
+                     : g4db::G4DarkBreMModel::XsecMethod::HyperImproved,
               model.getParameter<double>("threshold"),
               model.getParameter<double>("epsilon"),
               model.getParameter<std::string>("library_path"),
