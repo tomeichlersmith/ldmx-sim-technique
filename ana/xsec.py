@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import mplhep
 plt.style.use(mplhep.style.ROOT)
 
+from mpl_toolkits.axes_grid.inset_locator import (inset_axes, InsetPosition, mark_inset)
+
 import uproot
 import numpy as np
 import pandas as pd
@@ -24,6 +26,8 @@ def parse_mg(csv_path) :
     return df
 
 def xsec_plot(mg_csv, others, file_name, 
+    inset_xlim = None, ymax = None,
+    legend_overhead = False,
     xlabel = 'Incident Lepton Energy [GeV]', title = None) :
     (raw, ratio) = plt.gcf().subplots(ncols = 1, nrows = 2, 
         sharex = 'col', gridspec_kw=dict(height_ratios = [3,1]))
@@ -37,6 +41,16 @@ def xsec_plot(mg_csv, others, file_name,
     raw.plot(mg_x, mg_y, linewidth=0, label='MG/ME',
         marker='o', markersize=10, markerfacecolor='none', markeredgecolor='tab:green')
     ratio.plot(mg_x, [1. for x in mg_x], marker='.', markersize=0, linewidth=0, color='tab:green')
+    
+    if inset_xlim is not None :
+        inset = plt.axes([0,0,1,1])
+        # left edge, bottom edge, width, height
+        inset.set_axes_locator(InsetPosition(raw, [0.50,0.10,0.45,0.45]))
+        mark_inset(raw, inset, loc1=2, loc2=4, fc='none', ec='0.5')
+
+        selection = (mg_x > inset_xlim[0])&(mg_x < inset_xlim[1])
+        inset.plot(mg_x[selection], mg_y[selection], linewidth=0, label='MG/ME',
+                   marker='o', markersize=10, markerfacecolor='none', markeredgecolor='tab:green')
 
     for name, data, style in others :
         y = data['Xsec [pb]']
@@ -48,11 +62,24 @@ def xsec_plot(mg_csv, others, file_name,
         ratio.plot(mg_x[in_range], data_at_mge/mg_y[in_range], 
             marker='.', markersize=15, linewidth=0, **style)
 
-    #ratio.axhline(0.9, color='gray')
+        if inset_xlim is not None :
+            sl = (x > inset_xlim[0])&(x < inset_xlim[1])
+            inset.plot(x[sl], y[sl], label=name, linewidth=2, **style)
 
     raw.set_ylabel('Total Cross Section / $\epsilon^2$ [pb]')
-    l = raw.legend(title=title)
-    plt.setp(l.get_title(), multialignment='right')
+    raw.set_ylim(ymax=ymax)
+
+    if legend_overhead :
+        l = raw.legend(title=title, loc='lower center', bbox_to_anchor=(0.5,1))
+        plt.setp(l.get_title(), multialignment='center')
+    else :
+        l = raw.legend(title=title, loc='upper left')
+        plt.setp(l.get_title(), multialignment='left')
+
+    if inset_xlim is not None :
+        # give inset labels a white background so they cover the line
+        #inset.set_xticklabels(inset.get_xticks(), backgroundcolor='w')
+        pass
 
     ratio.set_ylabel('Ratio to MG/ME')
     ratio.set_xlabel(xlabel)
@@ -76,25 +103,17 @@ def main() :
         arg.out_dir = arg.data_dir
     os.makedirs(arg.out_dir, exist_ok=True)
 
-    xsec_plot('data/mg/el_xsec.csv', [
+    xsec_plot('data/mg/el_xsec_with_lowE.csv', [
             ('G4DarkBreM Improved WW', 
               pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_iww.csv'),
               dict(color='tab:blue')),
           ],
          f'{arg.out_dir}/el_xsec.pdf',
+        inset_xlim=(0,10), ymax=1.1e10,
         xlabel = 'Incident Electron Energy [GeV]',
-        title = '$m_{A\'} = 0.1$ GeV\nElectrons on Tungsten')
+        title = 'Electrons on Tungsten $m_{A\'} = 0.1$ GeV')
 
-    xsec_plot('data/mg/mu_xsec_1GeV.csv', [
-            ('G4DarkBreM Full WW', 
-              pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_fullww.csv'),
-              dict(color='tab:blue')),
-          ],
-        f'{arg.out_dir}/mu_xsec.pdf',
-        xlabel = 'Incident Muon Energy [GeV]',
-        title = '$m_{A\'} = 1.0$ GeV\nMuons on Copper')
-
-    xsec_plot('data/mg/el_xsec.csv', [
+    xsec_plot('data/mg/el_xsec_with_lowE.csv', [
             ('G4DarkBreM Improved WW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_iww.csv'),
               dict(color='tab:blue')),
             ('G4DarkBreM Hyper-Improved WW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_hiww.csv'),
@@ -103,8 +122,19 @@ def main() :
               dict(color='tab:red')),
           ],
          f'{arg.out_dir}/el_xsec_appendix.pdf',
+        inset_xlim = (0,10), legend_overhead=True,
         xlabel = 'Incident Electron Energy [GeV]',
-        title = '$m_{A\'} = 0.1$ GeV\nElectrons on Tungsten')
+        title = 'Electrons on Tungsten $m_{A\'} = 0.1$ GeV')
+
+    xsec_plot('data/mg/mu_xsec_1GeV.csv', [
+            ('G4DarkBreM Full WW', 
+              pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_fullww.csv'),
+              dict(color='tab:blue')),
+          ],
+        f'{arg.out_dir}/mu_xsec.pdf',
+        inset_xlim=(0,200),
+        xlabel = 'Incident Muon Energy [GeV]', ymax=5.5e6,
+        title = 'Muons on Copper $m_{A\'} = 1.0$ GeV')
 
     xsec_plot('data/mg/mu_xsec_1GeV.csv', [
             ('G4DarkBreM Full WW', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_fullww.csv'),
@@ -115,8 +145,10 @@ def main() :
               dict(color='tab:red')),
           ],
         f'{arg.out_dir}/mu_xsec_appendix.pdf',
+        legend_overhead=True,
+        inset_xlim=(0,200), ymax=5.5e6,
         xlabel = 'Incident Muon Energy [GeV]',
-        title = '$m_{A\'} = 1.0$ GeV\nMuons on Copper')
+        title = 'Muons on Copper $m_{A\'} = 1.0$ GeV')
 
 if __name__ == '__main__' :
     main()
