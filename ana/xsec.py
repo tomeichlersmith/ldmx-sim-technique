@@ -27,6 +27,7 @@ def parse_mg(csv_path) :
 
 def xsec_plot(mg_csv, others, file_name, 
     inset_xlim = None, ymax = None,
+    inset_width_height = (0.45,0.45),
     legend_overhead = False,
     xlabel = 'Incident Lepton Energy [GeV]', title = None) :
     (raw, ratio) = plt.gcf().subplots(ncols = 1, nrows = 2, 
@@ -47,7 +48,8 @@ def xsec_plot(mg_csv, others, file_name,
         # and then mark it relative to the ratio axes we are zooming in on
         inset = plt.axes([0,0,1,1])
         # left edge, bottom edge, width, height
-        inset.set_axes_locator(InsetPosition(raw, [0.50,0.10,0.45,0.45]))
+        inset.set_axes_locator(InsetPosition(raw, 
+          [0.50,0.10,inset_width_height[0], inset_width_height[1]]))
         mark_inset(ratio, inset, loc1=2, loc2=4, fc='none', ec='0.5')
 
         selection = (mg_x > inset_xlim[0])&(mg_x < inset_xlim[1])
@@ -120,19 +122,6 @@ def main() :
         xlabel = 'Incident Electron Energy [GeV]',
         title = 'Electrons on Tungsten $m_{A\'} = 0.1$ GeV')
 
-    xsec_plot('data/mg/el_xsec_with_lowE.csv', [
-            ('G4DarkBreM Improved WW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_iww.csv'),
-              dict(color='tab:blue')),
-            ('G4DarkBreM Hyper-Improved WW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_hiww.csv'),
-              dict(color='tab:orange')),
-            ('G4DarkBreM Full WW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_fullww.csv'),
-              dict(color='tab:red')),
-          ],
-         f'{arg.out_dir}/el_xsec_appendix.pdf',
-        inset_xlim = (0,5), legend_overhead=True,
-        xlabel = 'Incident Electron Energy [GeV]',
-        title = 'Electrons on Tungsten $m_{A\'} = 0.1$ GeV')
-
     xsec_plot('data/mg/mu_xsec_1GeV.csv', [
             ('G4DarkBreM Full WW', 
               pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_fullww.csv'),
@@ -143,17 +132,35 @@ def main() :
         xlabel = 'Incident Muon Energy [GeV]', ymax=5.5e6,
         title = 'Muons on Copper $m_{A\'} = 1.0$ GeV')
 
+    dx, dy = plt.gcf().get_size_inches()
+    plt.gcf().set_size_inches(dx, dy+4)
+
+    xsec_plot('data/mg/el_xsec_with_lowE.csv', [
+            ('G4DarkBreM Full WW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_fullww.csv'),
+              dict(color='tab:orange')),
+            ('G4DarkBreM Improved WW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_iww.csv'),
+              dict(color='tab:red')),
+            ('G4DarkBreM Hyper-Improved WW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_hiww.csv'),
+              dict(color='tab:purple')),
+          ],
+         f'{arg.out_dir}/el_xsec_appendix.pdf',
+        inset_xlim = (0,5), #legend_overhead=True,
+        ymax = 13e9, inset_width_height=(0.45,0.25),
+        xlabel = 'Incident Electron Energy [GeV]',
+        title = 'Electrons on Tungsten $m_{A\'} = 0.1$ GeV')
+
     xsec_plot('data/mg/mu_xsec_1GeV.csv', [
             ('G4DarkBreM Full WW', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_fullww.csv'),
-              dict(color='tab:blue')),
-            ('G4DarkBreM Improved WW', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_iww.csv'),
               dict(color='tab:orange')),
-            ('G4DarkBreM Hyper-Improved WW', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_hiww.csv'),
+            ('G4DarkBreM Improved WW', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_iww.csv'),
               dict(color='tab:red')),
+            ('G4DarkBreM Hyper-Improved WW', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_hiww.csv'),
+              dict(color='tab:purple')),
           ],
         f'{arg.out_dir}/mu_xsec_appendix.pdf',
-        legend_overhead=True,
-        inset_xlim=(0,100), ymax=5.5e6,
+        #legend_overhead=True,
+        inset_xlim=(0,100), ymax=9.5e6,
+        inset_width_height=(0.45,0.25),
         xlabel = 'Incident Muon Energy [GeV]',
         title = 'Muons on Copper $m_{A\'} = 1.0$ GeV')
 
