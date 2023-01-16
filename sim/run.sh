@@ -2,54 +2,11 @@
 # run.sh 
 #   run four simulations within container
 
-__usage__() {
-  cat <<HELP
- USAGE:
-  ./sim/run.sh [-o OUT_DIR] [--only-xsec]
-
- OPTIONS:
-  -o          : Base output directory for data files (default: 'data/<git describe --tags>')
-  --only-xsec : only do xsec calculations
-
- We do two simulations at once (G4DB and DMG4) and then we loop over the combinations
- of thicknesses and incident particles. The multiple jobs are written to a job listing
- file in the output directory and then "submitted" to parallel via the ldmx_parallel.sh
- script.
-
-HELP
-}
-
+# main generator of commands
+# Expected Env Variables
+#   _output_dir : directory in which to write files
+#   _only_xsec  : true if only xsec, false if everything
 __main__() {
-  local _tag=$(git describe --tags)
-  local _output_dir=$(cd data && pwd -P)/${_tag}
-  local _only_xsec=false
-  while [ $# -gt 0 ]; do
-    case $1 in
-      -o)
-        if [ -z $2 ]; then
-          echo "ERROR: '$1' requires an argument."
-          return 1
-        fi
-        case $1 in
-          -o) _output_dir=$2;;
-        esac
-        shift
-        ;;
-      --only-xsec)
-        _only_xsec=true
-        ;;
-      -h|--help|-?)
-        __usage__
-        return 0
-        ;;
-      *)
-        echo "ERROR: Unrecognized option '$1'."
-        return 1
-        ;;
-    esac
-    shift
-  done
-  
   if ! mkdir -p ${_output_dir}; then
     echo "ERROR: Could not create output directory ${_output_dir}"
     return $?
@@ -126,4 +83,71 @@ __main__() {
     "&>> ${_output_dir}/dmg4_electron_extra_thin.log"
 }
 
-__main__ $@ | ./sim/ldmx_parallel.sh
+__usage__() {
+  cat <<HELP
+ USAGE:
+  ./sim/run.sh [-o OUT_DIR] [--only-xsec] [--dry-run] [-- PARALLEL_OPTS]
+
+ OPTIONS:
+  -o            : Base output directory for data files (default: 'data/<git describe --tags>')
+  --only-xsec   : only do xsec calculations
+  --dry-run, -n : print commands to terminal instead of piping to parallel
+  PARALLEL_OPTS : all arguments after '--' are given to parallel (e.g. use -- -j 4 to limit
+                  the number of cores used).
+
+ We do two simulations at once (G4DB and DMG4) and then we loop over the combinations
+ of thicknesses and incident particles. The multiple jobs are written to a job listing
+ file in the output directory and then "submitted" to parallel via the ldmx_parallel.sh
+ script.
+
+HELP
+}
+
+_tag=$(git describe --tags)
+_output_dir=$(cd data && pwd -P)/${_tag}
+_only_xsec=false
+_dry_run=false
+while [ $# -gt 0 ]; do
+  case $1 in
+    -o)
+      if [ -z $2 ]; then
+        echo "ERROR: '$1' requires an argument."
+        exit 1
+      fi
+      case $1 in
+        -o) _output_dir=$2;;
+      esac
+      shift
+      shift
+      ;;
+    --only-xsec)
+      _only_xsec=true
+      shift
+      ;;
+    --dry-run|-n)
+      _dry_run=true
+      shift
+      ;;
+    -h|--help)
+      __usage__
+      exit 0
+      ;;
+    --)
+      # the rest of the options are options for parallel
+      shift
+      break
+      ;;
+    *)
+      echo "ERROR: Unrecognized option '$1'."
+      exit 1
+      ;;
+  esac
+done
+
+if ${_dry_run}; then
+  __main__
+  echo "with parallel options '$@'"
+else 
+  __main__ | parallel $@ ./sim/ldmx_parallel.sh
+fi
+
