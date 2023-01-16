@@ -64,9 +64,8 @@ void usage() {
     << std::flush;
 }
 
-
 /**
- * numerically integrate the value of the flux factory chi
+ * numerically integrate the value of the flux factor chi
  *
  * The integration of the form factor into the flux factor can
  * be done analytically with a tool like mathematica, but when
@@ -76,79 +75,75 @@ void usage() {
  *
  * The form factors are copied from Appendix A (Eq A18 and A19) of
  * https://journals.aps.org/prd/pdf/10.1103/PhysRevD.80.075018
- */
-class ChiIntegration {
-  static constexpr double bin = (2.79*2.79 - 1)/(4*0.938*0.938),
-                          mel = 0.000511;
-  double A_;
-  double Z_;
-  double a_el_inv2_;
-  double d_el_;
-  double a_in_inv2_;
-  double d_in_;
-  std::ofstream chi_f;
- public:
-  ChiIntegration(double A, double Z, const std::string& fn)
-    : A_{A}, Z_{Z}, chi_f{fn} {
-      double a_el = 111.0*pow(Z, -1./3.)/mel;
-      a_el_inv2_ = pow(a_el, -2);
-      d_el_ = 0.164*pow(A,-2./3.);
-      double a_in = 773.0*pow(Z,-2./3.)/mel;
-      a_el_inv2_ = pow(a_in, -2);
-      d_in_ = 0.71;
-      if (not chi_f.is_open()) {
-        throw std::runtime_error("Unable to open Chi log file");
-      }
-      chi_f << "x,theta,t,integrand\n";
-    }
-
-  double integrate(double x, double theta, double tmin, double tmax) {
-    /**
-     * We've manually expanded the integrand to cancin out the 1/t^2 factor
-     * from the differential, this hinps the numerical integration converge
-     * because we aren't teetering on the edge of division by zero
-     *
-     * The `auto` used in the integrand definition represents a _function_ 
-     * whose return value is a `double` and which has a single input `t`. 
-     * This lambda expression saves us the time of having to re-calculate 
-     * the form factor constants that do not depend on `t` because it 
-     * can inherit their values from the environment. 
-     * The return value is a double since it is calculated
-     * by simple arithmetic operations on doubles.
-     */
-    auto integrand = [&](double t) {
-      double ael_factor = 1./(a_el_inv2_ + t),
-             del_factor = 1./(1+t/d_el_),
-             ain_factor = 1./(a_in_inv2_ + t),
-             din_factor = 1./(1+t/d_in_),
-             nucl = (1 + t*bin);
-      
-      double chi_integrand =  (pow(ain_factor*del_factor*Z_, 2)
-              //+ Z_*pow(ain_factor*nucl*din_factor*din_factor*din_factor*din_factor, 2)
-             )*(t-tmin);
-      chi_f << x << "," << theta << "," << t << "," << chi_integrand << "\n";
-      return chi_integrand;
-    };
-  
-    return ::integrate(integrand,tmin,tmax);
-  }
-};
-
-/**
- * analytic flux factor chi integrated and simplified by DMG4 authors
  *
- * This only includes the elastic form factor term
+ * Here, the equations are listed for reference.
+ * \f{equation}{
+ * \chi(x,\theta) = \int^{t_{max}}_{t_{min}} dt \left( \frac{Z^2a^4t^2}{(1+a^2t)^2(1+t/d)^2}+\frac{Za_p^4t^2}{(1+a_p^2t)^2(1+t/0.71)^8}\left(1+\frac{t(\mu_p^2-1)}{4m_p^2}\right)^2\right)\frac{t-t_{min}}{t^2}
+ * \f}
+ * where
+ * \f{equation}{
+ * a = \frac{111.0}{m_e Z^{1/3}}
+ * \quad
+ * a_p = \frac{773.0}{m_e Z^{2/3}}
+ * \quad
+ * d = \frac{0.164}{A^{2/3}}
+ * \f}
+ * - \f$m_e\f$ is the mass of the electron in GeV
+ * - \f$m_p = 0.938\f$ is the mass of the proton in GeV
+ * - \f$\mu_p = 2.79\f$ is the proton \f$\mu\f$
+ * - \f$A\f$ is the atomic mass of the target nucleus in amu
+ * - \f$Z\f$ is the atomic number of the target nucleus
+ *
+ * @param[in] A atomic mass of the target nucleus in amu
+ * @param[in] Z atomic number of target nucleus
+ * @param[in] tmin lower limit of integration over t
+ * @param[in] tmax upper limit of integration over t
  */
-static double flux_factor_chi_analytic(double A, double Z, double tmin, double tmax) {
-  static const double mel = 0.000511;
-  const double a_el = 111.*pow(Z,-1./3)/mel,
-               d_el = 0.164*pow(A,-2./3);
-  double ta = 1.0/(a_el*a_el);
-  double td = d_el;
-  return -Z*Z*((td*td*(
-              ((ta - td)*(ta + td + 2.0*tmax)*(tmax - tmin))/((ta + tmax)*(td + tmax)) 
-              + (ta + td + 2.0*tmin)*(log(ta + tmax) - log(td + tmax) - log(ta + tmin) + log(td + tmin))
-             ))/((ta-td)*(ta-td)*(ta-td)));
+static double flux_factor_chi_numerical(double A, double Z, double tmin, double tmax) {
+  /*
+   * bin = (mu_p^2 - 1)/(4 m_pr^2)
+   * mel = mass of electron in GeV
+   */
+  static const double bin = (2.79*2.79 - 1)/(4*0.938*0.938),
+                      mel = 0.000511;
+  const double ael = 111.0*pow(Z,-1./3.)/mel,
+               del = 0.164*pow(A,-2./3.),
+               ain = 773.0*pow(Z,-2./3.)/mel,
+               din = 0.71,
+               ael_inv2 = pow(ael, -2),
+               ain_inv2 = pow(ain, -2);
+
+  /**
+   * We've manually expanded the integrand to cancel out the 1/t^2 factor
+   * from the differential, this helps the numerical integration converge
+   * because we aren't teetering on the edge of division by zero
+   *
+   * The `auto` used in the integrand definition represents a _function_ 
+   * whose return value is a `double` and which has a single input `lnt`. 
+   * This lambda expression saves us the time of having to re-calculate 
+   * the form factor constants that do not depend on `t` because it 
+   * can inherit their values from the environment. 
+   * The return value is a double since it is calculated
+   * by simple arithmetic operations on doubles.
+   *
+   * The integrand is so sharply peaked at t close to tmin,
+   * it is very helpful to do the integration in the variable
+   * u = ln(t) rather than t itself.
+   */
+  auto integrand = [&](double lnt) {
+    double t = exp(lnt);
+    double ael_factor = 1./(ael_inv2 + t),
+           del_factor = 1./(1+t/del),
+           ain_factor = 1./(ain_inv2 + t),
+           din_factor = 1./(1+t/din),
+           nucl = (1 + t*bin);
+    
+    return (pow(ael_factor*del_factor*Z, 2)
+            + Z*pow(ain_factor*nucl*din_factor*din_factor*din_factor*din_factor, 2)
+           )*(t-tmin)*t;
+  };
+
+  return integrate(integrand,log(tmin),log(tmax));
 }
 
 /**
@@ -254,10 +249,16 @@ int main(int argc, char* argv[]) try {
     return 2;
   }
 
-  ChiIntegration chi_calculator(target_A, target_Z, chi_fn);
+  std::ofstream chi_f(chi_fn);
+  if (!chi_f.is_open()) {
+    std::cerr << "File '" << chi_fn << "' was not able to be opened." << std::endl;
+    return 2;
+  }
+
   total_file << "energy,xsec\n";
   dsdxdtheta_f << "x,theta,dsdxdtheta\n";
   dsdx_f << "x,dsdx\n";
+  chi_f << "x,theta,tmin,tmax,chi\n";
 
   const double epsilon_ = 1.0;
   const double MA = ap_mass;
@@ -286,183 +287,175 @@ int main(int argc, char* argv[]) try {
     double lepton_e = lepton_ke + lepton_mass;
     double lepton_e_sq = lepton_e*lepton_e;
 
-    /*
-     * "Hyper-Improved" WW
-     *
-     * assume theta = 0, and x = 1 for form factor integration
-     * i.e. now chi is a constant pulled out of the integration
-     */
-    double chi_hiww = chi_calculator.integrate(1,0,
-        MA2*MA2/(4*lepton_e_sq),MA2+lepton_mass_sq);
-  
-    /*
-     * Differential cross section with respect to x and theta
-     *
-     * Equation (16) from Appendix A of https://arxiv.org/pdf/2101.12192.pdf
-     *
-     * This `auto` represents a lambda-expression function, inheriting many
-     * pre-calculated constants (like lepton_e and chi) while also calculating
-     * the variables dependent on the integration variables. The return value
-     * of this function is a double since it is calculated by arithmetic
-     * operations on doubles.
-     */
-    auto diff_cross = [&](double x, double theta) {
-      if (x*lepton_e < threshold_) return 0.;
-  
-      double theta_sq = theta*theta;
-      double x_sq = x*x;
-  
-      double utilde = -x*lepton_e_sq*theta_sq - MA2*(1.-x)/x - lepton_mass_sq*x;
-      double utilde_sq = utilde*utilde;
-  
-      /*
-       * WW
-       *
-       * Since muons are so much more massive than electrons, we keep 
-       * the form factor integration limits dependent on x and theta
-       */
-  
-      // non-zero theta and non-zero m_l
-      double tmin = utilde_sq/(4.0*lepton_e_sq*(1.0-x)*(1.0-x));
-      // maximum t kinematically limited to the incident lepton energy
-      double tmax = lepton_e_sq;
-  
-      /*
-       * The chi integrand limits given by
-       *
-       * Eqs (3.20) and (A6) of
-       * https://journals.aps.org/prd/pdf/10.1103/PhysRevD.8.3109
-       * OR
-       * Eqs (3.2) and (3.6) of 
-       * https://journals.aps.org/rmp/pdf/10.1103/RevModPhys.46.815
-       *
-       * to be
-       *
-       * tmax = m^2(1+l)^2
-       * tmin = tmax / (2*E*x*(1-x))^2
-       *
-       * where
-       *
-       *  l = E^2x^2theta^2/m^2
-       *  m is mass of dark photon
-       *  E is the incident lepton energy
-       * 
-       * were investigated in an attempt to control the numerical integration
-       * of chi in the hopes that cutting the integral away from odd places
-       * would be able to avoid the funky business. This was not successful,
-       * but we are leaving them here in case a typo is found in the future
-       * or the search is chosen to resume.
-      double el = lepton_e_sq*x_sq*theta_sq/MA2;
-      double tmax = MA2*pow(1 + el,2);
-      double tmin = MA2*tmax / pow(2*lepton_e*x*(1-x),2);
-      tmax = lepton_e_sq;
-       */
+    double xmax = 1 - std::min(lepton_mass,MA) / lepton_e;
 
-      // require 0 < tmin < tmax to procede
-      if (tmin < 0 or tmax < tmin) {
-        return 0.;
-      }
-    
+    double integrated_xsec{-1};
+    if (true) { // Full WW
       /*
-       * numerically integrate to calculate chi ourselves
-       * this _has not_ been well behaved due to the extreme values
-       * of t that must be handled
-       */
-      double chi = chi_calculator.integrate(x,theta,tmin, tmax);
-    
-      /*
-       * use analytic elastic-only chi derived for DMG4
-       * and double-checked with Mathematica
+       * max recoil angle of A'
        *
-       * The inelastic integral contains some 4000 terms
-       * according to Mathematica so it is expensive to
-       * compute and only an O(few) percent change.
-      double chi_analytic_elastic_only = flux_factor_chi_analytic(target_A,target_Z,tmin,tmax);
-      chi_f << chi_analytic_elastic_only << "\n";
+       * The wide angle A' are produced at a negligible rate
+       * so we enforce a hard-coded cut-off to stay within
+       * the small-angle regime.
+       *
+       * We choose the same cutoff as DMG4.
        */
-      
-      /*
-       * Amplitude squared is taken from 
-       * Equation (17) from Appendix A of https://arxiv.org/pdf/2101.12192.pdf
-       * with X = V
-       */
-      double factor1 = 2.0*(2.0 - 2.*x + x_sq)/(1. - x);
-      double factor2 = 4.0*(MA2 + 2.0*lepton_mass_sq)/utilde_sq;
-      double factor3 = utilde*x + MA2*(1. - x) + lepton_mass_sq*x_sq;
-      double amplitude_sq = factor1 + factor2*factor3;
-  
-      return 2.*pow(epsilon_,2.)*pow(alphaEW,3.)
-               *sqrt(x_sq*lepton_e_sq - MA2)*lepton_e*(1.-x)
-               *(chi/utilde_sq)*amplitude_sq*sin(theta);
-    };
+      double theta_max{0.3};
+      //double theta_max{2*3.14159};
 
-    // deduce integral bounds
-    double xmin = 0;
-    double xmax = 1 - std::max(lepton_mass,MA)/lepton_e;
+      /*
+       * Differential cross section with respect to x and theta
+       *
+       * Equation (16) from Appendix A of https://arxiv.org/pdf/2101.12192.pdf
+       *
+       * This `auto` represents a lambda-expression function, inheriting many
+       * pre-calculated constants (like lepton_e and chi) while also calculating
+       * the variables dependent on the integration variables. The return value
+       * of this function is a double since it is calculated by arithmetic
+       * operations on doubles.
+       */
+      auto diff_cross = [&](double x, double theta) {
+        if (x*lepton_e < threshold_) return 0.;
+    
+        double x_sq = x*x;
+    
+        double utilde = -x*lepton_e_sq*theta*theta - MA2*(1.-x)/x - lepton_mass_sq*x;
+        //double utilde = -x*lepton_e_sq*pow(sin(theta),2) - MA2*(1.-x)/x - lepton_mass_sq*x;
+        //double utilde = -x*lepton_e_sq*2*(1 - cos(theta)) - MA2*(1.-x)/x - lepton_mass_sq*x;
+        double utilde_sq = utilde*utilde;
+    
+        // non-zero theta and non-zero m_l
+        double tmin = utilde_sq/(4.0*lepton_e_sq*(1.0-x)*(1.0-x));
+        // maximum t kinematically limited to the incident lepton energy
+        double tmax = lepton_e_sq;
+
+        /*
+         * The chi integrand limits given by
+         *
+         * Eqs (3.20) and (A6) of
+         * https://journals.aps.org/prd/pdf/10.1103/PhysRevD.8.3109
+         * OR
+         * Eqs (3.2) and (3.6) of 
+         * https://journals.aps.org/rmp/pdf/10.1103/RevModPhys.46.815
+         *
+         * to be
+         *
+         * tmax = m^2(1+l)^2
+         * tmin = tmax / (2*E*x*(1-x))^2
+         *
+         * where
+         *
+         *  l = E^2x^2theta^2/m^2
+         *  m is mass of dark photon
+         *  E is the incident lepton energy
+         * 
+         * were investigated in an attempt to control the numerical integration
+         * of chi in the hopes that cutting the integral away from odd places
+         * would be able to avoid the funky business. This was not successful,
+         * but we are leaving them here in case a typo is found in the future
+         * or the search is chosen to resume.
+        double el = lepton_e_sq*x_sq*theta_sq/MA2;
+        double tmax = MA2*pow(1 + el,2);
+        double tmin = MA2*tmax / pow(2*lepton_e*x*(1-x),2);
+        tmax = lepton_e_sq;
+         */
   
-    /*
-     * max recoil angle of A'
-     *
-     * The wide angle A' are produced at a negligible rate
-     * so we enforce a hard-coded cut-off to stay within
-     * the small-angle regime.
-     *
-     * We choose the same cutoff as DMG4.
-     */
-    double theta_max{0.3};
-  
-    /*
-     * Integrand for integral over x
-     *
-     * For muons, we want to include the variation over theta from the chi
-     * integral, so we calculate the x-integrand by numerically integrating
-     * over theta in the differential cross section defined above.
-     *
-     * For electrons, we are using the Improved WW method where the theta
-     * integral has already been done analytically and we can use the
-     * numerical Chi (including both inelastic and elastic form factors)
-     * calculated above.  
-     *
-     * This is the final lambda expression used here. Its one argument is a double
-     * and it returns a double.
-     */
-    auto theta_integral = [&](double x) {
-      if (true or muons) {
-        auto theta_integrand = [&](double theta) {
-          double dsdxdtheta = diff_cross(x, theta);
-          dsdxdtheta_f << x << "," << theta << "," << dsdxdtheta << "\n";
-          return dsdxdtheta;
-        };
-        //theta_max = 3*(1-x)/lepton_e;
-        // integrand, min, max, max_depth, tolerance, error, pL1
-        double dsdx = integrate(theta_integrand, 0., theta_max);
-        dsdx_f << x << "," << dsdx << "\n";
-        return dsdx;
-      } else {
-        if (x*lepton_e < threshold_) {
-          dsdx_f << x << "," << 0. << "\n";
+        // require 0 < tmin < tmax to procede
+        if (tmin < 0 or tmax < tmin) {
           return 0.;
         }
-        double beta = sqrt(1 - MA2/lepton_e_sq),
-               nume = 1. - x + x*x/3.,
-               deno = MA2*(1-x)/x + lepton_mass_sq;
-        double dsdx = 4*pow(epsilon_,2)*pow(alphaEW,3)*chi_hiww*beta*nume/deno;
-        dsdx_f << x << "," << dsdx << "\n";
-        return dsdx;
-      }
-    };
+      
+        double chi = flux_factor_chi_numerical(target_A,target_Z,tmin, tmax);
+        chi_f << x << "," << theta << "," << tmin << "," << tmax << "," << chi << "\n";
+      
+        /*
+         * Amplitude squared is taken from 
+         * Equation (17) from Appendix A of https://arxiv.org/pdf/2101.12192.pdf
+         * with X = V
+         */
+        double factor1 = 2.0*(2.0 - 2.*x + x_sq)/(1. - x);
+        double factor2 = 4.0*(MA2 + 2.0*lepton_mass_sq)/utilde_sq;
+        double factor3 = utilde*x + MA2*(1. - x) + lepton_mass_sq*x_sq;
+        double amplitude_sq = factor1 + factor2*factor3;
+    
+        return 2.*pow(epsilon_,2.)*pow(alphaEW,3.)
+                 *sqrt(x_sq*lepton_e_sq - MA2)*lepton_e*(1.-x)
+                 *(chi/utilde_sq)*amplitude_sq*sin(theta);
+      };
 
-    theta_integral(1 - 1e-4);
-
-    double error;
-    double integrated_xsec = integrate(theta_integral, xmin, xmax);
+      integrated_xsec = integrate(
+          [&](double x) {
+            auto theta_integrand = [&](double theta) {
+              double dsdxdtheta = diff_cross(x, theta);
+              dsdxdtheta_f << x << "," << theta << "," << dsdxdtheta << "\n";
+              return dsdxdtheta;
+            };
+            double dsdx = integrate(theta_integrand, 0., theta_max);
+            dsdx_f << x << "," << dsdx << "\n";
+            return dsdx;
+          }, 0, xmax);
+    } else if (false) { // Improved WW
+      /*
+       * do the theta integral analytically by neglecting
+       * all theta terms in the integrand.
+       */
+      integrated_xsec = integrate(
+          [&](double x) {
+            if (x*lepton_e < threshold_) return 0.;
+            double utilde = -MA2*(1.-x)/x -lepton_mass_sq*x;
+            double utilde_sq = utilde*utilde;
+            // non-zero theta and non-zero m_l
+            double tmin = utilde_sq/(4.0*lepton_e_sq*(1.0-x)*(1.0-x));
+            // maximum t kinematically limited to the incident lepton energy
+            double tmax = lepton_e_sq;
+            // require 0 < tmin < tmax to procede
+            if (tmin < 0) return 0.;
+            if (tmax < tmin) return 0.;
+            double chi = flux_factor_chi_numerical(target_A,target_Z,tmin,tmax);
+            chi_f << x << "," << 0 << "," << tmin << "," << tmax << "," << chi << "\n";
+            double beta = sqrt(1 - MA2/lepton_e_sq),
+                   nume = 1. - x + x*x/3.,
+                   deno = MA2*(1-x)/x + lepton_mass_sq;
+            double dsdx = 4*pow(epsilon_,2)*pow(alphaEW,3)*chi*beta*nume/deno;
+            dsdx_f << x << "," << dsdx << "\n";
+            return dsdx;
+          }, 0, xmax);
+    } else if (false) { // HyperImproved WW
+      /*
+       * calculate chi once at x=1, theta=0 and then use it
+       * everywhere in the integration over dsigma/dx
+       *
+       * cut off the integration earlier than the lepton energy squared
+       * so that this overestimate isn't too much of an overestimate.
+       */
+      double tmin = MA2*MA2/(4*lepton_e_sq);
+      double tmax = MA2+lepton_mass_sq;
+      double chi_hiww = flux_factor_chi_numerical(target_A,target_Z,tmin,tmax);
+      chi_f << 1 << "," << 0 << "," << tmin << "," << tmax << "," << chi_hiww << "\n";
   
-    double GeVtoPb = 3.894E08;
+      integrated_xsec = integrate(
+          [&](double x) {
+            if (x*lepton_e < threshold_) return 0.;
+            double beta = sqrt(1 - MA2/lepton_e_sq),
+                   nume = 1. - x + x*x/3.,
+                   deno = MA2*(1-x)/x + lepton_mass_sq;
+            double dsdx = 4*pow(epsilon_,2)*pow(alphaEW,3)*chi_hiww*beta*nume/deno;
+            dsdx_f << x << "," << dsdx << "\n";
+            return dsdx;
+          }, 0, xmax);
+    } else {
+      std::cerr << "Did not choose a cross section calculation method.";
+      return -127;
+    }
+
+    static const double GeVtoPb = 3.894E08;
+
     /*
      * The integrated_xsec should be the correct value, we are just
      * converting it to Geant4's pb units here
      */
     double cross = integrated_xsec * GeVtoPb;
+
     total_file << current_energy << "," << cross << "\n";
 
     current_energy += energy_step;
@@ -483,6 +476,7 @@ int main(int argc, char* argv[]) try {
   total_file.close();
   dsdxdtheta_f.close();
   dsdx_f.close();
+  chi_f.close();
 
   return 0;
 } catch (const std::exception& e) {
