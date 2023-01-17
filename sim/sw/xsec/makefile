@@ -15,5 +15,6 @@ run: xsec-dbg
 		--ap-mass 0.1 \
 		--2d $(label)/dsdxtheta.csv \
 		--1d $(label)/dsdx.csv \
+		--chi $(label)/chi.csv \
 		--total $(label)/xsec.csv	
 

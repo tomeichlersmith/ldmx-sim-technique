@@ -17,7 +17,7 @@
 template<typename Integrand>
 double integrate(Integrand f, double low, double high) {
   return boost::math::quadrature::gauss_kronrod<double, 61>::integrate(
-      f, low, high, 5, 1e-9);
+      f, low, high, 15, 1e-9);
 }
 
 /*
@@ -362,6 +362,7 @@ int main(int argc, char* argv[]) try {
   
         // require 0 < tmin < tmax to procede
         if (tmin < 0 or tmax < tmin) {
+          chi_f << x << "," << theta << "," << tmin << "," << tmax << "," << 0 << "\n";
           return 0.;
         }
       
@@ -384,16 +385,19 @@ int main(int argc, char* argv[]) try {
       };
 
       integrated_xsec = integrate(
-          [&](double x) {
-            auto theta_integrand = [&](double theta) {
+          [&](double y) {
+            double x = 1 - exp(y);
+            auto theta_integrand = [&](double lntheta) {
+              double theta = exp(lntheta);
               double dsdxdtheta = diff_cross(x, theta);
               dsdxdtheta_f << x << "," << theta << "," << dsdxdtheta << "\n";
-              return dsdxdtheta;
+              return dsdxdtheta*theta;
             };
-            double dsdx = integrate(theta_integrand, 0., theta_max);
+            double dsdx = integrate(theta_integrand, 
+                -1*std::numeric_limits<double>::infinity(), log(theta_max));
             dsdx_f << x << "," << dsdx << "\n";
-            return dsdx;
-          }, 0, xmax);
+            return dsdx*(-1)*(1-x);
+          }, 0, log(1-xmax));
     } else if (false) { // Improved WW
       /*
        * do the theta integral analytically by neglecting
