@@ -29,6 +29,8 @@ def xsec_plot(mg_csv, others, file_name,
     inset_xlim = None, ymax = None,
     inset_width_height = (0.45,0.45),
     legend_overhead = False,
+    include_mg = True, 
+    scale_by = None,
     xlabel = 'Incident Lepton Energy [GeV]', title = None) :
     (raw, ratio) = plt.gcf().subplots(ncols = 1, nrows = 2, 
         sharex = 'col', gridspec_kw=dict(height_ratios = [3,1]))
@@ -39,8 +41,14 @@ def xsec_plot(mg_csv, others, file_name,
     mg_x = mg['Energy [GeV]']
     mg_y = mg['Xsec [pb]']
 
-    raw.plot(mg_x, mg_y, linewidth=0, label='MG/ME',
-        marker='o', markersize=10, markerfacecolor='none', markeredgecolor='tab:green')
+    if scale_by is not None :
+        scale = scale_by(mg_x, mg_y)
+        print(scale)
+        mg_y /= scale
+
+    if include_mg :
+        raw.plot(mg_x, mg_y, linewidth=0, label='MG/ME',
+            marker='o', markersize=10, markerfacecolor='none', markeredgecolor='tab:green')
     ratio.plot(mg_x, [1. for x in mg_x], marker='.', markersize=0, linewidth=0, color='tab:green')
     
     if inset_xlim is not None :
@@ -49,7 +57,7 @@ def xsec_plot(mg_csv, others, file_name,
         inset = plt.axes([0,0,1,1])
         # left edge, bottom edge, width, height
         inset.set_axes_locator(InsetPosition(raw, 
-          [0.50,0.10,inset_width_height[0], inset_width_height[1]]))
+          [0.50,0.08,inset_width_height[0], inset_width_height[1]]))
         mark_inset(ratio, inset, loc1=2, loc2=4, fc='none', ec='0.5')
 
         selection = (mg_x > inset_xlim[0])&(mg_x < inset_xlim[1])
@@ -61,6 +69,12 @@ def xsec_plot(mg_csv, others, file_name,
     for name, data, style in others :
         y = data['Xsec [pb]']
         x = data['Energy [MeV]']/1000.
+
+        if scale_by is not None :
+            scale = scale_by(x, y)
+            print(scale)
+            y /= scale
+
         raw.plot(x, y, label=name, linewidth=2, **style)
         data_interp = scipy.interpolate.interp1d(x, y)
         in_range = (mg_x >= x.min())&(mg_x <= x.max())#&(mg_x > 100)
@@ -75,7 +89,10 @@ def xsec_plot(mg_csv, others, file_name,
                 marker='.', markersize=15, linewidth=0,
                 label=name, **style)
 
-    raw.set_ylabel('Total Cross Section / $\epsilon^2$ [pb]')
+    if scale_by is None :
+        raw.set_ylabel('Total Cross Section / $\epsilon^2$ [pb]')
+    else :
+        raw.set_ylabel('A.U.')
     raw.set_ylim(ymax=ymax)
 
     if legend_overhead :
@@ -112,57 +129,110 @@ def main() :
         arg.out_dir = arg.data_dir
     os.makedirs(arg.out_dir, exist_ok=True)
 
-    xsec_plot('data/mg/el_xsec_with_lowE.csv', [
-            ('G4DarkBreM Improved WW', 
-              pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_iww.csv'),
-              dict(color='tab:blue')),
-          ],
-         f'{arg.out_dir}/el_xsec.pdf',
+    xsec_plot(
+        'data/mg/el_xsec_0.02GeV.csv', 
+        [
+          ('G4DarkBreM Full WW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_fullww_0.02GeV.csv'),
+            dict(color='tab:orange')),
+          ('G4DarkBreM IWW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_iww_0.02GeV.csv'), 
+            dict(color='tab:red')),
+          ('G4DarkBreM HIWW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_hiww_0.02GeV.csv'), 
+            dict(color='tab:purple')) 
+        ],
+        f'{arg.out_dir}/el_xsec_0.02GeV.pdf',
+        xlabel = 'Incident Electron Energy [GeV]',
+        title = 'Electrons on Tungsten $m_{A\'} = 0.02$ GeV'
+    )
+
+    xsec_plot(
+        'data/mg/el_xsec_0.005GeV.csv', 
+        [
+          ('G4DarkBreM Full WW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_fullww_0.005GeV.csv'),
+            dict(color='tab:orange')),
+          ('G4DarkBreM IWW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_iww_0.005GeV.csv'), 
+            dict(color='tab:red')),
+          ('G4DarkBreM HIWW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_hiww_0.005GeV.csv'), 
+            dict(color='tab:purple')),
+        ],
+        f'{arg.out_dir}/el_xsec_0.005GeV.pdf',
+        xlabel = 'Incident Electron Energy [GeV]',
+        title = 'Electrons on Tungsten $m_{A\'} = 0.005$ GeV'
+    )
+
+    xsec_plot(
+        'data/mg/el_xsec_with_lowE.csv', 
+        [
+          ('G4DarkBreM Improved WW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_iww.csv'), dict(color='tab:blue')),
+        ],
+        f'{arg.out_dir}/el_xsec.pdf',
         inset_xlim=(0,5), ymax=1.1e10,
         xlabel = 'Incident Electron Energy [GeV]',
-        title = 'Electrons on Tungsten $m_{A\'} = 0.1$ GeV')
+        title = 'Electrons on Tungsten $m_{A\'} = 0.1$ GeV'
+    )
 
-    xsec_plot('data/mg/mu_xsec_1GeV.csv', [
-            ('G4DarkBreM Full WW', 
-              pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_fullww.csv'),
-              dict(color='tab:blue')),
-          ],
+    xsec_plot(
+        'data/mg/mu_xsec_1GeV.csv', 
+        [
+          ('G4DarkBreM Full WW', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_fullww.csv'), dict(color='tab:blue')),
+        ],
         f'{arg.out_dir}/mu_xsec.pdf',
         inset_xlim=(0,100),
         xlabel = 'Incident Muon Energy [GeV]', ymax=5.5e6,
-        title = 'Muons on Copper $m_{A\'} = 1.0$ GeV')
+        title = 'Muons on Copper $m_{A\'} = 1.0$ GeV'
+    )
 
     dx, dy = plt.gcf().get_size_inches()
     plt.gcf().set_size_inches(dx, dy+4)
 
-    xsec_plot('data/mg/el_xsec_with_lowE.csv', [
+    def top_5percent(x, y) :
+        sl = (x >= 0.95*x.max())
+        return y[sl].mean()
+
+    xsec_plot(
+        'data/mg/el_xsec_with_lowE.csv', 
+        [
             ('G4DarkBreM Full WW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_fullww.csv'),
               dict(color='tab:orange')),
             ('G4DarkBreM Improved WW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_iww.csv'),
               dict(color='tab:red')),
             ('G4DarkBreM Hyper-Improved WW', pd.read_csv(f'{arg.data_dir}/g4db_el_xsec_hiww.csv'),
               dict(color='tab:purple')),
-          ],
-         f'{arg.out_dir}/el_xsec_appendix.pdf',
-        inset_xlim = (0,5), #legend_overhead=True,
-        ymax = 13e9, inset_width_height=(0.45,0.25),
+        ],
+        f'{arg.out_dir}/el_xsec_appendix.pdf',
+        inset_xlim = (0,5), 
+        # don't remove scale
+        #ymax = 13e9, 
+        #inset_width_height=(0.45,0.25),
+        # remove scale
+        inset_width_height=(0.45,0.45),
+        ymax = 1.44,
+        scale_by = top_5percent,
         xlabel = 'Incident Electron Energy [GeV]',
-        title = 'Electrons on Tungsten $m_{A\'} = 0.1$ GeV')
+        title = 'Electrons on Tungsten $m_{A\'} = 0.1$ GeV'
+    )
 
-    xsec_plot('data/mg/mu_xsec_1GeV.csv', [
+    xsec_plot(
+        'data/mg/mu_xsec_1GeV.csv', 
+        [
             ('G4DarkBreM Full WW', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_fullww.csv'),
               dict(color='tab:orange')),
             ('G4DarkBreM Improved WW', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_iww.csv'),
               dict(color='tab:red')),
             ('G4DarkBreM Hyper-Improved WW', pd.read_csv(f'{arg.data_dir}/g4db_mu_xsec_hiww.csv'),
               dict(color='tab:purple')),
-          ],
+        ],
         f'{arg.out_dir}/mu_xsec_appendix.pdf',
-        #legend_overhead=True,
-        inset_xlim=(0,100), ymax=9.5e6,
-        inset_width_height=(0.45,0.25),
+        inset_xlim=(0,100), 
+        # don't remove scale
+        #ymax=9.5e6,
+        #inset_width_height=(0.45,0.25),
+        # remove scale
+        inset_width_height=(0.45,0.45),
+        ymax = 1.44,
+        scale_by = top_5percent,
         xlabel = 'Incident Muon Energy [GeV]',
-        title = 'Muons on Copper $m_{A\'} = 1.0$ GeV')
+        title = 'Muons on Copper $m_{A\'} = 1.0$ GeV'
+    )
 
 if __name__ == '__main__' :
     main()
